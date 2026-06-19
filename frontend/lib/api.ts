@@ -88,3 +88,14 @@ export async function askFinCredit(question: string) {
 
   return response.json();
 }
+export async function getMarketData(ticker: string) {
+  const response = await fetch(`${API_BASE_URL}/api/market/${ticker}`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch market data");
+  }
+
+  return response.json();
+}

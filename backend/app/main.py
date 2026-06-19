@@ -12,6 +12,7 @@ from app.core.config import settings
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from app.db.database import engine
+from app.api.market import router as market_router
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -69,3 +70,4 @@ app.include_router(reports_router, prefix=settings.API_PREFIX)
 app.include_router(governance_router, prefix=settings.API_PREFIX)
 app.include_router(company_router, prefix=settings.API_PREFIX)
 app.include_router(ask_router, prefix=settings.API_PREFIX)
+app.include_router(market_router, prefix=settings.API_PREFIX)

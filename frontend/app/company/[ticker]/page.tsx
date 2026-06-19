@@ -39,7 +39,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getCompanyData } from "@/lib/api";
+import { getCompanyData, getMarketData } from "@/lib/api";
 
 type RiskTrendPoint = {
   month: string;
@@ -89,6 +89,21 @@ type CompanyApiData = {
   filingSignals: FilingSignal[];
   peerBenchmark: PeerBenchmark[];
   evidence: EvidenceItem[];
+  message: string;
+};
+
+type MarketData = {
+  ticker: string;
+  companyName: string;
+  sector: string | null;
+  currentPrice: number | null;
+  previousClose: number | null;
+  dayHigh: number | null;
+  dayLow: number | null;
+  volume: number | null;
+  marketCap: number | null;
+  currency: string | null;
+  exchange: string | null;
   message: string;
 };
 
@@ -166,17 +181,26 @@ export default function CompanyPage() {
   const ticker = String(params.ticker || "MSFT").toUpperCase();
 
   const [companyData, setCompanyData] = useState<CompanyApiData | null>(null);
+  const [marketData, setMarketData] = useState<MarketData | null>(null);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState("");
 
   useEffect(() => {
     async function loadCompanyData() {
       try {
-        const data = await getCompanyData(ticker);
-        setCompanyData(data);
+        setLoading(true);
+        setApiError("");
+
+        const [companyResponse, marketResponse] = await Promise.all([
+          getCompanyData(ticker),
+          getMarketData(ticker),
+        ]);
+
+        setCompanyData(companyResponse);
+        setMarketData(marketResponse);
       } catch (error) {
         console.error(error);
-        setApiError("Backend company API is not connected.");
+        setApiError("Backend company or market API is not connected.");
       } finally {
         setLoading(false);
       }
@@ -189,6 +213,14 @@ export default function CompanyPage() {
     ...fallbackCompany,
     ticker,
   };
+
+  const formattedMarketCap = marketData?.marketCap
+    ? `$${(marketData.marketCap / 1_000_000_000_000).toFixed(2)}T`
+    : company.marketCap;
+
+  const formattedCurrentPrice = marketData?.currentPrice
+    ? `$${marketData.currentPrice.toFixed(2)}`
+    : company.revenue;
 
   return (
     <AppShell>
@@ -207,13 +239,19 @@ export default function CompanyPage() {
 
             {loading && (
               <p className="mt-2 text-xs text-blue-300">
-                Loading backend company data...
+                Loading company profile and real market data...
               </p>
             )}
 
             {!loading && companyData && (
               <p className="mt-2 text-xs text-emerald-300">
                 Backend connected: {companyData.message}
+              </p>
+            )}
+
+            {!loading && marketData && (
+              <p className="mt-1 text-xs text-blue-300">
+                Real market data connected: {marketData.message}
               </p>
             )}
 
@@ -256,14 +294,14 @@ export default function CompanyPage() {
           />
           <MetricCard
             title="Market Cap"
-            value={company.marketCap}
-            change="Latest"
+            value={formattedMarketCap}
+            change={marketData?.exchange ?? "Latest"}
             icon={<BarChart3 className="h-5 w-5 text-blue-300" />}
           />
           <MetricCard
-            title="Revenue"
-            value={company.revenue}
-            change="Annual"
+            title="Current Price"
+            value={formattedCurrentPrice}
+            change={marketData?.currency ?? "Live"}
             icon={<TrendingUp className="h-5 w-5 text-emerald-300" />}
           />
           <MetricCard
@@ -273,6 +311,50 @@ export default function CompanyPage() {
             icon={<ShieldCheck className="h-5 w-5 text-violet-300" />}
           />
         </div>
+
+        <Card className="border-white/10 bg-white/[0.04] text-white">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-blue-300" />
+              Live Market Snapshot
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <SnapshotCard
+              title="Previous Close"
+              value={
+                marketData?.previousClose
+                  ? `$${marketData.previousClose.toFixed(2)}`
+                  : "Not available"
+              }
+            />
+            <SnapshotCard
+              title="Day High"
+              value={
+                marketData?.dayHigh
+                  ? `$${marketData.dayHigh.toFixed(2)}`
+                  : "Not available"
+              }
+            />
+            <SnapshotCard
+              title="Day Low"
+              value={
+                marketData?.dayLow
+                  ? `$${marketData.dayLow.toFixed(2)}`
+                  : "Not available"
+              }
+            />
+            <SnapshotCard
+              title="Volume"
+              value={
+                marketData?.volume
+                  ? marketData.volume.toLocaleString()
+                  : "Not available"
+              }
+            />
+          </CardContent>
+        </Card>
 
         <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <Card className="border-white/10 bg-white/[0.04] text-white">
@@ -398,7 +480,10 @@ export default function CompanyPage() {
               <SnapshotCard title="Debt / Equity" value={company.debtToEquity} />
               <SnapshotCard title="Profit Margin" value={company.profitMargin} />
               <SnapshotCard title="Sentiment" value={company.sentiment} />
-              <SnapshotCard title="Sector" value={company.sector} />
+              <SnapshotCard
+                title="Sector"
+                value={marketData?.sector ?? company.sector}
+              />
             </CardContent>
           </Card>
         </div>
