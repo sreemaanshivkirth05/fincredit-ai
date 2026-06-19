@@ -1,68 +1,51 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from app.db.database import get_db
+from app.models.holding import Holding
 
 router = APIRouter(prefix="/portfolio", tags=["Portfolio"])
 
 
 @router.get("")
-def get_portfolio():
-    holdings = [
+def get_portfolio(db: Session = Depends(get_db)):
+    holdings = db.query(Holding).order_by(Holding.id.asc()).all()
+
+    holdings_response = [
         {
-            "ticker": "MSFT",
-            "company": "Microsoft Corp.",
-            "shares": 5,
-            "avgPrice": 410,
-            "value": 2245,
-            "weight": 34,
-            "sector": "Technology",
-            "risk": "Low",
-            "score": 28,
-            "sentiment": "Positive",
-        },
-        {
-            "ticker": "NVDA",
-            "company": "NVIDIA Corp.",
-            "shares": 3,
-            "avgPrice": 125,
-            "value": 2130,
-            "weight": 31,
-            "sector": "Semiconductors",
-            "risk": "Medium",
-            "score": 54,
-            "sentiment": "Positive",
-        },
-        {
-            "ticker": "TSLA",
-            "company": "Tesla Inc.",
-            "shares": 2,
-            "avgPrice": 220,
-            "value": 1430,
-            "weight": 21,
-            "sector": "Automotive",
-            "risk": "High",
-            "score": 78,
-            "sentiment": "Mixed",
-        },
-        {
-            "ticker": "JPM",
-            "company": "JPMorgan Chase",
-            "shares": 4,
-            "avgPrice": 190,
-            "value": 960,
-            "weight": 14,
-            "sector": "Financials",
-            "risk": "Low",
-            "score": 33,
-            "sentiment": "Neutral",
-        },
+            "ticker": holding.ticker,
+            "company": holding.company,
+            "shares": holding.shares,
+            "avgPrice": holding.avg_price,
+            "value": holding.value,
+            "weight": holding.weight,
+            "sector": holding.sector,
+            "risk": holding.risk,
+            "score": holding.score,
+            "sentiment": holding.sentiment,
+        }
+        for holding in holdings
     ]
 
-    total_value = sum(item["value"] for item in holdings)
+    total_value = sum(item["value"] for item in holdings_response)
+    holdings_count = len(holdings_response)
+
+    high_risk_exposure = sum(
+        item["weight"] for item in holdings_response if item["risk"] == "High"
+    )
+
+    if holdings_count > 0:
+        overall_risk = round(
+            sum(item["score"] * item["weight"] for item in holdings_response) / 100
+        )
+    else:
+        overall_risk = 0
 
     return {
         "totalValue": total_value,
-        "overallRisk": 57,
-        "highRiskExposure": 21,
-        "holdingsCount": len(holdings),
-        "holdings": holdings,
-        "message": "Portfolio API connected successfully",
+        "overallRisk": overall_risk,
+        "highRiskExposure": high_risk_exposure,
+        "holdingsCount": holdings_count,
+        "holdings": holdings_response,
+        "message": "Portfolio API connected to PostgreSQL successfully",
     }

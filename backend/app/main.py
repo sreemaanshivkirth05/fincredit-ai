@@ -9,6 +9,9 @@ from app.api.governance import router as governance_router
 from app.api.company import router as company_router
 from app.api.ask import router as ask_router
 from app.core.config import settings
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
+from app.db.database import engine
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -40,6 +43,23 @@ def health_check():
         "service": settings.APP_NAME,
         "environment": settings.APP_ENV,
     }
+@app.get("/api/db-check")
+def database_check():
+    try:
+        with engine.connect() as connection:
+            result = connection.execute(text("SELECT current_database();"))
+            database_name = result.scalar()
+
+        return {
+            "status": "connected",
+            "database": database_name,
+        }
+
+    except SQLAlchemyError as error:
+        return {
+            "status": "error",
+            "message": str(error),
+        }
 
 
 app.include_router(dashboard_router, prefix=settings.API_PREFIX)
