@@ -1,10 +1,14 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from app.db.database import get_db
+from app.models.audit_log import AuditLog
 
 router = APIRouter(prefix="/governance", tags=["Governance"])
 
 
 @router.get("")
-def get_governance():
+def get_governance(db: Session = Depends(get_db)):
     model_usage = [
         {
             "model": "ChatGPT API",
@@ -91,42 +95,27 @@ def get_governance():
         },
     ]
 
+    audit_log_rows = db.query(AuditLog).order_by(AuditLog.id.desc()).all()
+
     audit_logs = [
         {
-            "time": "10:42 AM",
-            "event": "Report generated",
-            "detail": "TSLA red flag review generated with 87% grounding score.",
-            "severity": "Info",
-        },
-        {
-            "time": "10:39 AM",
-            "event": "Unsupported claim detected",
-            "detail": "Two statements required analyst review before approval.",
-            "severity": "Warning",
-        },
-        {
-            "time": "10:31 AM",
-            "event": "Local model routed",
-            "detail": "Ollama handled 18 sentiment classification tasks.",
-            "severity": "Info",
-        },
-        {
-            "time": "10:24 AM",
-            "event": "Data source delay",
-            "detail": "GDELT news refresh exceeded latency threshold.",
-            "severity": "Warning",
-        },
+            "time": log.time,
+            "event": log.event,
+            "detail": log.detail,
+            "severity": log.severity,
+        }
+        for log in audit_log_rows
     ]
 
     return {
         "totalModelCalls": 170,
         "estimatedCost": 3.84,
         "avgGrounding": 92,
-        "auditEvents": 24,
+        "auditEvents": len(audit_logs),
         "modelUsage": model_usage,
         "qualityMetrics": quality_metrics,
         "agentRuns": agent_runs,
         "dataSources": data_sources,
         "auditLogs": audit_logs,
-        "message": "Governance API connected successfully",
+        "message": "Governance API connected to PostgreSQL audit logs successfully",
     }

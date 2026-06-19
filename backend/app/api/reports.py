@@ -1,62 +1,37 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from app.db.database import get_db
+from app.models.report import Report
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
 
 
 @router.get("")
-def get_reports():
+def get_reports(db: Session = Depends(get_db)):
+    report_rows = db.query(Report).order_by(Report.id.desc()).all()
+
     reports = [
         {
-            "id": "RPT-1042",
-            "company": "Microsoft",
-            "ticker": "MSFT",
-            "type": "Credit Risk + Filing Analysis",
-            "status": "Approved",
-            "grounding": 94,
-            "unsupported": 0,
-            "model": "ChatGPT API",
-            "created": "Jun 15, 2026",
-        },
-        {
-            "id": "RPT-1041",
-            "company": "Tesla",
-            "ticker": "TSLA",
-            "type": "Red Flag Review",
-            "status": "Needs Review",
-            "grounding": 87,
-            "unsupported": 2,
-            "model": "ChatGPT API + Ollama",
-            "created": "Jun 14, 2026",
-        },
-        {
-            "id": "RPT-1040",
-            "company": "NVIDIA",
-            "ticker": "NVDA",
-            "type": "Peer Benchmark",
-            "status": "Draft",
-            "grounding": 91,
-            "unsupported": 1,
-            "model": "ChatGPT API",
-            "created": "Jun 13, 2026",
-        },
-        {
-            "id": "RPT-1039",
-            "company": "JPMorgan Chase",
-            "ticker": "JPM",
-            "type": "Portfolio Impact Memo",
-            "status": "Approved",
-            "grounding": 96,
-            "unsupported": 0,
-            "model": "ChatGPT API + Ollama",
-            "created": "Jun 12, 2026",
-        },
+            "id": report.report_id,
+            "company": report.company,
+            "ticker": report.ticker,
+            "type": report.report_type,
+            "status": report.status,
+            "grounding": report.grounding,
+            "unsupported": report.unsupported,
+            "model": report.model,
+            "created": report.created,
+        }
+        for report in report_rows
     ]
 
     report_quality = [
-        {"report": "MSFT", "grounding": 94},
-        {"report": "TSLA", "grounding": 87},
-        {"report": "NVDA", "grounding": 91},
-        {"report": "JPM", "grounding": 96},
+        {
+            "report": report.ticker,
+            "grounding": report.grounding,
+        }
+        for report in report_rows
     ]
 
     workflow = [
@@ -83,9 +58,14 @@ def get_reports():
     ]
 
     total_reports = 18
-    approved_reports = 12
-    needs_review = 3
-    avg_grounding = 92
+    approved_reports = sum(1 for report in reports if report["status"] == "Approved")
+    needs_review = sum(1 for report in reports if report["status"] == "Needs Review")
+
+    avg_grounding = (
+        round(sum(report["grounding"] for report in reports) / len(reports))
+        if reports
+        else 0
+    )
 
     return {
         "totalReports": total_reports,
@@ -95,5 +75,5 @@ def get_reports():
         "reports": reports,
         "reportQuality": report_quality,
         "workflow": workflow,
-        "message": "Reports API connected successfully",
+        "message": "Reports API connected to PostgreSQL successfully",
     }

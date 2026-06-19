@@ -1,69 +1,37 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from app.db.database import get_db
+from app.models.watchlist_company import WatchlistCompany
 
 router = APIRouter(prefix="/watchlist", tags=["Watchlist"])
 
 
 @router.get("")
-def get_watchlist():
+def get_watchlist(db: Session = Depends(get_db)):
+    companies = db.query(WatchlistCompany).order_by(WatchlistCompany.id.asc()).all()
+
     watchlist = [
         {
-            "ticker": "MSFT",
-            "company": "Microsoft Corp.",
-            "sector": "Technology",
-            "risk": "Low",
-            "riskScore": 28,
-            "sentiment": "Positive",
-            "filing": "10-K analyzed",
-            "status": "Stable",
-        },
-        {
-            "ticker": "NVDA",
-            "company": "NVIDIA Corp.",
-            "sector": "Semiconductors",
-            "risk": "Medium",
-            "riskScore": 54,
-            "sentiment": "Positive",
-            "filing": "No new filing",
-            "status": "Monitor",
-        },
-        {
-            "ticker": "TSLA",
-            "company": "Tesla Inc.",
-            "sector": "Automotive",
-            "risk": "High",
-            "riskScore": 78,
-            "sentiment": "Mixed",
-            "filing": "10-Q changed",
-            "status": "Needs Review",
-        },
-        {
-            "ticker": "JPM",
-            "company": "JPMorgan Chase",
-            "sector": "Financials",
-            "risk": "Low",
-            "riskScore": 33,
-            "sentiment": "Neutral",
-            "filing": "10-K analyzed",
-            "status": "Stable",
-        },
-        {
-            "ticker": "AAPL",
-            "company": "Apple Inc.",
-            "sector": "Technology",
-            "risk": "Medium",
-            "riskScore": 49,
-            "sentiment": "Neutral",
-            "filing": "No new filing",
-            "status": "Monitor",
-        },
+            "ticker": company.ticker,
+            "company": company.company,
+            "sector": company.sector,
+            "risk": company.risk,
+            "riskScore": company.risk_score,
+            "sentiment": company.sentiment,
+            "filing": company.filing,
+            "status": company.status,
+        }
+        for company in companies
     ]
 
     sentiment_data = [
-        {"ticker": "MSFT", "positive": 12, "negative": 2},
-        {"ticker": "NVDA", "positive": 15, "negative": 3},
-        {"ticker": "TSLA", "positive": 6, "negative": 9},
-        {"ticker": "JPM", "positive": 5, "negative": 4},
-        {"ticker": "AAPL", "positive": 7, "negative": 5},
+        {
+            "ticker": company["ticker"],
+            "positive": 12 if company["sentiment"] == "Positive" else 7,
+            "negative": 2 if company["risk"] == "Low" else 5,
+        }
+        for company in watchlist
     ]
 
     news_radar = [
@@ -87,13 +55,26 @@ def get_watchlist():
         },
     ]
 
+    needs_review = sum(1 for company in watchlist if company["status"] == "Needs Review")
+    new_filing_changes = sum(1 for company in watchlist if "changed" in company["filing"].lower())
+
+    positive_sentiment_count = sum(
+        1 for company in watchlist if company["sentiment"] == "Positive"
+    )
+
+    positive_sentiment = (
+        round((positive_sentiment_count / len(watchlist)) * 100)
+        if watchlist
+        else 0
+    )
+
     return {
         "companiesTracked": len(watchlist),
-        "needsReview": 1,
-        "newFilingChanges": 1,
-        "positiveSentiment": 62,
+        "needsReview": needs_review,
+        "newFilingChanges": new_filing_changes,
+        "positiveSentiment": positive_sentiment,
         "watchlist": watchlist,
         "sentimentData": sentiment_data,
         "newsRadar": news_radar,
-        "message": "Watchlist API connected successfully",
+        "message": "Watchlist API connected to PostgreSQL successfully",
     }
