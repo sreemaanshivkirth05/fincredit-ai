@@ -99,3 +99,14 @@ export async function getMarketData(ticker: string) {
 
   return response.json();
 }
+export async function getMarketHistory(ticker: string) {
+  const response = await fetch(`${API_BASE_URL}/api/market/${ticker}/history`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch market history");
+  }
+
+  return response.json();
+}

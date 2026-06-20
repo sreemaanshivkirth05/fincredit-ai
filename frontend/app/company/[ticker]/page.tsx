@@ -39,7 +39,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getCompanyData, getMarketData } from "@/lib/api";
+import { getCompanyData, getMarketData, getMarketHistory } from "@/lib/api";
 
 type RiskTrendPoint = {
   month: string;
@@ -104,6 +104,28 @@ type MarketData = {
   marketCap: number | null;
   currency: string | null;
   exchange: string | null;
+  message: string;
+};
+
+type MarketSnapshot = {
+  ticker: string;
+  companyName: string;
+  sector: string | null;
+  currentPrice: number | null;
+  previousClose: number | null;
+  dayHigh: number | null;
+  dayLow: number | null;
+  volume: number | null;
+  marketCap: number | null;
+  currency: string | null;
+  exchange: string | null;
+  fetchedAt: string;
+};
+
+type MarketHistory = {
+  ticker: string;
+  snapshotsCount: number;
+  snapshots: MarketSnapshot[];
   message: string;
 };
 
@@ -182,6 +204,9 @@ export default function CompanyPage() {
 
   const [companyData, setCompanyData] = useState<CompanyApiData | null>(null);
   const [marketData, setMarketData] = useState<MarketData | null>(null);
+  const [marketHistory, setMarketHistory] = useState<MarketHistory | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState("");
 
@@ -191,16 +216,21 @@ export default function CompanyPage() {
         setLoading(true);
         setApiError("");
 
-        const [companyResponse, marketResponse] = await Promise.all([
-          getCompanyData(ticker),
-          getMarketData(ticker),
-        ]);
+        const [companyResponse, marketResponse, historyResponse] =
+          await Promise.all([
+            getCompanyData(ticker),
+            getMarketData(ticker),
+            getMarketHistory(ticker),
+          ]);
 
         setCompanyData(companyResponse);
         setMarketData(marketResponse);
+        setMarketHistory(historyResponse);
       } catch (error) {
         console.error(error);
-        setApiError("Backend company or market API is not connected.");
+        setApiError(
+          "Backend company, market, or market history API is not connected."
+        );
       } finally {
         setLoading(false);
       }
@@ -222,6 +252,18 @@ export default function CompanyPage() {
     ? `$${marketData.currentPrice.toFixed(2)}`
     : company.revenue;
 
+  const marketSnapshotTrend =
+    marketHistory?.snapshots
+      ?.slice()
+      .reverse()
+      .map((snapshot) => ({
+        time: new Date(snapshot.fetchedAt).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        price: snapshot.currentPrice ?? 0,
+      })) ?? [];
+
   return (
     <AppShell>
       <div className="space-y-6">
@@ -239,7 +281,8 @@ export default function CompanyPage() {
 
             {loading && (
               <p className="mt-2 text-xs text-blue-300">
-                Loading company profile and real market data...
+                Loading company profile, real market data, and stored snapshot
+                history...
               </p>
             )}
 
@@ -252,6 +295,12 @@ export default function CompanyPage() {
             {!loading && marketData && (
               <p className="mt-1 text-xs text-blue-300">
                 Real market data connected: {marketData.message}
+              </p>
+            )}
+
+            {!loading && marketHistory && (
+              <p className="mt-1 text-xs text-violet-300">
+                Market history connected: {marketHistory.message}
               </p>
             )}
 
@@ -353,6 +402,140 @@ export default function CompanyPage() {
                   : "Not available"
               }
             />
+          </CardContent>
+        </Card>
+
+        <Card className="border-white/10 bg-white/[0.04] text-white">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileSearch className="h-5 w-5 text-violet-300" />
+              Stored Market Snapshot History
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-white/10">
+                  <TableHead className="text-slate-400">Fetched At</TableHead>
+                  <TableHead className="text-slate-400">Price</TableHead>
+                  <TableHead className="text-slate-400">
+                    Previous Close
+                  </TableHead>
+                  <TableHead className="text-slate-400">Day High</TableHead>
+                  <TableHead className="text-slate-400">Day Low</TableHead>
+                  <TableHead className="text-slate-400">Volume</TableHead>
+                </TableRow>
+              </TableHeader>
+
+              <TableBody>
+                {(marketHistory?.snapshots ?? []).slice(0, 5).map((snapshot) => (
+                  <TableRow
+                    key={`${snapshot.ticker}-${snapshot.fetchedAt}`}
+                    className="border-white/10"
+                  >
+                    <TableCell className="text-slate-300">
+                      {new Date(snapshot.fetchedAt).toLocaleString()}
+                    </TableCell>
+                    <TableCell className="font-medium text-white">
+                      {snapshot.currentPrice
+                        ? `$${snapshot.currentPrice.toFixed(2)}`
+                        : "N/A"}
+                    </TableCell>
+                    <TableCell className="text-slate-300">
+                      {snapshot.previousClose
+                        ? `$${snapshot.previousClose.toFixed(2)}`
+                        : "N/A"}
+                    </TableCell>
+                    <TableCell className="text-slate-300">
+                      {snapshot.dayHigh
+                        ? `$${snapshot.dayHigh.toFixed(2)}`
+                        : "N/A"}
+                    </TableCell>
+                    <TableCell className="text-slate-300">
+                      {snapshot.dayLow
+                        ? `$${snapshot.dayLow.toFixed(2)}`
+                        : "N/A"}
+                    </TableCell>
+                    <TableCell className="text-slate-300">
+                      {snapshot.volume
+                        ? snapshot.volume.toLocaleString()
+                        : "N/A"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+
+            {(!marketHistory || marketHistory.snapshots.length === 0) && (
+              <p className="mt-4 text-sm text-slate-400">
+                No stored market snapshots yet. Refresh this company page to
+                ingest new yfinance snapshots into PostgreSQL.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-white/10 bg-white/[0.04] text-white">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-emerald-300" />
+              Stored Market Price Trend
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={marketSnapshotTrend}>
+                  <defs>
+                    <linearGradient
+                      id="marketPrice"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="5%"
+                        stopColor="#34d399"
+                        stopOpacity={0.45}
+                      />
+                      <stop
+                        offset="95%"
+                        stopColor="#34d399"
+                        stopOpacity={0}
+                      />
+                    </linearGradient>
+                  </defs>
+
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                  <XAxis dataKey="time" stroke="#94a3b8" />
+                  <YAxis stroke="#94a3b8" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#0f172a",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: "12px",
+                      color: "white",
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="price"
+                    stroke="#34d399"
+                    fill="url(#marketPrice)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+
+            {marketSnapshotTrend.length === 0 && (
+              <p className="mt-4 text-sm text-slate-400">
+                No stored price history yet. Refresh this company page a few
+                times to create market snapshots.
+              </p>
+            )}
           </CardContent>
         </Card>
 

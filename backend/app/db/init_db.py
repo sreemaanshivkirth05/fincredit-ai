@@ -4,6 +4,7 @@ from app.models.watchlist_company import WatchlistCompany
 from app.models.report import Report
 from app.models.company_profile import CompanyProfile
 from app.models.audit_log import AuditLog
+from app.models.market_snapshot import MarketSnapshot
 
 
 def init_db():
