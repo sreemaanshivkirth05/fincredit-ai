@@ -1,10 +1,11 @@
 from app.db.database import Base, engine
-from app.models.holding import Holding
-from app.models.watchlist_company import WatchlistCompany
-from app.models.report import Report
-from app.models.company_profile import CompanyProfile
 from app.models.audit_log import AuditLog
+from app.models.company_profile import CompanyProfile
+from app.models.holding import Holding
 from app.models.market_snapshot import MarketSnapshot
+from app.models.report import Report
+from app.models.sec_fundamental import SecFundamental
+from app.models.watchlist_company import WatchlistCompany
 
 
 def init_db():

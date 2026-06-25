@@ -110,3 +110,31 @@ export async function getMarketHistory(ticker: string) {
 
   return response.json();
 }
+export async function getSecCompanyFacts(ticker: string) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/sec/company-facts/${ticker}`,
+    {
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch SEC company facts");
+  }
+
+  return response.json();
+}
+export async function getSecFundamentalsHistory(ticker: string) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/sec/company-facts/${ticker}/history`,
+    {
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch SEC fundamentals history");
+  }
+
+  return response.json();
+}

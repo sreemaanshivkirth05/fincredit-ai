@@ -39,7 +39,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getCompanyData, getMarketData, getMarketHistory } from "@/lib/api";
+import {
+  getCompanyData,
+  getMarketData,
+  getMarketHistory,
+  getSecCompanyFacts,
+  getSecFundamentalsHistory,
+} from "@/lib/api";
 
 type RiskTrendPoint = {
   month: string;
@@ -129,6 +135,45 @@ type MarketHistory = {
   message: string;
 };
 
+type SecCompanyFacts = {
+  ticker: string;
+  cik: string;
+  companyName: string;
+  revenue: number | null;
+  netIncome: number | null;
+  assets: number | null;
+  liabilities: number | null;
+  equity: number | null;
+  fiscalYear: number | null;
+  form: string | null;
+  filed: string | null;
+  source: string;
+  message: string;
+};
+
+type SecFundamentalSnapshot = {
+  ticker: string;
+  cik: string;
+  companyName: string;
+  revenue: number | null;
+  netIncome: number | null;
+  assets: number | null;
+  liabilities: number | null;
+  equity: number | null;
+  fiscalYear: number | null;
+  form: string | null;
+  filed: string | null;
+  source: string;
+  fetchedAt: string;
+};
+
+type SecFundamentalsHistory = {
+  ticker: string;
+  snapshotsCount: number;
+  snapshots: SecFundamentalSnapshot[];
+  message: string;
+};
+
 const fallbackCompany: CompanyApiData = {
   ticker: "MSFT",
   company: "Microsoft Corp.",
@@ -207,6 +252,9 @@ export default function CompanyPage() {
   const [marketHistory, setMarketHistory] = useState<MarketHistory | null>(
     null
   );
+  const [secFacts, setSecFacts] = useState<SecCompanyFacts | null>(null);
+  const [secHistory, setSecHistory] =
+    useState<SecFundamentalsHistory | null>(null);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState("");
 
@@ -216,20 +264,29 @@ export default function CompanyPage() {
         setLoading(true);
         setApiError("");
 
-        const [companyResponse, marketResponse, historyResponse] =
-          await Promise.all([
-            getCompanyData(ticker),
-            getMarketData(ticker),
-            getMarketHistory(ticker),
-          ]);
+        const [
+          companyResponse,
+          marketResponse,
+          historyResponse,
+          secResponse,
+          secHistoryResponse,
+        ] = await Promise.all([
+          getCompanyData(ticker),
+          getMarketData(ticker),
+          getMarketHistory(ticker),
+          getSecCompanyFacts(ticker),
+          getSecFundamentalsHistory(ticker),
+        ]);
 
         setCompanyData(companyResponse);
         setMarketData(marketResponse);
         setMarketHistory(historyResponse);
+        setSecFacts(secResponse);
+        setSecHistory(secHistoryResponse);
       } catch (error) {
         console.error(error);
         setApiError(
-          "Backend company, market, or market history API is not connected."
+          "Backend company, market, market history, SEC, or SEC history API is not connected."
         );
       } finally {
         setLoading(false);
@@ -264,6 +321,24 @@ export default function CompanyPage() {
         price: snapshot.currentPrice ?? 0,
       })) ?? [];
 
+  const formatLargeMoney = (value: number | null | undefined) => {
+    if (!value) return "Not available";
+
+    if (value >= 1_000_000_000_000) {
+      return `$${(value / 1_000_000_000_000).toFixed(2)}T`;
+    }
+
+    if (value >= 1_000_000_000) {
+      return `$${(value / 1_000_000_000).toFixed(2)}B`;
+    }
+
+    if (value >= 1_000_000) {
+      return `$${(value / 1_000_000).toFixed(2)}M`;
+    }
+
+    return `$${value.toLocaleString()}`;
+  };
+
   return (
     <AppShell>
       <div className="space-y-6">
@@ -281,8 +356,8 @@ export default function CompanyPage() {
 
             {loading && (
               <p className="mt-2 text-xs text-blue-300">
-                Loading company profile, real market data, and stored snapshot
-                history...
+                Loading company profile, market data, SEC fundamentals, and
+                stored histories...
               </p>
             )}
 
@@ -301,6 +376,18 @@ export default function CompanyPage() {
             {!loading && marketHistory && (
               <p className="mt-1 text-xs text-violet-300">
                 Market history connected: {marketHistory.message}
+              </p>
+            )}
+
+            {!loading && secFacts && (
+              <p className="mt-1 text-xs text-amber-300">
+                SEC fundamentals connected: {secFacts.message}
+              </p>
+            )}
+
+            {!loading && secHistory && (
+              <p className="mt-1 text-xs text-orange-300">
+                SEC history connected: {secHistory.message}
               </p>
             )}
 
@@ -354,10 +441,10 @@ export default function CompanyPage() {
             icon={<TrendingUp className="h-5 w-5 text-emerald-300" />}
           />
           <MetricCard
-            title="Unsupported Claims"
-            value={String(company.unsupportedClaims)}
-            change="Review queue"
-            icon={<ShieldCheck className="h-5 w-5 text-violet-300" />}
+            title="SEC Fiscal Year"
+            value={secFacts?.fiscalYear ? String(secFacts.fiscalYear) : "N/A"}
+            change={secFacts?.form ?? "SEC"}
+            icon={<FileSearch className="h-5 w-5 text-violet-300" />}
           />
         </div>
 
@@ -402,6 +489,139 @@ export default function CompanyPage() {
                   : "Not available"
               }
             />
+          </CardContent>
+        </Card>
+
+        <Card className="border-white/10 bg-white/[0.04] text-white">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileSearch className="h-5 w-5 text-amber-300" />
+              SEC Financial Fundamentals
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+              <SnapshotCard
+                title="Revenue"
+                value={formatLargeMoney(secFacts?.revenue)}
+              />
+              <SnapshotCard
+                title="Net Income"
+                value={formatLargeMoney(secFacts?.netIncome)}
+              />
+              <SnapshotCard
+                title="Assets"
+                value={formatLargeMoney(secFacts?.assets)}
+              />
+              <SnapshotCard
+                title="Liabilities"
+                value={formatLargeMoney(secFacts?.liabilities)}
+              />
+              <SnapshotCard
+                title="Equity"
+                value={formatLargeMoney(secFacts?.equity)}
+              />
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div>
+                  <p className="text-sm text-slate-400">CIK</p>
+                  <p className="mt-1 font-medium text-white">
+                    {secFacts?.cik ?? "Not available"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-sm text-slate-400">Fiscal Year</p>
+                  <p className="mt-1 font-medium text-white">
+                    {secFacts?.fiscalYear ?? "Not available"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-sm text-slate-400">Filing Form</p>
+                  <p className="mt-1 font-medium text-white">
+                    {secFacts?.form ?? "Not available"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-sm text-slate-400">Filed Date</p>
+                  <p className="mt-1 font-medium text-white">
+                    {secFacts?.filed ?? "Not available"}
+                  </p>
+                </div>
+              </div>
+
+              <p className="mt-4 text-xs text-slate-500">
+                Source: {secFacts?.source ?? "SEC Company Facts API"}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-white/10 bg-white/[0.04] text-white">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileSearch className="h-5 w-5 text-orange-300" />
+              Stored SEC Fundamentals History
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-white/10">
+                  <TableHead className="text-slate-400">Fetched At</TableHead>
+                  <TableHead className="text-slate-400">Fiscal Year</TableHead>
+                  <TableHead className="text-slate-400">Form</TableHead>
+                  <TableHead className="text-slate-400">Filed</TableHead>
+                  <TableHead className="text-slate-400">Revenue</TableHead>
+                  <TableHead className="text-slate-400">Net Income</TableHead>
+                  <TableHead className="text-slate-400">Assets</TableHead>
+                </TableRow>
+              </TableHeader>
+
+              <TableBody>
+                {(secHistory?.snapshots ?? []).slice(0, 5).map((snapshot) => (
+                  <TableRow
+                    key={`${snapshot.ticker}-${snapshot.fetchedAt}`}
+                    className="border-white/10"
+                  >
+                    <TableCell className="text-slate-300">
+                      {new Date(snapshot.fetchedAt).toLocaleString()}
+                    </TableCell>
+                    <TableCell className="font-medium text-white">
+                      {snapshot.fiscalYear ?? "N/A"}
+                    </TableCell>
+                    <TableCell className="text-slate-300">
+                      {snapshot.form ?? "N/A"}
+                    </TableCell>
+                    <TableCell className="text-slate-300">
+                      {snapshot.filed ?? "N/A"}
+                    </TableCell>
+                    <TableCell className="text-slate-300">
+                      {formatLargeMoney(snapshot.revenue)}
+                    </TableCell>
+                    <TableCell className="text-slate-300">
+                      {formatLargeMoney(snapshot.netIncome)}
+                    </TableCell>
+                    <TableCell className="text-slate-300">
+                      {formatLargeMoney(snapshot.assets)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+
+            {(!secHistory || secHistory.snapshots.length === 0) && (
+              <p className="mt-4 text-sm text-slate-400">
+                No stored SEC fundamentals yet. Refresh this company page to
+                ingest SEC fundamentals into PostgreSQL.
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -660,9 +880,26 @@ export default function CompanyPage() {
             </CardHeader>
 
             <CardContent className="grid gap-4 sm:grid-cols-2">
-              <SnapshotCard title="Debt / Equity" value={company.debtToEquity} />
-              <SnapshotCard title="Profit Margin" value={company.profitMargin} />
-              <SnapshotCard title="Sentiment" value={company.sentiment} />
+              <SnapshotCard
+                title="Revenue"
+                value={formatLargeMoney(secFacts?.revenue)}
+              />
+              <SnapshotCard
+                title="Net Income"
+                value={formatLargeMoney(secFacts?.netIncome)}
+              />
+              <SnapshotCard
+                title="Assets"
+                value={formatLargeMoney(secFacts?.assets)}
+              />
+              <SnapshotCard
+                title="Liabilities"
+                value={formatLargeMoney(secFacts?.liabilities)}
+              />
+              <SnapshotCard
+                title="Equity"
+                value={formatLargeMoney(secFacts?.equity)}
+              />
               <SnapshotCard
                 title="Sector"
                 value={marketData?.sector ?? company.sector}
