@@ -1,6 +1,11 @@
+from datetime import datetime
+
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from app.models.agent_run import AgentRun
 from app.models.report import Report
+from app.models.report_document import ReportDocument
 
 
 def get_reports_data(db: Session):
@@ -32,27 +37,27 @@ def get_reports_data(db: Session):
     workflow = [
         {
             "title": "Data Collection",
-            "detail": "SEC filings, financial ratios, portfolio exposure, and news radar data collected.",
+            "detail": "Market snapshots, SEC fundamentals, portfolio holdings, and saved agent runs are collected.",
             "status": "Complete",
         },
         {
-            "title": "Agent Analysis",
-            "detail": "Specialist agents generated credit risk, filing, peer, and red flag analysis.",
+            "title": "LangGraph Agent Analysis",
+            "detail": "Portfolio, market, SEC, risk, evidence, and LLM answer agents generate the research response.",
             "status": "Complete",
         },
         {
-            "title": "Citation Validation",
-            "detail": "Evidence panel checked claims, source coverage, and unsupported statements.",
+            "title": "Report Generation",
+            "detail": "Saved LangGraph runs are converted into analyst report records and full report documents.",
             "status": "Complete",
         },
         {
-            "title": "Analyst Approval",
-            "detail": "Reports can be approved, revised, exported as PDF, or sent as an email digest.",
+            "title": "Governance Review",
+            "detail": "Grounding score, unsupported claims, evidence, and model workflow metadata are available for audit review.",
             "status": "In Review",
         },
     ]
 
-    total_reports = 18
+    total_reports = len(reports)
     approved_reports = sum(1 for report in reports if report["status"] == "Approved")
     needs_review = sum(1 for report in reports if report["status"] == "Needs Review")
 
@@ -71,4 +76,93 @@ def get_reports_data(db: Session):
         "reportQuality": report_quality,
         "workflow": workflow,
         "message": "Reports API connected to PostgreSQL successfully",
+    }
+
+
+def generate_report_from_agent_run(agent_run_id: int, db: Session):
+    agent_run = db.query(AgentRun).filter(AgentRun.id == agent_run_id).first()
+
+    if not agent_run:
+        raise HTTPException(status_code=404, detail="Agent run not found")
+
+    ticker = agent_run.ticker or "PORTFOLIO"
+
+    report_count = db.query(Report).count() + 1
+    report_id = f"RPT-AI-{report_count:04d}"
+
+    company_or_question = (
+        f"{ticker} AI Risk Report"
+        if ticker != "PORTFOLIO"
+        else "Portfolio AI Risk Report"
+    )
+
+    created_date = datetime.utcnow().strftime("%Y-%m-%d")
+
+    report = Report(
+        report_id=report_id,
+        company=company_or_question,
+        ticker=ticker,
+        report_type="AI Agent Risk Report",
+        status="Needs Review",
+        grounding=agent_run.grounding_score,
+        unsupported=agent_run.unsupported_claims,
+        model=agent_run.workflow,
+        created=created_date,
+    )
+
+    db.add(report)
+    db.commit()
+    db.refresh(report)
+
+    report_document = ReportDocument(
+        report_id=report.report_id,
+        agent_run_id=agent_run.id,
+        ticker=agent_run.ticker,
+        question=agent_run.question,
+        answer=agent_run.answer,
+        risk_drivers=agent_run.risk_drivers,
+        evidence=agent_run.evidence,
+        suggested_actions=agent_run.suggested_actions,
+    )
+
+    db.add(report_document)
+    db.commit()
+
+    return {
+        "reportId": report.report_id,
+        "agentRunId": agent_run.id,
+        "ticker": report.ticker,
+        "company": report.company,
+        "reportType": report.report_type,
+        "status": report.status,
+        "grounding": report.grounding,
+        "unsupported": report.unsupported,
+        "model": report.model,
+        "created": report.created,
+        "message": f"Report {report.report_id} and full report document generated from agent run {agent_run.id}",
+    }
+
+
+def get_report_document(report_id: str, db: Session):
+    report_document = (
+        db.query(ReportDocument)
+        .filter(ReportDocument.report_id == report_id)
+        .order_by(ReportDocument.created_at.desc())
+        .first()
+    )
+
+    if not report_document:
+        raise HTTPException(status_code=404, detail="Report document not found")
+
+    return {
+        "reportId": report_document.report_id,
+        "agentRunId": report_document.agent_run_id,
+        "ticker": report_document.ticker,
+        "question": report_document.question,
+        "answer": report_document.answer,
+        "riskDrivers": report_document.risk_drivers,
+        "evidence": report_document.evidence,
+        "suggestedActions": report_document.suggested_actions,
+        "createdAt": report_document.created_at,
+        "message": f"Report document {report_id} loaded from PostgreSQL",
     }

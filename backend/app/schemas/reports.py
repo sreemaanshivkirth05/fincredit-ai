@@ -1,3 +1,6 @@
+from datetime import datetime
+from typing import Any
+
 from pydantic import BaseModel
 
 
@@ -32,4 +35,31 @@ class ReportsResponse(BaseModel):
     reports: list[ReportItemResponse]
     reportQuality: list[ReportQualityResponse]
     workflow: list[WorkflowStepResponse]
+    message: str
+
+
+class GeneratedReportResponse(BaseModel):
+    reportId: str
+    agentRunId: int
+    ticker: str
+    company: str
+    reportType: str
+    status: str
+    grounding: int
+    unsupported: int
+    model: str
+    created: str
+    message: str
+
+
+class ReportDocumentResponse(BaseModel):
+    reportId: str
+    agentRunId: int
+    ticker: str | None
+    question: str
+    answer: str
+    riskDrivers: list[dict[str, Any]]
+    evidence: list[dict[str, Any]]
+    suggestedActions: list[str]
+    createdAt: datetime
     message: str

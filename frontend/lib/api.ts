@@ -150,3 +150,19 @@ export async function getAgentRuns() {
 
   return response.json();
 }
+
+export async function generateReportFromAgentRun(agentRunId: number) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/reports/generate-from-agent-run/${agentRunId}`,
+    {
+      method: "POST",
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to generate report from agent run");
+  }
+
+  return response.json();
+}

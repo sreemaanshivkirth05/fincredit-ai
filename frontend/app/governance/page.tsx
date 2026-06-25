@@ -1,5 +1,6 @@
 "use client";
 
+import type React from "react";
 import { useEffect, useState } from "react";
 
 import {
@@ -10,6 +11,7 @@ import {
   Clock,
   Database,
   FileSearch,
+  Loader2,
   ShieldCheck,
   Sparkles,
   Workflow,
@@ -17,6 +19,7 @@ import {
 
 import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -27,7 +30,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getAgentRuns, getGovernanceData } from "@/lib/api";
+import {
+  generateReportFromAgentRun,
+  getAgentRuns,
+  getGovernanceData,
+} from "@/lib/api";
 
 type ModelUsage = {
   model: string;
@@ -112,6 +119,20 @@ type AgentRunsResponse = {
   message: string;
 };
 
+type GeneratedReportResponse = {
+  reportId: string;
+  agentRunId: number;
+  ticker: string;
+  company: string;
+  reportType: string;
+  status: string;
+  grounding: number;
+  unsupported: number;
+  model: string;
+  created: string;
+  message: string;
+};
+
 const fallbackGovernance: GovernanceData = {
   totalModelCalls: 170,
   estimatedCost: 3.84,
@@ -119,16 +140,16 @@ const fallbackGovernance: GovernanceData = {
   auditEvents: 4,
   modelUsage: [
     {
-      model: "ChatGPT API",
-      task: "Final reasoning, report writing, investment thesis synthesis",
+      model: "LangChain ChatOllama",
+      task: "Local LLM answer generation for financial research responses",
       calls: 42,
-      cost: 3.84,
+      cost: 0,
       status: "Active",
     },
     {
-      model: "Ollama Qwen Local",
-      task: "Sentiment classification, red flag tagging, filing extraction",
-      calls: 128,
+      model: "LangGraph Workflow",
+      task: "Portfolio, market, SEC, risk, evidence, and answer orchestration",
+      calls: 42,
       cost: 0,
       status: "Active",
     },
@@ -144,7 +165,7 @@ const fallbackGovernance: GovernanceData = {
       agent: "Credit Risk Agent",
       company: "TSLA",
       status: "Completed",
-      model: "ChatGPT API",
+      model: "LangGraph + Ollama",
       duration: "18.4s",
       grounding: 87,
     },
@@ -152,23 +173,29 @@ const fallbackGovernance: GovernanceData = {
       agent: "Filing Analysis Agent",
       company: "MSFT",
       status: "Completed",
-      model: "Ollama + ChatGPT API",
+      model: "LangGraph + Ollama",
       duration: "22.1s",
       grounding: 94,
     },
   ],
   dataSources: [
     {
-      source: "SEC EDGAR",
+      source: "SEC Company Facts API",
       status: "Healthy",
       lastSync: "2 minutes ago",
       latency: "420ms",
     },
     {
-      source: "Yahoo Finance",
+      source: "Yahoo Finance / yfinance",
       status: "Healthy",
       lastSync: "1 minute ago",
       latency: "380ms",
+    },
+    {
+      source: "PostgreSQL",
+      status: "Healthy",
+      lastSync: "Live",
+      latency: "Local",
     },
   ],
   auditLogs: [
@@ -189,6 +216,11 @@ export default function GovernancePage() {
     useState<AgentRunsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState("");
+  const [generatingReportId, setGeneratingReportId] = useState<number | null>(
+    null
+  );
+  const [generatedReport, setGeneratedReport] =
+    useState<GeneratedReportResponse | null>(null);
 
   useEffect(() => {
     async function loadGovernanceData() {
@@ -216,6 +248,22 @@ export default function GovernancePage() {
     loadGovernanceData();
   }, []);
 
+  async function handleGenerateReport(agentRunId: number) {
+    try {
+      setGeneratingReportId(agentRunId);
+      setGeneratedReport(null);
+      setApiError("");
+
+      const response = await generateReportFromAgentRun(agentRunId);
+      setGeneratedReport(response);
+    } catch (error) {
+      console.error(error);
+      setApiError("Failed to generate report from this agent run.");
+    } finally {
+      setGeneratingReportId(null);
+    }
+  }
+
   const governance = governanceData ?? fallbackGovernance;
   const storedAgentRuns = agentRunsData?.runs ?? [];
 
@@ -224,18 +272,13 @@ export default function GovernancePage() {
   const avgStoredGrounding =
     storedAgentRuns.length > 0
       ? Math.round(
-          storedAgentRuns.reduce(
-            (sum, run) => sum + run.groundingScore,
-            0
-          ) / storedAgentRuns.length
+          storedAgentRuns.reduce((sum, run) => sum + run.groundingScore, 0) /
+            storedAgentRuns.length
         )
       : governance.avgGrounding;
 
   const totalUnsupportedClaims =
-    storedAgentRuns.reduce(
-      (sum, run) => sum + run.unsupportedClaims,
-      0
-    ) ?? 0;
+    storedAgentRuns.reduce((sum, run) => sum + run.unsupportedClaims, 0) ?? 0;
 
   return (
     <AppShell>
@@ -252,7 +295,8 @@ export default function GovernancePage() {
 
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
               Monitor model usage, data sources, grounding quality, audit logs,
-              and saved LangGraph/LLM agent runs from PostgreSQL.
+              saved LangGraph/LLM agent runs, and report generation workflows
+              from PostgreSQL.
             </p>
 
             {loading && (
@@ -270,6 +314,12 @@ export default function GovernancePage() {
             {!loading && agentRunsData && (
               <p className="mt-1 text-xs text-violet-300">
                 Agent runs connected: {agentRunsData.message}
+              </p>
+            )}
+
+            {generatedReport && (
+              <p className="mt-1 text-xs text-emerald-300">
+                Report generated: {generatedReport.message}
               </p>
             )}
 
@@ -305,7 +355,7 @@ export default function GovernancePage() {
           <MetricCard
             title="Estimated Cost"
             value={`$${governance.estimatedCost.toFixed(2)}`}
-            change="Tracked"
+            change="Local LLM"
             icon={<Activity className="h-5 w-5 text-blue-300" />}
           />
         </div>
@@ -328,6 +378,7 @@ export default function GovernancePage() {
                   <TableHead className="text-slate-400">Grounding</TableHead>
                   <TableHead className="text-slate-400">Unsupported</TableHead>
                   <TableHead className="text-slate-400">Status</TableHead>
+                  <TableHead className="text-slate-400">Action</TableHead>
                 </TableRow>
               </TableHeader>
 
@@ -365,6 +416,25 @@ export default function GovernancePage() {
                       <Badge className="bg-emerald-500/15 text-emerald-200">
                         LLM Generated
                       </Badge>
+                    </TableCell>
+
+                    <TableCell>
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={generatingReportId === run.id}
+                        className="bg-violet-500 text-white hover:bg-violet-600"
+                        onClick={() => handleGenerateReport(run.id)}
+                      >
+                        {generatingReportId === run.id ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Generating
+                          </>
+                        ) : (
+                          "Generate Report"
+                        )}
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -410,7 +480,10 @@ export default function GovernancePage() {
 
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     <MiniMetric label="Calls" value={String(item.calls)} />
-                    <MiniMetric label="Cost" value={`$${item.cost.toFixed(2)}`} />
+                    <MiniMetric
+                      label="Cost"
+                      value={`$${item.cost.toFixed(2)}`}
+                    />
                   </div>
                 </div>
               ))}
