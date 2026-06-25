@@ -19,7 +19,18 @@ TICKER_TO_CIK = {
 }
 
 
-def get_latest_fact(facts: dict, taxonomy: str, concept: str):
+def get_latest_annual_fact(facts: dict, taxonomy: str, concept: str):
+    """
+    Selects the latest annual SEC Company Facts value for a concept.
+
+    Important filters:
+    - form must be 10-K or 10-K/A
+    - fiscal period must be FY
+    - fiscal year must exist
+    - value must exist
+
+    Then sorts by latest filed date and fiscal year.
+    """
     try:
         units = facts["facts"][taxonomy][concept]["units"]
 
@@ -35,14 +46,21 @@ def get_latest_fact(facts: dict, taxonomy: str, concept: str):
             item
             for item in values
             if item.get("form") in ["10-K", "10-K/A"]
+            and item.get("fp") == "FY"
             and item.get("fy") is not None
+            and item.get("val") is not None
+            and item.get("filed") is not None
         ]
 
         if not annual_values:
             return None
 
         annual_values.sort(
-            key=lambda item: (item.get("fy", 0), item.get("filed", "")),
+            key=lambda item: (
+                item.get("filed", ""),
+                item.get("fy", 0),
+                item.get("end", ""),
+            ),
             reverse=True,
         )
 
@@ -50,6 +68,19 @@ def get_latest_fact(facts: dict, taxonomy: str, concept: str):
 
     except KeyError:
         return None
+
+
+def get_first_available_fact(facts: dict, concept_candidates: list[str]):
+    """
+    Tries multiple us-gaap concepts and returns the latest valid annual fact.
+    This is useful because companies may report the same metric under different concepts.
+    """
+    for concept in concept_candidates:
+        fact = get_latest_annual_fact(facts, "us-gaap", concept)
+        if fact is not None:
+            return fact
+
+    return None
 
 
 def get_sec_company_facts(ticker: str, db: Session | None = None):
@@ -75,20 +106,52 @@ def get_sec_company_facts(ticker: str, db: Session | None = None):
 
         facts = response.json()
 
-        revenue_fact = (
-            get_latest_fact(facts, "us-gaap", "Revenues")
-            or get_latest_fact(
-                facts,
-                "us-gaap",
+        revenue_fact = get_first_available_fact(
+            facts,
+            [
                 "RevenueFromContractWithCustomerExcludingAssessedTax",
-            )
+                "Revenues",
+                "SalesRevenueNet",
+            ],
         )
-        net_income_fact = get_latest_fact(facts, "us-gaap", "NetIncomeLoss")
-        assets_fact = get_latest_fact(facts, "us-gaap", "Assets")
-        liabilities_fact = get_latest_fact(facts, "us-gaap", "Liabilities")
-        equity_fact = get_latest_fact(facts, "us-gaap", "StockholdersEquity")
 
-        reference_fact = revenue_fact or net_income_fact or assets_fact
+        net_income_fact = get_first_available_fact(
+            facts,
+            [
+                "NetIncomeLoss",
+                "ProfitLoss",
+            ],
+        )
+
+        assets_fact = get_first_available_fact(
+            facts,
+            [
+                "Assets",
+            ],
+        )
+
+        liabilities_fact = get_first_available_fact(
+            facts,
+            [
+                "Liabilities",
+            ],
+        )
+
+        equity_fact = get_first_available_fact(
+            facts,
+            [
+                "StockholdersEquity",
+                "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+            ],
+        )
+
+        reference_fact = (
+            revenue_fact
+            or net_income_fact
+            or assets_fact
+            or liabilities_fact
+            or equity_fact
+        )
 
         sec_data = {
             "ticker": ticker_upper,

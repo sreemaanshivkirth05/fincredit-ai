@@ -18,8 +18,8 @@ class AskEvidenceResponse(BaseModel):
 
 
 class AskAuditResponse(BaseModel):
-    primaryModel: str
-    localModel: str
+    workflow: str
+    agentsUsed: list[str]
     groundingScore: int
     unsupportedClaims: int
     status: str
