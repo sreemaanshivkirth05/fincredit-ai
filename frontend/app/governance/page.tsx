@@ -1,31 +1,19 @@
 "use client";
 
-import type React from "react";
 import { useEffect, useState } from "react";
 
 import {
   Activity,
-  AlertTriangle,
   Bot,
+  BrainCircuit,
   CheckCircle2,
+  Clock,
   Database,
-  DollarSign,
-  FileCheck2,
-  Gauge,
-  Layers3,
-  ServerCog,
+  FileSearch,
   ShieldCheck,
+  Sparkles,
+  Workflow,
 } from "lucide-react";
-
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 
 import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
@@ -39,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getGovernanceData } from "@/lib/api";
+import { getAgentRuns, getGovernanceData } from "@/lib/api";
 
 type ModelUsage = {
   model: string;
@@ -77,7 +65,7 @@ type AuditLog = {
   severity: string;
 };
 
-type GovernanceApiData = {
+type GovernanceData = {
   totalModelCalls: number;
   estimatedCost: number;
   avgGrounding: number;
@@ -90,133 +78,136 @@ type GovernanceApiData = {
   message: string;
 };
 
-const fallbackModelUsage: ModelUsage[] = [
-  {
-    model: "ChatGPT API",
-    task: "Final reasoning, report writing, investment thesis synthesis",
-    calls: 42,
-    cost: 3.84,
-    status: "Active",
-  },
-  {
-    model: "Ollama Qwen Local",
-    task: "Sentiment classification, red flag tagging, filing extraction",
-    calls: 128,
-    cost: 0,
-    status: "Active",
-  },
-];
+type RiskDriver = {
+  ticker: string;
+  driver: string;
+  impact: string;
+};
 
-const fallbackQualityMetrics: QualityMetric[] = [
-  { metric: "Citation Coverage", value: 91 },
-  { metric: "Grounding Score", value: 92 },
-  { metric: "Model Agreement", value: 84 },
-  { metric: "Unsupported Claim Rate", value: 6 },
-];
+type EvidenceItem = {
+  source: string;
+  claim: string;
+  confidence: number;
+};
 
-const fallbackAgentRuns: AgentRun[] = [
-  {
-    agent: "Credit Risk Agent",
-    company: "TSLA",
-    status: "Completed",
-    model: "ChatGPT API",
-    duration: "18.4s",
-    grounding: 87,
-  },
-  {
-    agent: "Filing Analysis Agent",
-    company: "MSFT",
-    status: "Completed",
-    model: "Ollama + ChatGPT API",
-    duration: "22.1s",
-    grounding: 94,
-  },
-  {
-    agent: "News Sentiment Agent",
-    company: "NVDA",
-    status: "Completed",
-    model: "Ollama Qwen Local",
-    duration: "8.7s",
-    grounding: 89,
-  },
-  {
-    agent: "Report Writer Agent",
-    company: "JPM",
-    status: "In Review",
-    model: "ChatGPT API",
-    duration: "31.5s",
-    grounding: 96,
-  },
-];
+type StoredAgentRun = {
+  id: number;
+  question: string;
+  ticker: string | null;
+  answer: string;
+  workflow: string;
+  agentsUsed: string[];
+  groundingScore: number;
+  unsupportedClaims: number;
+  status: string;
+  riskDrivers: RiskDriver[];
+  evidence: EvidenceItem[];
+  suggestedActions: string[];
+  createdAt: string;
+};
 
-const fallbackDataSources: DataSource[] = [
-  {
-    source: "SEC EDGAR",
-    status: "Healthy",
-    lastSync: "2 minutes ago",
-    latency: "420ms",
-  },
-  {
-    source: "SEC Company Facts",
-    status: "Healthy",
-    lastSync: "5 minutes ago",
-    latency: "510ms",
-  },
-  {
-    source: "Yahoo Finance",
-    status: "Healthy",
-    lastSync: "1 minute ago",
-    latency: "380ms",
-  },
-  {
-    source: "GDELT News",
-    status: "Delayed",
-    lastSync: "18 minutes ago",
-    latency: "1.8s",
-  },
-];
+type AgentRunsResponse = {
+  totalRuns: number;
+  runs: StoredAgentRun[];
+  message: string;
+};
 
-const fallbackAuditLogs: AuditLog[] = [
-  {
-    time: "10:42 AM",
-    event: "Report generated",
-    detail: "TSLA red flag review generated with 87% grounding score.",
-    severity: "Info",
-  },
-  {
-    time: "10:39 AM",
-    event: "Unsupported claim detected",
-    detail: "Two statements required analyst review before approval.",
-    severity: "Warning",
-  },
-  {
-    time: "10:31 AM",
-    event: "Local model routed",
-    detail: "Ollama handled 18 sentiment classification tasks.",
-    severity: "Info",
-  },
-  {
-    time: "10:24 AM",
-    event: "Data source delay",
-    detail: "GDELT news refresh exceeded latency threshold.",
-    severity: "Warning",
-  },
-];
+const fallbackGovernance: GovernanceData = {
+  totalModelCalls: 170,
+  estimatedCost: 3.84,
+  avgGrounding: 92,
+  auditEvents: 4,
+  modelUsage: [
+    {
+      model: "ChatGPT API",
+      task: "Final reasoning, report writing, investment thesis synthesis",
+      calls: 42,
+      cost: 3.84,
+      status: "Active",
+    },
+    {
+      model: "Ollama Qwen Local",
+      task: "Sentiment classification, red flag tagging, filing extraction",
+      calls: 128,
+      cost: 0,
+      status: "Active",
+    },
+  ],
+  qualityMetrics: [
+    { metric: "Citation Coverage", value: 91 },
+    { metric: "Grounding Score", value: 92 },
+    { metric: "Model Agreement", value: 84 },
+    { metric: "Unsupported Claim Rate", value: 6 },
+  ],
+  agentRuns: [
+    {
+      agent: "Credit Risk Agent",
+      company: "TSLA",
+      status: "Completed",
+      model: "ChatGPT API",
+      duration: "18.4s",
+      grounding: 87,
+    },
+    {
+      agent: "Filing Analysis Agent",
+      company: "MSFT",
+      status: "Completed",
+      model: "Ollama + ChatGPT API",
+      duration: "22.1s",
+      grounding: 94,
+    },
+  ],
+  dataSources: [
+    {
+      source: "SEC EDGAR",
+      status: "Healthy",
+      lastSync: "2 minutes ago",
+      latency: "420ms",
+    },
+    {
+      source: "Yahoo Finance",
+      status: "Healthy",
+      lastSync: "1 minute ago",
+      latency: "380ms",
+    },
+  ],
+  auditLogs: [
+    {
+      time: "10:12 AM",
+      event: "Fallback audit event",
+      detail: "Governance fallback data loaded.",
+      severity: "Low",
+    },
+  ],
+  message: "Fallback governance data loaded",
+};
 
 export default function GovernancePage() {
   const [governanceData, setGovernanceData] =
-    useState<GovernanceApiData | null>(null);
+    useState<GovernanceData | null>(null);
+  const [agentRunsData, setAgentRunsData] =
+    useState<AgentRunsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState("");
 
   useEffect(() => {
     async function loadGovernanceData() {
       try {
-        const data = await getGovernanceData();
-        setGovernanceData(data);
+        setLoading(true);
+        setApiError("");
+
+        const [governanceResponse, agentRunsResponse] = await Promise.all([
+          getGovernanceData(),
+          getAgentRuns(),
+        ]);
+
+        setGovernanceData(governanceResponse);
+        setAgentRunsData(agentRunsResponse);
       } catch (error) {
         console.error(error);
-        setApiError("Backend governance API is not connected.");
+        setApiError(
+          "Governance or agent runs API is not connected. Showing fallback data."
+        );
       } finally {
         setLoading(false);
       }
@@ -225,165 +216,105 @@ export default function GovernancePage() {
     loadGovernanceData();
   }, []);
 
-  const modelUsage = governanceData?.modelUsage ?? fallbackModelUsage;
-  const qualityMetrics =
-    governanceData?.qualityMetrics ?? fallbackQualityMetrics;
-  const agentRuns = governanceData?.agentRuns ?? fallbackAgentRuns;
-  const dataSources = governanceData?.dataSources ?? fallbackDataSources;
-  const auditLogs = governanceData?.auditLogs ?? fallbackAuditLogs;
+  const governance = governanceData ?? fallbackGovernance;
+  const storedAgentRuns = agentRunsData?.runs ?? [];
 
-  const totalModelCalls = governanceData?.totalModelCalls ?? 170;
-  const estimatedCost = governanceData?.estimatedCost ?? 3.84;
-  const avgGrounding = governanceData?.avgGrounding ?? 92;
-  const auditEvents = governanceData?.auditEvents ?? 24;
+  const totalStoredRuns = agentRunsData?.totalRuns ?? storedAgentRuns.length;
+
+  const avgStoredGrounding =
+    storedAgentRuns.length > 0
+      ? Math.round(
+          storedAgentRuns.reduce(
+            (sum, run) => sum + run.groundingScore,
+            0
+          ) / storedAgentRuns.length
+        )
+      : governance.avgGrounding;
+
+  const totalUnsupportedClaims =
+    storedAgentRuns.reduce(
+      (sum, run) => sum + run.unsupportedClaims,
+      0
+    ) ?? 0;
 
   return (
     <AppShell>
       <div className="space-y-6">
-        <div>
-          <Badge className="mb-3 bg-blue-500/15 text-blue-200">
-            AI Governance
+        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+          <div>
+            <Badge className="mb-3 bg-violet-500/15 text-violet-200">
+              AI Governance
+            </Badge>
+
+            <h1 className="text-3xl font-semibold tracking-tight">
+              Governance & Agent Audit
+            </h1>
+
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
+              Monitor model usage, data sources, grounding quality, audit logs,
+              and saved LangGraph/LLM agent runs from PostgreSQL.
+            </p>
+
+            {loading && (
+              <p className="mt-2 text-xs text-blue-300">
+                Loading governance metrics and stored agent runs...
+              </p>
+            )}
+
+            {!loading && governanceData && (
+              <p className="mt-2 text-xs text-emerald-300">
+                Governance connected: {governanceData.message}
+              </p>
+            )}
+
+            {!loading && agentRunsData && (
+              <p className="mt-1 text-xs text-violet-300">
+                Agent runs connected: {agentRunsData.message}
+              </p>
+            )}
+
+            {apiError && (
+              <p className="mt-2 text-xs text-red-300">{apiError}</p>
+            )}
+          </div>
+
+          <Badge className="w-fit bg-white/10 text-slate-300">
+            Audit-Ready AI
           </Badge>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Governance Dashboard
-          </h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-            Monitor model routing, cost usage, agent runs, source health,
-            grounding quality, and audit events across the FinCredit AI
-            platform.
-          </p>
-
-          {loading && (
-            <p className="mt-2 text-xs text-blue-300">
-              Loading backend governance data...
-            </p>
-          )}
-
-          {!loading && governanceData && (
-            <p className="mt-2 text-xs text-emerald-300">
-              Backend connected: {governanceData.message}
-            </p>
-          )}
-
-          {apiError && <p className="mt-2 text-xs text-red-300">{apiError}</p>}
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
           <MetricCard
-            title="Model Calls"
-            value={String(totalModelCalls)}
-            change="Today"
-            icon={<Bot className="h-5 w-5 text-blue-300" />}
-          />
-          <MetricCard
-            title="Estimated Cost"
-            value={`$${estimatedCost.toFixed(2)}`}
-            change="Local-first"
-            icon={<DollarSign className="h-5 w-5 text-emerald-300" />}
+            title="Stored Agent Runs"
+            value={String(totalStoredRuns)}
+            change="PostgreSQL"
+            icon={<Workflow className="h-5 w-5 text-violet-300" />}
           />
           <MetricCard
             title="Avg Grounding"
-            value={`${avgGrounding}%`}
-            change="Evidence-backed"
-            icon={<ShieldCheck className="h-5 w-5 text-violet-300" />}
+            value={`${avgStoredGrounding}%`}
+            change="Evidence quality"
+            icon={<ShieldCheck className="h-5 w-5 text-emerald-300" />}
           />
           <MetricCard
-            title="Audit Events"
-            value={String(auditEvents)}
-            change="Tracked"
-            icon={<FileCheck2 className="h-5 w-5 text-amber-300" />}
+            title="Unsupported Claims"
+            value={String(totalUnsupportedClaims)}
+            change="LLM audit"
+            icon={<FileSearch className="h-5 w-5 text-amber-300" />}
           />
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
-          <Card className="border-white/10 bg-white/[0.04] text-white">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Layers3 className="h-5 w-5 text-blue-300" />
-                Dual-LLM Routing
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {modelUsage.map((model) => (
-                <div
-                  key={model.model}
-                  className="rounded-2xl border border-white/10 bg-black/20 p-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="font-medium">{model.model}</p>
-                    <StatusBadge status={model.status} />
-                  </div>
-
-                  <p className="mt-2 text-sm leading-6 text-slate-400">
-                    {model.task}
-                  </p>
-
-                  <div className="mt-4 grid grid-cols-2 gap-3">
-                    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                      <p className="text-xs text-slate-500">Calls</p>
-                      <p className="mt-1 font-semibold">{model.calls}</p>
-                    </div>
-                    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                      <p className="text-xs text-slate-500">Cost</p>
-                      <p className="mt-1 font-semibold">
-                        ${model.cost.toFixed(2)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card className="border-white/10 bg-white/[0.04] text-white">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Gauge className="h-5 w-5 text-emerald-300" />
-                Quality Metrics
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[310px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={qualityMetrics}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                    <XAxis dataKey="metric" stroke="#94a3b8" />
-                    <YAxis stroke="#94a3b8" />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#0f172a",
-                        border: "1px solid rgba(255,255,255,0.1)",
-                        borderRadius: "12px",
-                        color: "white",
-                      }}
-                    />
-                    <Bar
-                      dataKey="value"
-                      fill="#34d399"
-                      radius={[8, 8, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                {qualityMetrics.map((metric) => (
-                  <QualityMetric
-                    key={metric.metric}
-                    label={metric.metric}
-                    value={metric.value}
-                  />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <MetricCard
+            title="Estimated Cost"
+            value={`$${governance.estimatedCost.toFixed(2)}`}
+            change="Tracked"
+            icon={<Activity className="h-5 w-5 text-blue-300" />}
+          />
         </div>
 
         <Card className="border-white/10 bg-white/[0.04] text-white">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-blue-300" />
-              Agent Run Monitor
+              <Bot className="h-5 w-5 text-violet-300" />
+              Stored LangGraph / LLM Agent Runs
             </CardTitle>
           </CardHeader>
 
@@ -391,48 +322,61 @@ export default function GovernancePage() {
             <Table>
               <TableHeader>
                 <TableRow className="border-white/10">
-                  <TableHead className="text-slate-400">Agent</TableHead>
-                  <TableHead className="text-slate-400">Company</TableHead>
-                  <TableHead className="text-slate-400">Status</TableHead>
-                  <TableHead className="text-slate-400">Model</TableHead>
-                  <TableHead className="text-slate-400">Duration</TableHead>
+                  <TableHead className="text-slate-400">Time</TableHead>
+                  <TableHead className="text-slate-400">Ticker</TableHead>
+                  <TableHead className="text-slate-400">Question</TableHead>
                   <TableHead className="text-slate-400">Grounding</TableHead>
+                  <TableHead className="text-slate-400">Unsupported</TableHead>
+                  <TableHead className="text-slate-400">Status</TableHead>
                 </TableRow>
               </TableHeader>
 
               <TableBody>
-                {agentRuns.map((run) => (
-                  <TableRow
-                    key={`${run.agent}-${run.company}`}
-                    className="border-white/10"
-                  >
-                    <TableCell className="font-medium text-white">
-                      {run.agent}
-                    </TableCell>
+                {storedAgentRuns.slice(0, 10).map((run) => (
+                  <TableRow key={run.id} className="border-white/10">
                     <TableCell className="text-slate-300">
-                      {run.company}
+                      {new Date(run.createdAt).toLocaleString()}
                     </TableCell>
+
                     <TableCell>
-                      <StatusBadge status={run.status} />
+                      <Badge className="bg-blue-500/15 text-blue-200">
+                        {run.ticker ?? "Portfolio"}
+                      </Badge>
                     </TableCell>
-                    <TableCell className="text-slate-300">
-                      {run.model}
+
+                    <TableCell className="max-w-[360px] text-slate-300">
+                      {run.question}
                     </TableCell>
-                    <TableCell className="text-slate-300">
-                      {run.duration}
-                    </TableCell>
+
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <Progress value={run.grounding} className="w-24" />
+                        <Progress value={run.groundingScore} className="w-20" />
                         <span className="text-sm text-slate-300">
-                          {run.grounding}%
+                          {run.groundingScore}%
                         </span>
                       </div>
+                    </TableCell>
+
+                    <TableCell className="text-slate-300">
+                      {run.unsupportedClaims}
+                    </TableCell>
+
+                    <TableCell>
+                      <Badge className="bg-emerald-500/15 text-emerald-200">
+                        LLM Generated
+                      </Badge>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+
+            {storedAgentRuns.length === 0 && (
+              <p className="mt-4 text-sm text-slate-400">
+                No stored agent runs yet. Ask a question on the Ask FinCredit
+                page to create an audit record.
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -440,35 +384,33 @@ export default function GovernancePage() {
           <Card className="border-white/10 bg-white/[0.04] text-white">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Database className="h-5 w-5 text-violet-300" />
-                Data Source Health
+                <BrainCircuit className="h-5 w-5 text-violet-300" />
+                Model Usage
               </CardTitle>
             </CardHeader>
 
             <CardContent className="space-y-3">
-              {dataSources.map((source) => (
+              {governance.modelUsage.map((item) => (
                 <div
-                  key={source.source}
+                  key={item.model}
                   className="rounded-2xl border border-white/10 bg-black/20 p-4"
                 >
-                  <div className="flex items-center justify-between">
-                    <p className="font-medium">{source.source}</p>
-                    <SourceStatusBadge status={source.status} />
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="font-medium text-white">{item.model}</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-400">
+                        {item.task}
+                      </p>
+                    </div>
+
+                    <Badge className="bg-emerald-500/15 text-emerald-200">
+                      {item.status}
+                    </Badge>
                   </div>
 
-                  <div className="mt-3 grid grid-cols-2 gap-3">
-                    <div>
-                      <p className="text-xs text-slate-500">Last sync</p>
-                      <p className="mt-1 text-sm text-slate-300">
-                        {source.lastSync}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-500">Latency</p>
-                      <p className="mt-1 text-sm text-slate-300">
-                        {source.latency}
-                      </p>
-                    </div>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <MiniMetric label="Calls" value={String(item.calls)} />
+                    <MiniMetric label="Cost" value={`$${item.cost.toFixed(2)}`} />
                   </div>
                 </div>
               ))}
@@ -478,35 +420,118 @@ export default function GovernancePage() {
           <Card className="border-white/10 bg-white/[0.04] text-white">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <ServerCog className="h-5 w-5 text-amber-300" />
-                Audit Trail
+                <ShieldCheck className="h-5 w-5 text-emerald-300" />
+                Quality Metrics
               </CardTitle>
             </CardHeader>
 
-            <CardContent className="space-y-3">
-              {auditLogs.map((log) => (
+            <CardContent className="space-y-4">
+              {governance.qualityMetrics.map((metric) => (
                 <div
-                  key={`${log.time}-${log.event}`}
+                  key={metric.metric}
                   className="rounded-2xl border border-white/10 bg-black/20 p-4"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-medium">{log.event}</p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {log.time}
-                      </p>
-                    </div>
-                    <SeverityBadge severity={log.severity} />
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-slate-300">{metric.metric}</p>
+                    <p className="font-medium text-white">{metric.value}%</p>
                   </div>
-
-                  <p className="mt-3 text-sm leading-6 text-slate-400">
-                    {log.detail}
-                  </p>
+                  <Progress value={metric.value} className="mt-3" />
                 </div>
               ))}
             </CardContent>
           </Card>
         </div>
+
+        <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
+          <Card className="border-white/10 bg-white/[0.04] text-white">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="h-5 w-5 text-blue-300" />
+                Data Sources
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent className="space-y-3">
+              {governance.dataSources.map((source) => (
+                <div
+                  key={source.source}
+                  className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium text-white">{source.source}</p>
+                    <StatusBadge status={source.status} />
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <MiniMetric label="Last Sync" value={source.lastSync} />
+                    <MiniMetric label="Latency" value={source.latency} />
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="border-white/10 bg-white/[0.04] text-white">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-amber-300" />
+                Audit Logs
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent className="space-y-3">
+              {governance.auditLogs.map((log) => (
+                <div
+                  key={`${log.time}-${log.event}`}
+                  className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium text-white">{log.event}</p>
+                    <RiskBadge risk={log.severity} />
+                  </div>
+
+                  <p className="mt-2 text-sm leading-6 text-slate-400">
+                    {log.detail}
+                  </p>
+
+                  <p className="mt-3 text-xs text-slate-500">{log.time}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="border-white/10 bg-white/[0.04] text-white">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-violet-300" />
+              Agents Used in Latest Runs
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {(storedAgentRuns[0]?.agentsUsed ??
+                [
+                  "Portfolio Agent",
+                  "Market Data Agent",
+                  "SEC Fundamentals Agent",
+                  "Risk Analysis Agent",
+                  "Evidence Agent",
+                  "LLM Answer Agent",
+                ]
+              ).map((agent) => (
+                <div
+                  key={agent}
+                  className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 p-4"
+                >
+                  <CheckCircle2 className="h-5 w-5 text-emerald-300" />
+                  <p className="text-sm font-medium text-white">{agent}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </AppShell>
   );
@@ -537,52 +562,33 @@ function MetricCard({
   );
 }
 
-function QualityMetric({ label, value }: { label: string; value: number }) {
-  const shownValue = label === "Unsupported Claim Rate" ? 100 - value : value;
-
+function MiniMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-      <div className="mb-2 flex items-center justify-between">
-        <p className="text-sm text-slate-300">{label}</p>
-        <p className="text-sm text-slate-400">{value}%</p>
-      </div>
-      <Progress value={shownValue} />
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+      <p className="text-xs text-slate-500">{label}</p>
+      <p className="mt-1 text-sm font-medium text-white">{value}</p>
     </div>
   );
 }
 
 function StatusBadge({ status }: { status: string }) {
   const styles =
-    status === "Active" || status === "Completed"
+    status === "Healthy" || status === "Active"
       ? "bg-emerald-500/15 text-emerald-200"
-      : status === "In Review"
+      : status === "Delayed" || status === "In Review"
         ? "bg-amber-500/15 text-amber-200"
-        : "bg-slate-500/15 text-slate-200";
+        : "bg-red-500/15 text-red-200";
 
   return <Badge className={styles}>{status}</Badge>;
 }
 
-function SourceStatusBadge({ status }: { status: string }) {
+function RiskBadge({ risk }: { risk: string }) {
   const styles =
-    status === "Healthy"
-      ? "bg-emerald-500/15 text-emerald-200"
-      : "bg-amber-500/15 text-amber-200";
+    risk === "High"
+      ? "bg-red-500/15 text-red-200"
+      : risk === "Medium"
+        ? "bg-amber-500/15 text-amber-200"
+        : "bg-emerald-500/15 text-emerald-200";
 
-  const Icon = status === "Healthy" ? CheckCircle2 : AlertTriangle;
-
-  return (
-    <Badge className={styles}>
-      <Icon className="mr-1 h-3.5 w-3.5" />
-      {status}
-    </Badge>
-  );
-}
-
-function SeverityBadge({ severity }: { severity: string }) {
-  const styles =
-    severity === "Warning"
-      ? "bg-amber-500/15 text-amber-200"
-      : "bg-blue-500/15 text-blue-200";
-
-  return <Badge className={styles}>{severity}</Badge>;
+  return <Badge className={styles}>{risk}</Badge>;
 }

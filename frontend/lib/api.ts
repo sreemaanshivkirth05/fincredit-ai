@@ -138,3 +138,15 @@ export async function getSecFundamentalsHistory(ticker: string) {
 
   return response.json();
 }
+
+export async function getAgentRuns() {
+  const response = await fetch(`${API_BASE_URL}/api/ask/runs`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch agent runs");
+  }
+
+  return response.json();
+}

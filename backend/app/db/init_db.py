@@ -1,4 +1,5 @@
 from app.db.database import Base, engine
+from app.models.agent_run import AgentRun
 from app.models.audit_log import AuditLog
 from app.models.company_profile import CompanyProfile
 from app.models.holding import Holding

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -32,4 +34,26 @@ class AskResponse(BaseModel):
     evidence: list[AskEvidenceResponse]
     suggestedActions: list[str]
     audit: AskAuditResponse
+    message: str
+
+
+class AgentRunItemResponse(BaseModel):
+    id: int
+    question: str
+    ticker: str | None
+    answer: str
+    workflow: str
+    agentsUsed: list[str]
+    groundingScore: int
+    unsupportedClaims: int
+    status: str
+    riskDrivers: list[RiskDriverResponse]
+    evidence: list[AskEvidenceResponse]
+    suggestedActions: list[str]
+    createdAt: datetime
+
+
+class AgentRunsResponse(BaseModel):
+    totalRuns: int
+    runs: list[AgentRunItemResponse]
     message: str

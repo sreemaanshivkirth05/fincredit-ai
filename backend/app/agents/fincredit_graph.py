@@ -8,6 +8,7 @@ from app.models.market_snapshot import MarketSnapshot
 from app.models.sec_fundamental import SecFundamental
 from app.services.llm_service import generate_llm_answer
 
+
 class FinCreditState(TypedDict):
     question: str
     ticker: str | None
@@ -31,6 +32,27 @@ def extract_ticker_from_question(question: str) -> str | None:
             return ticker
 
     return None
+
+
+def format_money(value):
+    if value is None:
+        return "not available"
+
+    try:
+        numeric_value = float(value)
+    except (TypeError, ValueError):
+        return "not available"
+
+    if numeric_value >= 1_000_000_000_000:
+        return f"${numeric_value / 1_000_000_000_000:.2f}T"
+
+    if numeric_value >= 1_000_000_000:
+        return f"${numeric_value / 1_000_000_000:.2f}B"
+
+    if numeric_value >= 1_000_000:
+        return f"${numeric_value / 1_000_000:.2f}M"
+
+    return f"${numeric_value:,.0f}"
 
 
 def create_portfolio_agent(db: Session):
@@ -158,7 +180,10 @@ def risk_analysis_agent(state: FinCreditState) -> FinCreditState:
             risk_drivers.append(
                 {
                     "ticker": ticker,
-                    "driver": f"Portfolio weight is {matching_holding['weight']}% with a {matching_holding['risk']} internal risk label.",
+                    "driver": (
+                        f"Portfolio weight is {matching_holding['weight']}% "
+                        f"with a {matching_holding['risk']} internal risk label."
+                    ),
                     "impact": matching_holding["risk"],
                 }
             )
@@ -210,7 +235,10 @@ def risk_analysis_agent(state: FinCreditState) -> FinCreditState:
                 risk_drivers.append(
                     {
                         "ticker": ticker,
-                        "driver": f"Liabilities represent approximately {liability_ratio:.1%} of assets based on latest SEC fundamentals.",
+                        "driver": (
+                            f"Liabilities represent approximately {liability_ratio:.1%} "
+                            "of assets based on latest SEC fundamentals."
+                        ),
                         "impact": impact,
                     }
                 )
@@ -228,7 +256,10 @@ def risk_analysis_agent(state: FinCreditState) -> FinCreditState:
         risk_drivers.append(
             {
                 "ticker": ticker or "Portfolio",
-                "driver": "No ticker-specific risk driver was found. The answer is based on available portfolio and stored financial data.",
+                "driver": (
+                    "No ticker-specific risk driver was found. The answer is based "
+                    "on available portfolio and stored financial data."
+                ),
                 "impact": "Low",
             }
         )
@@ -239,32 +270,106 @@ def risk_analysis_agent(state: FinCreditState) -> FinCreditState:
 
 def evidence_agent(state: FinCreditState) -> FinCreditState:
     ticker = state.get("ticker")
+    portfolio_context = state.get("portfolio_context", [])
+    market_context = state.get("market_context")
+    sec_context = state.get("sec_context")
+
     evidence = []
 
-    if state.get("portfolio_context"):
+    if portfolio_context:
+        if ticker:
+            matching_holding = next(
+                (holding for holding in portfolio_context if holding["ticker"] == ticker),
+                None,
+            )
+
+            if matching_holding:
+                evidence.append(
+                    {
+                        "source": "PostgreSQL Portfolio Holdings",
+                        "claim": (
+                            f"Portfolio record used for {ticker}: "
+                            f"{matching_holding['company']} has a portfolio weight of "
+                            f"{matching_holding['weight']}%, value of "
+                            f"{format_money(matching_holding['value'])}, internal risk label of "
+                            f"{matching_holding['risk']}, risk score of "
+                            f"{matching_holding['score']}, and sentiment of "
+                            f"{matching_holding['sentiment']}."
+                        ),
+                        "confidence": 94,
+                    }
+                )
+            else:
+                evidence.append(
+                    {
+                        "source": "PostgreSQL Portfolio Holdings",
+                        "claim": (
+                            "Portfolio holdings were loaded, but no matching holding was found "
+                            f"for {ticker}."
+                        ),
+                        "confidence": 82,
+                    }
+                )
+        else:
+            evidence.append(
+                {
+                    "source": "PostgreSQL Portfolio Holdings",
+                    "claim": (
+                        f"{len(portfolio_context)} portfolio holdings were loaded from PostgreSQL "
+                        "with weights, values, internal risk labels, and sentiment."
+                    ),
+                    "confidence": 92,
+                }
+            )
+
+    if market_context:
+        current_price = market_context.get("currentPrice")
+        previous_close = market_context.get("previousClose")
+        day_high = market_context.get("dayHigh")
+        day_low = market_context.get("dayLow")
+        volume = market_context.get("volume")
+        market_cap = market_context.get("marketCap")
+        exchange = market_context.get("exchange")
+        fetched_at = market_context.get("fetchedAt")
+
         evidence.append(
             {
-                "source": "PostgreSQL Portfolio Holdings",
-                "claim": "Portfolio holdings, weights, internal risk labels, and sentiment were loaded from the holdings table.",
+                "source": "PostgreSQL Market Snapshots",
+                "claim": (
+                    f"Latest stored market snapshot used for {ticker}: "
+                    f"current price "
+                    f"{f'${current_price:.2f}' if current_price is not None else 'not available'}, "
+                    f"previous close "
+                    f"{f'${previous_close:.2f}' if previous_close is not None else 'not available'}, "
+                    f"day high "
+                    f"{f'${day_high:.2f}' if day_high is not None else 'not available'}, "
+                    f"day low "
+                    f"{f'${day_low:.2f}' if day_low is not None else 'not available'}, "
+                    f"volume {f'{volume:,}' if volume is not None else 'not available'}, "
+                    f"market cap {format_money(market_cap)}, "
+                    f"exchange {exchange or 'not available'}, "
+                    f"fetched at {fetched_at or 'not available'}."
+                ),
                 "confidence": 92,
             }
         )
 
-    if state.get("market_context"):
-        evidence.append(
-            {
-                "source": "PostgreSQL Market Snapshots",
-                "claim": f"Latest stored market snapshot was used for {ticker}.",
-                "confidence": 90,
-            }
-        )
-
-    if state.get("sec_context"):
+    if sec_context:
         evidence.append(
             {
                 "source": "PostgreSQL SEC Fundamentals",
-                "claim": f"Latest stored SEC fundamentals were used for {ticker}.",
-                "confidence": 94,
+                "claim": (
+                    f"Latest stored SEC fundamentals used for {ticker}: "
+                    f"revenue {format_money(sec_context.get('revenue'))}, "
+                    f"net income {format_money(sec_context.get('netIncome'))}, "
+                    f"assets {format_money(sec_context.get('assets'))}, "
+                    f"liabilities {format_money(sec_context.get('liabilities'))}, "
+                    f"equity {format_money(sec_context.get('equity'))}, "
+                    f"fiscal year {sec_context.get('fiscalYear') or 'not available'}, "
+                    f"form {sec_context.get('form') or 'not available'}, "
+                    f"filed date {sec_context.get('filed') or 'not available'}."
+                ),
+                "confidence": 95,
             }
         )
 
@@ -336,8 +441,8 @@ def answer_agent(state: FinCreditState) -> FinCreditState:
 
             fallback_parts.append(
                 f"The latest SEC fundamentals for fiscal year {fiscal_year} show revenue of "
-                f"${revenue:,.0f}, net income of ${net_income:,.0f}, assets of ${assets:,.0f}, "
-                f"and liabilities of ${liabilities:,.0f}."
+                f"{format_money(revenue)}, net income of {format_money(net_income)}, "
+                f"assets of {format_money(assets)}, and liabilities of {format_money(liabilities)}."
             )
 
         if risk_drivers:
