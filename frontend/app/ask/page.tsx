@@ -2,6 +2,7 @@
 
 import type React from "react";
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 
 import {
   Bot,
@@ -95,7 +96,7 @@ export default function AskPage() {
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
             <Badge className="mb-3 bg-violet-500/15 text-violet-200">
-              LangGraph Agent Workflow
+              LangGraph + LangChain + Ollama
             </Badge>
 
             <h1 className="text-3xl font-semibold tracking-tight">
@@ -104,8 +105,8 @@ export default function AskPage() {
 
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
               Ask portfolio, market, SEC fundamentals, and credit-risk questions.
-              The response is generated through a LangGraph workflow using
-              stored PostgreSQL evidence.
+              The answer is generated through a LangGraph workflow and a local
+              Ollama LLM using stored PostgreSQL evidence.
             </p>
 
             {answer && (
@@ -162,7 +163,7 @@ export default function AskPage() {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Running LangGraph Workflow...
+                  Running LangGraph + LLM Workflow...
                 </>
               ) : (
                 <>
@@ -189,9 +190,39 @@ export default function AskPage() {
                 <p className="mt-1 font-medium text-white">{answer.question}</p>
 
                 <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-5">
-                  <p className="text-sm leading-7 text-slate-200">
-                    {answer.answer}
-                  </p>
+                  <div className="space-y-4 text-sm leading-7 text-slate-200">
+                    <ReactMarkdown
+                      components={{
+                        strong: ({ children }) => (
+                          <strong className="font-semibold text-white">
+                            {children}
+                          </strong>
+                        ),
+                        p: ({ children }) => (
+                          <p className="text-sm leading-7 text-slate-200">
+                            {children}
+                          </p>
+                        ),
+                        ol: ({ children }) => (
+                          <ol className="ml-5 list-decimal space-y-2 text-sm leading-7 text-slate-200">
+                            {children}
+                          </ol>
+                        ),
+                        ul: ({ children }) => (
+                          <ul className="ml-5 list-disc space-y-2 text-sm leading-7 text-slate-200">
+                            {children}
+                          </ul>
+                        ),
+                        li: ({ children }) => (
+                          <li className="text-sm leading-7 text-slate-200">
+                            {children}
+                          </li>
+                        ),
+                      }}
+                    >
+                      {answer.answer}
+                    </ReactMarkdown>
+                  </div>
                 </div>
               </CardContent>
             </Card>

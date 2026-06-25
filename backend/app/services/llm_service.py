@@ -39,11 +39,35 @@ Risk drivers:
 Evidence:
 {evidence}
 
-Write your answer with:
-1. Direct answer
-2. Main risk drivers
-3. Market and SEC evidence used
-4. Short analyst recommendation
+Write your answer in clean Markdown with clear spacing.
+
+Use this exact structure:
+
+**Direct Answer:**
+
+One short paragraph answering the question directly.
+
+**Main Risk Drivers:**
+
+1. First risk driver.
+2. Second risk driver.
+3. Third risk driver, if available.
+
+**Market and SEC Evidence Used:**
+
+1. Market evidence used.
+2. SEC fundamentals evidence used.
+3. Portfolio evidence used, if relevant.
+
+**Short Analyst Recommendation:**
+
+One short recommendation paragraph.
+
+Important formatting rules:
+- Add a blank line after every section heading.
+- Do not put the entire answer in one paragraph.
+- Do not invent values not present in the evidence.
+- Do not give investment advice. Frame recommendations as analyst review actions.
 """
 
 
