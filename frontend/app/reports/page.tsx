@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 import {
   BarChart3,
@@ -25,6 +26,7 @@ import {
 
 import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -246,6 +248,17 @@ export default function ReportsPage() {
                     </span>
                     .
                   </p>
+
+                  <div className="mt-4">
+                    <Link href={`/reports/${latestReport.id}`}>
+                      <Button
+                        type="button"
+                        className="bg-blue-500 text-white hover:bg-blue-600"
+                      >
+                        View Latest Report
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -285,6 +298,7 @@ export default function ReportsPage() {
                   <TableHead className="text-slate-400">Grounding</TableHead>
                   <TableHead className="text-slate-400">Unsupported</TableHead>
                   <TableHead className="text-slate-400">Created</TableHead>
+                  <TableHead className="text-slate-400">Action</TableHead>
                 </TableRow>
               </TableHeader>
 
@@ -329,6 +343,18 @@ export default function ReportsPage() {
                     <TableCell className="text-slate-300">
                       {report.created}
                     </TableCell>
+
+                    <TableCell>
+                      <Link href={`/reports/${report.id}`}>
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="bg-blue-500 text-white hover:bg-blue-600"
+                        >
+                          View Report
+                        </Button>
+                      </Link>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -353,7 +379,7 @@ export default function ReportsPage() {
             </CardHeader>
 
             <CardContent>
-              <div className="h-[320px]">
+              <div className="h-[320px] min-h-[320px] min-w-0 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={reports.reportQuality}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />

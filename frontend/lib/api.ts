@@ -48,6 +48,21 @@ export async function getReportsData() {
   return response.json();
 }
 
+export async function getReportDocument(reportId: string) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/reports/${reportId}/document`,
+    {
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch report document");
+  }
+
+  return response.json();
+}
+
 export async function getGovernanceData() {
   const response = await fetch(`${API_BASE_URL}/api/governance`, {
     cache: "no-store",
@@ -72,22 +87,6 @@ export async function getCompanyData(ticker: string) {
   return response.json();
 }
 
-export async function askFinCredit(question: string) {
-  const response = await fetch(`${API_BASE_URL}/api/ask`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    cache: "no-store",
-    body: JSON.stringify({ question }),
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to ask FinCredit");
-  }
-
-  return response.json();
-}
 export async function getMarketData(ticker: string) {
   const response = await fetch(`${API_BASE_URL}/api/market/${ticker}`, {
     cache: "no-store",
@@ -99,6 +98,7 @@ export async function getMarketData(ticker: string) {
 
   return response.json();
 }
+
 export async function getMarketHistory(ticker: string) {
   const response = await fetch(`${API_BASE_URL}/api/market/${ticker}/history`, {
     cache: "no-store",
@@ -110,6 +110,7 @@ export async function getMarketHistory(ticker: string) {
 
   return response.json();
 }
+
 export async function getSecCompanyFacts(ticker: string) {
   const response = await fetch(
     `${API_BASE_URL}/api/sec/company-facts/${ticker}`,
@@ -124,6 +125,7 @@ export async function getSecCompanyFacts(ticker: string) {
 
   return response.json();
 }
+
 export async function getSecFundamentalsHistory(ticker: string) {
   const response = await fetch(
     `${API_BASE_URL}/api/sec/company-facts/${ticker}/history`,
@@ -134,6 +136,23 @@ export async function getSecFundamentalsHistory(ticker: string) {
 
   if (!response.ok) {
     throw new Error("Failed to fetch SEC fundamentals history");
+  }
+
+  return response.json();
+}
+
+export async function askFinCredit(question: string) {
+  const response = await fetch(`${API_BASE_URL}/api/ask`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    cache: "no-store",
+    body: JSON.stringify({ question }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to ask FinCredit");
   }
 
   return response.json();
