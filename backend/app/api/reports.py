@@ -7,12 +7,15 @@ from app.schemas.reports import (
     GeneratedReportResponse,
     ReportDocumentResponse,
     ReportsResponse,
+    UpdateReportStatusRequest,
+    UpdateReportStatusResponse,
 )
 from app.services.reports_service import (
     generate_report_from_agent_run,
     get_report_document,
     get_reports_data,
     get_report_pdf,
+    update_report_status,
 )
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
@@ -48,3 +51,10 @@ def get_report_pdf_route(report_id: str, db: Session = Depends(get_db)):
             "Content-Disposition": f'attachment; filename="{filename}"'
         },
     )
+@router.patch("/{report_id}/status", response_model=UpdateReportStatusResponse)
+def update_report_status_route(
+    report_id: str,
+    request: UpdateReportStatusRequest,
+    db: Session = Depends(get_db),
+):
+    return update_report_status(report_id, request.status, db)

@@ -168,6 +168,7 @@ def get_report_document(report_id: str, db: Session):
         "message": f"Report document {report_id} loaded from PostgreSQL",
     }
 
+
 def get_report_pdf(report_id: str, db: Session):
     report_document = (
         db.query(ReportDocument)
@@ -180,3 +181,29 @@ def get_report_pdf(report_id: str, db: Session):
         raise HTTPException(status_code=404, detail="Report document not found")
 
     return build_report_pdf(report_document)
+
+
+def update_report_status(report_id: str, status: str, db: Session):
+    allowed_statuses = {"Approved", "Needs Review", "Rejected"}
+
+    if status not in allowed_statuses:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid status. Allowed statuses: Approved, Needs Review, Rejected",
+        )
+
+    report = db.query(Report).filter(Report.report_id == report_id).first()
+
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    report.status = status
+
+    db.commit()
+    db.refresh(report)
+
+    return {
+        "reportId": report.report_id,
+        "status": report.status,
+        "message": f"Report {report.report_id} status updated to {report.status}",
+    }

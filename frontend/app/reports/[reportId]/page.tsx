@@ -9,6 +9,7 @@ import {
   ArrowLeft,
   BadgeCheck,
   Calendar,
+  CheckCircle2,
   Download,
   FileSearch,
   FileText,
@@ -17,6 +18,7 @@ import {
   ShieldCheck,
   Sparkles,
   Target,
+  XCircle,
 } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
@@ -24,7 +26,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { getReportDocument, getReportPdfUrl } from "@/lib/api";
+import {
+  getReportDocument,
+  getReportPdfUrl,
+  updateReportStatus,
+} from "@/lib/api";
 
 type RiskDriver = {
   ticker: string;
@@ -51,6 +57,12 @@ type ReportDocument = {
   message: string;
 };
 
+type UpdateStatusResponse = {
+  reportId: string;
+  status: string;
+  message: string;
+};
+
 export default function ReportDocumentPage() {
   const params = useParams();
   const reportId = params.reportId as string;
@@ -59,6 +71,9 @@ export default function ReportDocumentPage() {
     useState<ReportDocument | null>(null);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState("");
+  const [currentStatus, setCurrentStatus] = useState("Needs Review");
+  const [statusMessage, setStatusMessage] = useState("");
+  const [updatingStatus, setUpdatingStatus] = useState("");
 
   useEffect(() => {
     async function loadReportDocument() {
@@ -82,6 +97,27 @@ export default function ReportDocumentPage() {
 
     loadReportDocument();
   }, [reportId]);
+
+  async function handleStatusUpdate(status: string) {
+    try {
+      setUpdatingStatus(status);
+      setStatusMessage("");
+      setApiError("");
+
+      const response: UpdateStatusResponse = await updateReportStatus(
+        reportId,
+        status
+      );
+
+      setCurrentStatus(response.status);
+      setStatusMessage(response.message);
+    } catch (error) {
+      console.error(error);
+      setApiError("Failed to update report status.");
+    } finally {
+      setUpdatingStatus("");
+    }
+  }
 
   const averageEvidenceConfidence =
     reportDocument && reportDocument.evidence.length > 0
@@ -119,7 +155,7 @@ export default function ReportDocumentPage() {
 
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
               Full AI analyst report document generated from a saved
-              LangGraph/LLM agent run.
+              LangGraph/LLM agent run, with approval workflow and PDF export.
             </p>
 
             {loading && (
@@ -135,12 +171,70 @@ export default function ReportDocumentPage() {
               </p>
             )}
 
+            {statusMessage && (
+              <p className="mt-1 text-xs text-emerald-300">{statusMessage}</p>
+            )}
+
             {apiError && (
               <p className="mt-2 text-xs text-red-300">{apiError}</p>
             )}
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            <Button
+              type="button"
+              className="bg-emerald-500 text-white hover:bg-emerald-600"
+              disabled={updatingStatus === "Approved"}
+              onClick={() => handleStatusUpdate("Approved")}
+            >
+              {updatingStatus === "Approved" ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Approving
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Approve Report
+                </>
+              )}
+            </Button>
+
+            <Button
+              type="button"
+              className="bg-amber-500 text-white hover:bg-amber-600"
+              disabled={updatingStatus === "Needs Review"}
+              onClick={() => handleStatusUpdate("Needs Review")}
+            >
+              {updatingStatus === "Needs Review" ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating
+                </>
+              ) : (
+                "Needs Review"
+              )}
+            </Button>
+
+            <Button
+              type="button"
+              className="bg-red-500 text-white hover:bg-red-600"
+              disabled={updatingStatus === "Rejected"}
+              onClick={() => handleStatusUpdate("Rejected")}
+            >
+              {updatingStatus === "Rejected" ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Rejecting
+                </>
+              ) : (
+                <>
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Reject Report
+                </>
+              )}
+            </Button>
+
             <a
               href={getReportPdfUrl(reportId)}
               target="_blank"
@@ -148,16 +242,14 @@ export default function ReportDocumentPage() {
             >
               <Button
                 type="button"
-                className="bg-emerald-500 text-white hover:bg-emerald-600"
+                className="bg-blue-500 text-white hover:bg-blue-600"
               >
                 <Download className="mr-2 h-4 w-4" />
                 Export PDF
               </Button>
             </a>
 
-            <Badge className="w-fit bg-white/10 text-slate-300">
-              Stored Report Document
-            </Badge>
+            <StatusBadge status={currentStatus} />
           </div>
         </div>
 
@@ -448,4 +540,15 @@ function RiskImpactBadge({ impact }: { impact: string }) {
         : "bg-emerald-500/15 text-emerald-200";
 
   return <Badge className={styles}>{impact}</Badge>;
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const styles =
+    status === "Approved"
+      ? "bg-emerald-500/15 text-emerald-200"
+      : status === "Rejected"
+        ? "bg-red-500/15 text-red-200"
+        : "bg-amber-500/15 text-amber-200";
+
+  return <Badge className={styles}>Status: {status}</Badge>;
 }

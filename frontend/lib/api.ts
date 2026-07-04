@@ -63,6 +63,30 @@ export async function getReportDocument(reportId: string) {
   return response.json();
 }
 
+export function getReportPdfUrl(reportId: string) {
+  return `${API_BASE_URL}/api/reports/${reportId}/pdf`;
+}
+
+export async function updateReportStatus(reportId: string, status: string) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/reports/${reportId}/status`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+      body: JSON.stringify({ status }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to update report status");
+  }
+
+  return response.json();
+}
+
 export async function getGovernanceData() {
   const response = await fetch(`${API_BASE_URL}/api/governance`, {
     cache: "no-store",
@@ -184,8 +208,4 @@ export async function generateReportFromAgentRun(agentRunId: number) {
   }
 
   return response.json();
-}
-
-export function getReportPdfUrl(reportId: string) {
-  return `${API_BASE_URL}/api/reports/${reportId}/pdf`;
 }

@@ -63,3 +63,13 @@ class ReportDocumentResponse(BaseModel):
     suggestedActions: list[str]
     createdAt: datetime
     message: str
+
+
+class UpdateReportStatusRequest(BaseModel):
+    status: str
+
+
+class UpdateReportStatusResponse(BaseModel):
+    reportId: str
+    status: str
+    message: str
