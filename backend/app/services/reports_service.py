@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.models.agent_run import AgentRun
 from app.models.report import Report
 from app.models.report_document import ReportDocument
+from app.services.pdf_service import build_report_pdf
 
 
 def get_reports_data(db: Session):
@@ -166,3 +167,16 @@ def get_report_document(report_id: str, db: Session):
         "createdAt": report_document.created_at,
         "message": f"Report document {report_id} loaded from PostgreSQL",
     }
+
+def get_report_pdf(report_id: str, db: Session):
+    report_document = (
+        db.query(ReportDocument)
+        .filter(ReportDocument.report_id == report_id)
+        .order_by(ReportDocument.created_at.desc())
+        .first()
+    )
+
+    if not report_document:
+        raise HTTPException(status_code=404, detail="Report document not found")
+
+    return build_report_pdf(report_document)

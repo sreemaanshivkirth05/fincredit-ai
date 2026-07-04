@@ -185,3 +185,7 @@ export async function generateReportFromAgentRun(agentRunId: number) {
 
   return response.json();
 }
+
+export function getReportPdfUrl(reportId: string) {
+  return `${API_BASE_URL}/api/reports/${reportId}/pdf`;
+}

@@ -9,6 +9,7 @@ import {
   ArrowLeft,
   BadgeCheck,
   Calendar,
+  Download,
   FileSearch,
   FileText,
   Lightbulb,
@@ -23,7 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { getReportDocument } from "@/lib/api";
+import { getReportDocument, getReportPdfUrl } from "@/lib/api";
 
 type RiskDriver = {
   ticker: string;
@@ -139,9 +140,25 @@ export default function ReportDocumentPage() {
             )}
           </div>
 
-          <Badge className="w-fit bg-white/10 text-slate-300">
-            Stored Report Document
-          </Badge>
+          <div className="flex flex-wrap items-center gap-3">
+            <a
+              href={getReportPdfUrl(reportId)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button
+                type="button"
+                className="bg-emerald-500 text-white hover:bg-emerald-600"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Export PDF
+              </Button>
+            </a>
+
+            <Badge className="w-fit bg-white/10 text-slate-300">
+              Stored Report Document
+            </Badge>
+          </div>
         </div>
 
         {reportDocument && (
@@ -153,18 +170,21 @@ export default function ReportDocumentPage() {
                 change="Scope"
                 icon={<Target className="h-5 w-5 text-blue-300" />}
               />
+
               <MetricCard
                 title="Agent Run"
                 value={`#${reportDocument.agentRunId}`}
                 change="Traceable"
                 icon={<Sparkles className="h-5 w-5 text-violet-300" />}
               />
+
               <MetricCard
                 title="Evidence Items"
                 value={String(reportDocument.evidence.length)}
                 change="Grounded"
                 icon={<FileSearch className="h-5 w-5 text-emerald-300" />}
               />
+
               <MetricCard
                 title="Avg Confidence"
                 value={`${averageEvidenceConfidence}%`}
@@ -254,6 +274,7 @@ export default function ReportDocumentPage() {
                         <Badge className="bg-blue-500/15 text-blue-200">
                           {risk.ticker}
                         </Badge>
+
                         <RiskImpactBadge impact={risk.impact} />
                       </div>
 
@@ -289,6 +310,7 @@ export default function ReportDocumentPage() {
                         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-xs font-semibold text-amber-200">
                           {index + 1}
                         </div>
+
                         <p className="text-sm leading-6 text-slate-300">
                           {action}
                         </p>
@@ -356,11 +378,16 @@ export default function ReportDocumentPage() {
 
               <CardContent>
                 <div className="grid gap-4 md:grid-cols-3">
-                  <MiniMetric label="Report ID" value={reportDocument.reportId} />
+                  <MiniMetric
+                    label="Report ID"
+                    value={reportDocument.reportId}
+                  />
+
                   <MiniMetric
                     label="Agent Run ID"
                     value={String(reportDocument.agentRunId)}
                   />
+
                   <MiniMetric
                     label="Created"
                     value={new Date(reportDocument.createdAt).toLocaleString()}
@@ -393,6 +420,7 @@ function MetricCard({
           {icon}
           <Badge className="bg-white/10 text-slate-300">{change}</Badge>
         </div>
+
         <p className="mt-5 text-sm text-slate-400">{title}</p>
         <p className="mt-1 text-2xl font-semibold">{value}</p>
       </CardContent>
