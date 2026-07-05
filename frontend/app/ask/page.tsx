@@ -1,20 +1,19 @@
 "use client";
 
-import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 
 import {
-  Bot,
   BrainCircuit,
   CheckCircle2,
   FileSearch,
-  Gauge,
+  FileText,
   Loader2,
-  MessageSquare,
+  MessageSquareText,
   ShieldCheck,
   Sparkles,
-  Workflow,
+  Target,
 } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
@@ -23,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import { askFinCredit } from "@/lib/api";
+import { askFinCredit, generateReportFromAgentRun } from "@/lib/api";
 
 type RiskDriver = {
   ticker: string;
@@ -46,6 +45,7 @@ type AskAudit = {
 };
 
 type AskResponse = {
+  agentRunId: number;
   question: string;
   answer: string;
   riskDrivers: RiskDriver[];
@@ -55,39 +55,76 @@ type AskResponse = {
   message: string;
 };
 
-const sampleQuestions = [
-  "What is the risk outlook for MSFT?",
-  "Why is TSLA risky in my portfolio?",
-  "What are the main risk drivers for NVDA?",
-  "How does JPM look based on SEC fundamentals?",
-];
-
 export default function AskPage() {
-  const [question, setQuestion] = useState("What is the risk outlook for MSFT?");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const prefilledQuestion = searchParams.get("question") ?? "";
+
+  const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<AskResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [generatingReport, setGeneratingReport] = useState(false);
   const [apiError, setApiError] = useState("");
+  const [reportMessage, setReportMessage] = useState("");
+
+  useEffect(() => {
+    if (prefilledQuestion) {
+      setQuestion(prefilledQuestion);
+    }
+  }, [prefilledQuestion]);
 
   async function handleAsk() {
     if (!question.trim()) {
-      setApiError("Please enter a question.");
+      setApiError("Please enter a question before running FinCredit AI.");
       return;
     }
 
     try {
       setLoading(true);
       setApiError("");
+      setReportMessage("");
+      setAnswer(null);
 
       const response = await askFinCredit(question);
       setAnswer(response);
     } catch (error) {
       console.error(error);
       setApiError(
-        "Ask FinCredit API is not connected. Make sure the FastAPI backend is running."
+        "Could not generate an AI answer. Make sure the backend is running and Ollama is available."
       );
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleGenerateReportFromAnswer() {
+    if (!answer?.agentRunId) {
+      setApiError("No saved agent run is available for this answer.");
+      return;
+    }
+
+    try {
+      setGeneratingReport(true);
+      setApiError("");
+      setReportMessage("");
+
+      const response = await generateReportFromAgentRun(answer.agentRunId);
+
+      setReportMessage(response.message);
+      router.push(`/reports/${response.reportId}`);
+    } catch (error) {
+      console.error(error);
+      setApiError("Could not generate a report from this AI answer.");
+    } finally {
+      setGeneratingReport(false);
+    }
+  }
+
+  function fillExampleQuestion(exampleQuestion: string) {
+    setQuestion(exampleQuestion);
+    setAnswer(null);
+    setApiError("");
+    setReportMessage("");
   }
 
   return (
@@ -96,133 +133,264 @@ export default function AskPage() {
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
             <Badge className="mb-3 bg-violet-500/15 text-violet-200">
-              LangGraph + LangChain + Ollama
+              Ask FinCredit AI
             </Badge>
 
             <h1 className="text-3xl font-semibold tracking-tight">
-              Ask FinCredit AI
+              AI Financial Risk Assistant
             </h1>
 
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-              Ask portfolio, market, SEC fundamentals, and credit-risk questions.
-              The answer is generated through a LangGraph workflow and a local
-              Ollama LLM using stored PostgreSQL evidence.
+              Ask portfolio, market, SEC fundamentals, credit risk, and company
+              intelligence questions. FinCredit AI uses a LangGraph workflow,
+              structured evidence, and a local LangChain/Ollama LLM response.
             </p>
 
-            {answer && (
+            {prefilledQuestion && (
               <p className="mt-2 text-xs text-emerald-300">
-                Backend connected: {answer.message}
+                Question prefilled from company intelligence page.
               </p>
-            )}
-
-            {apiError && (
-              <p className="mt-2 text-xs text-red-300">{apiError}</p>
             )}
           </div>
 
           <Badge className="w-fit bg-white/10 text-slate-300">
-            Multi-Agent Reasoning
+            LangGraph + LangChain + Ollama
           </Badge>
         </div>
 
-        <Card className="border-white/10 bg-white/[0.04] text-white">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-violet-300" />
-              Ask a Financial Risk Question
-            </CardTitle>
-          </CardHeader>
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <Card className="border-white/10 bg-white/[0.04] text-white">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquareText className="h-5 w-5 text-violet-300" />
+                Ask a Financial Risk Question
+              </CardTitle>
+            </CardHeader>
 
-          <CardContent className="space-y-4">
-            <Textarea
-              value={question}
-              onChange={(event) => setQuestion(event.target.value)}
-              placeholder="Ask about MSFT, TSLA, NVDA, AAPL, JPM, portfolio risk, SEC fundamentals, or market snapshots..."
-              className="min-h-28 border-white/10 bg-black/30 text-white placeholder:text-slate-500"
-            />
+            <CardContent className="space-y-4">
+              <Textarea
+                value={question}
+                onChange={(event) => setQuestion(event.target.value)}
+                placeholder="Example: What is the risk outlook for MSFT? Use market data, SEC fundamentals, portfolio exposure, risk drivers, and evidence."
+                className="min-h-[160px] border-white/10 bg-black/30 text-slate-100 placeholder:text-slate-500"
+              />
 
-            <div className="flex flex-wrap gap-2">
-              {sampleQuestions.map((sample) => (
+              <div className="flex flex-wrap items-center gap-3">
                 <Button
-                  key={sample}
+                  type="button"
+                  className="bg-violet-500 text-white hover:bg-violet-600"
+                  onClick={handleAsk}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Running Agents
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Ask FinCredit AI
+                    </>
+                  )}
+                </Button>
+
+                <Button
                   type="button"
                   variant="outline"
                   className="border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/10 hover:text-white"
-                  onClick={() => setQuestion(sample)}
+                  onClick={() =>
+                    fillExampleQuestion(
+                      "What is the risk outlook for MSFT? Use market data, SEC fundamentals, portfolio exposure, risk drivers, and evidence."
+                    )
+                  }
                 >
-                  {sample}
+                  MSFT Example
                 </Button>
-              ))}
-            </div>
 
-            <Button
-              onClick={handleAsk}
-              disabled={loading}
-              className="bg-violet-500 text-white hover:bg-violet-600"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Running LangGraph + LLM Workflow...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Ask FinCredit
-                </>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/10 hover:text-white"
+                  onClick={() =>
+                    fillExampleQuestion(
+                      "Which portfolio holdings need analyst review based on risk drivers, concentration, market movement, and SEC fundamentals?"
+                    )
+                  }
+                >
+                  Portfolio Example
+                </Button>
+              </div>
+
+              {apiError && (
+                <p className="text-sm leading-6 text-red-300">{apiError}</p>
               )}
-            </Button>
-          </CardContent>
-        </Card>
+
+              {answer && (
+                <p className="text-sm leading-6 text-emerald-300">
+                  {answer.message}
+                </p>
+              )}
+
+              {reportMessage && (
+                <p className="text-sm leading-6 text-emerald-300">
+                  {reportMessage}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-white/10 bg-white/[0.04] text-white">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BrainCircuit className="h-5 w-5 text-blue-300" />
+                Agent Workflow
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent className="space-y-3">
+              <WorkflowStep
+                title="Portfolio Agent"
+                detail="Loads portfolio exposure, holdings, and risk context."
+              />
+
+              <WorkflowStep
+                title="Market Agent"
+                detail="Uses latest stored market snapshots from PostgreSQL."
+              />
+
+              <WorkflowStep
+                title="SEC Agent"
+                detail="Uses latest stored SEC Company Facts fundamentals."
+              />
+
+              <WorkflowStep
+                title="Risk + Evidence Agents"
+                detail="Creates risk drivers and evidence-backed claims."
+              />
+
+              <WorkflowStep
+                title="LLM Answer Agent"
+                detail="Generates analyst response using local Ollama model."
+              />
+            </CardContent>
+          </Card>
+        </div>
 
         {answer && (
           <>
+            <Card className="border-emerald-500/20 bg-emerald-500/[0.05] text-white">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-emerald-300" />
+                  Create Report from This Answer
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+                <div>
+                  <p className="text-sm leading-6 text-slate-300">
+                    This AI answer has been saved as agent run{" "}
+                    <span className="font-semibold text-white">
+                      #{answer.agentRunId}
+                    </span>
+                    . Generate a full report document with approval workflow,
+                    evidence, comments, history, and PDF export.
+                  </p>
+                </div>
+
+                <Button
+                  type="button"
+                  className="w-fit bg-emerald-500 text-white hover:bg-emerald-600"
+                  disabled={generatingReport}
+                  onClick={handleGenerateReportFromAnswer}
+                >
+                  {generatingReport ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating Report
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="mr-2 h-4 w-4" />
+                      Generate Report from This Answer
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+
+            <div className="grid gap-4 md:grid-cols-4">
+              <MetricCard
+                title="Grounding Score"
+                value={`${answer.audit.groundingScore}%`}
+                change="Evidence quality"
+                icon={<ShieldCheck className="h-5 w-5 text-emerald-300" />}
+              />
+
+              <MetricCard
+                title="Unsupported Claims"
+                value={String(answer.audit.unsupportedClaims)}
+                change="Governance"
+                icon={<FileSearch className="h-5 w-5 text-amber-300" />}
+              />
+
+              <MetricCard
+                title="Risk Drivers"
+                value={String(answer.riskDrivers.length)}
+                change="Detected"
+                icon={<Target className="h-5 w-5 text-red-300" />}
+              />
+
+              <MetricCard
+                title="Agent Run"
+                value={`#${answer.agentRunId}`}
+                change="Saved"
+                icon={<BrainCircuit className="h-5 w-5 text-violet-300" />}
+              />
+            </div>
+
             <Card className="border-white/10 bg-white/[0.04] text-white">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Bot className="h-5 w-5 text-emerald-300" />
-                  AI Financial Research Response
+                  <Sparkles className="h-5 w-5 text-violet-300" />
+                  AI Analyst Answer
                 </CardTitle>
               </CardHeader>
 
               <CardContent>
-                <p className="text-sm text-slate-400">Question</p>
-                <p className="mt-1 font-medium text-white">{answer.question}</p>
-
-                <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-5">
-                  <div className="space-y-4 text-sm leading-7 text-slate-200">
-                    <ReactMarkdown
-                      components={{
-                        strong: ({ children }) => (
-                          <strong className="font-semibold text-white">
-                            {children}
-                          </strong>
-                        ),
-                        p: ({ children }) => (
-                          <p className="text-sm leading-7 text-slate-200">
-                            {children}
-                          </p>
-                        ),
-                        ol: ({ children }) => (
-                          <ol className="ml-5 list-decimal space-y-2 text-sm leading-7 text-slate-200">
-                            {children}
-                          </ol>
-                        ),
-                        ul: ({ children }) => (
-                          <ul className="ml-5 list-disc space-y-2 text-sm leading-7 text-slate-200">
-                            {children}
-                          </ul>
-                        ),
-                        li: ({ children }) => (
-                          <li className="text-sm leading-7 text-slate-200">
-                            {children}
-                          </li>
-                        ),
-                      }}
-                    >
-                      {answer.answer}
-                    </ReactMarkdown>
-                  </div>
+                <div className="space-y-4 rounded-2xl border border-white/10 bg-black/20 p-5">
+                  <ReactMarkdown
+                    components={{
+                      strong: ({ children }) => (
+                        <strong className="font-semibold text-white">
+                          {children}
+                        </strong>
+                      ),
+                      p: ({ children }) => (
+                        <p className="text-sm leading-7 text-slate-200">
+                          {children}
+                        </p>
+                      ),
+                      ol: ({ children }) => (
+                        <ol className="ml-5 list-decimal space-y-2 text-sm leading-7 text-slate-200">
+                          {children}
+                        </ol>
+                      ),
+                      ul: ({ children }) => (
+                        <ul className="ml-5 list-disc space-y-2 text-sm leading-7 text-slate-200">
+                          {children}
+                        </ul>
+                      ),
+                      li: ({ children }) => (
+                        <li className="text-sm leading-7 text-slate-200">
+                          {children}
+                        </li>
+                      ),
+                    }}
+                  >
+                    {answer.answer}
+                  </ReactMarkdown>
                 </div>
               </CardContent>
             </Card>
@@ -231,71 +399,39 @@ export default function AskPage() {
               <Card className="border-white/10 bg-white/[0.04] text-white">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Gauge className="h-5 w-5 text-amber-300" />
+                    <Target className="h-5 w-5 text-red-300" />
                     Risk Drivers
                   </CardTitle>
                 </CardHeader>
 
                 <CardContent className="space-y-3">
-                  {answer.riskDrivers.map((driver, index) => (
+                  {answer.riskDrivers.map((risk, index) => (
                     <div
-                      key={`${driver.ticker}-${index}`}
+                      key={`${risk.ticker}-${risk.driver}-${index}`}
                       className="rounded-2xl border border-white/10 bg-black/20 p-4"
                     >
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="font-medium text-white">
-                          {driver.ticker}
-                        </p>
-                        <RiskBadge risk={driver.impact} />
+                      <div className="flex items-center justify-between gap-4">
+                        <Badge className="bg-blue-500/15 text-blue-200">
+                          {risk.ticker}
+                        </Badge>
+
+                        <RiskImpactBadge impact={risk.impact} />
                       </div>
 
-                      <p className="mt-2 text-sm leading-6 text-slate-400">
-                        {driver.driver}
+                      <p className="mt-3 text-sm leading-6 text-slate-300">
+                        {risk.driver}
                       </p>
                     </div>
                   ))}
+
+                  {answer.riskDrivers.length === 0 && (
+                    <p className="text-sm text-slate-400">
+                      No risk drivers were detected for this question.
+                    </p>
+                  )}
                 </CardContent>
               </Card>
 
-              <Card className="border-white/10 bg-white/[0.04] text-white">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileSearch className="h-5 w-5 text-blue-300" />
-                    Evidence Used
-                  </CardTitle>
-                </CardHeader>
-
-                <CardContent className="space-y-3">
-                  {answer.evidence.map((item) => (
-                    <div
-                      key={`${item.source}-${item.claim}`}
-                      className="rounded-2xl border border-white/10 bg-black/20 p-4"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="font-medium text-white">
-                            {item.source}
-                          </p>
-                          <p className="mt-2 text-sm leading-6 text-slate-400">
-                            {item.claim}
-                          </p>
-                        </div>
-
-                        <div className="min-w-28">
-                          <div className="flex items-center justify-between text-xs text-slate-400">
-                            <span>Confidence</span>
-                            <span>{item.confidence}%</span>
-                          </div>
-                          <Progress value={item.confidence} className="mt-2" />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
               <Card className="border-white/10 bg-white/[0.04] text-white">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -305,62 +441,28 @@ export default function AskPage() {
                 </CardHeader>
 
                 <CardContent className="space-y-3">
-                  {answer.suggestedActions.map((action) => (
+                  {answer.suggestedActions.map((action, index) => (
                     <div
-                      key={action}
-                      className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 p-4"
+                      key={`${action}-${index}`}
+                      className="rounded-2xl border border-white/10 bg-black/20 p-4"
                     >
-                      <CheckCircle2 className="h-4 w-4 text-emerald-300" />
-                      <p className="text-sm text-slate-300">{action}</p>
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-semibold text-emerald-200">
+                          {index + 1}
+                        </div>
+
+                        <p className="text-sm leading-6 text-slate-300">
+                          {action}
+                        </p>
+                      </div>
                     </div>
                   ))}
-                </CardContent>
-              </Card>
 
-              <Card className="border-white/10 bg-white/[0.04] text-white">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <ShieldCheck className="h-5 w-5 text-violet-300" />
-                    LangGraph Audit
-                  </CardTitle>
-                </CardHeader>
-
-                <CardContent className="space-y-4">
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <p className="text-sm text-slate-400">Workflow</p>
-                    <p className="mt-1 font-medium text-white">
-                      {answer.audit.workflow}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm text-slate-400">Grounding Score</p>
-                      <p className="font-medium text-white">
-                        {answer.audit.groundingScore}%
-                      </p>
-                    </div>
-                    <Progress
-                      value={answer.audit.groundingScore}
-                      className="mt-3"
-                    />
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                  {answer.suggestedActions.length === 0 && (
                     <p className="text-sm text-slate-400">
-                      Unsupported Claims
+                      No suggested actions were returned.
                     </p>
-                    <p className="mt-1 text-2xl font-semibold text-white">
-                      {answer.audit.unsupportedClaims}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <p className="text-sm text-slate-400">Status</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-300">
-                      {answer.audit.status}
-                    </p>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -368,22 +470,72 @@ export default function AskPage() {
             <Card className="border-white/10 bg-white/[0.04] text-white">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Workflow className="h-5 w-5 text-blue-300" />
-                  Agents Used
+                  <FileSearch className="h-5 w-5 text-emerald-300" />
+                  Evidence Used
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent className="space-y-3">
+                {answer.evidence.map((item, index) => (
+                  <div
+                    key={`${item.source}-${index}`}
+                    className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <Badge className="bg-emerald-500/15 text-emerald-200">
+                        {item.source}
+                      </Badge>
+
+                      <div className="flex items-center gap-3">
+                        <Progress value={item.confidence} className="w-24" />
+                        <span className="text-sm text-slate-300">
+                          {item.confidence}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="mt-3 text-sm leading-6 text-slate-300">
+                      {item.claim}
+                    </p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card className="border-white/10 bg-white/[0.04] text-white">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-blue-300" />
+                  Governance Audit
                 </CardTitle>
               </CardHeader>
 
               <CardContent>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {answer.audit.agentsUsed.map((agent) => (
-                    <div
-                      key={agent}
-                      className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 p-4"
-                    >
-                      <BrainCircuit className="h-5 w-5 text-violet-300" />
-                      <p className="text-sm font-medium text-white">{agent}</p>
-                    </div>
-                  ))}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <MiniMetric label="Workflow" value={answer.audit.workflow} />
+                  <MiniMetric label="Status" value={answer.audit.status} />
+                  <MiniMetric
+                    label="Grounding Score"
+                    value={`${answer.audit.groundingScore}%`}
+                  />
+                  <MiniMetric
+                    label="Unsupported Claims"
+                    value={String(answer.audit.unsupportedClaims)}
+                  />
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+                  <p className="text-sm text-slate-400">Agents Used</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {answer.audit.agentsUsed.map((agent) => (
+                      <Badge
+                        key={agent}
+                        className="bg-violet-500/15 text-violet-200"
+                      >
+                        {agent}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -394,13 +546,59 @@ export default function AskPage() {
   );
 }
 
-function RiskBadge({ risk }: { risk: string }) {
+function WorkflowStep({ title, detail }: { title: string; detail: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+      <p className="font-medium text-white">{title}</p>
+      <p className="mt-2 text-sm leading-6 text-slate-400">{detail}</p>
+    </div>
+  );
+}
+
+function MetricCard({
+  title,
+  value,
+  change,
+  icon,
+}: {
+  title: string;
+  value: string;
+  change: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <Card className="border-white/10 bg-white/[0.04] text-white">
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between">
+          {icon}
+          <Badge className="bg-white/10 text-slate-300">{change}</Badge>
+        </div>
+
+        <p className="mt-5 text-sm text-slate-400">{title}</p>
+        <p className="mt-1 text-2xl font-semibold">{value}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function MiniMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+      <p className="text-sm text-slate-400">{label}</p>
+      <p className="mt-2 break-words text-sm font-medium leading-6 text-white">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function RiskImpactBadge({ impact }: { impact: string }) {
   const styles =
-    risk === "High"
+    impact === "High"
       ? "bg-red-500/15 text-red-200"
-      : risk === "Medium"
+      : impact === "Medium"
         ? "bg-amber-500/15 text-amber-200"
         : "bg-emerald-500/15 text-emerald-200";
 
-  return <Badge className={styles}>{risk}</Badge>;
+  return <Badge className={styles}>{impact}</Badge>;
 }

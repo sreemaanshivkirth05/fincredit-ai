@@ -48,6 +48,21 @@ export async function getReportsData() {
   return response.json();
 }
 
+export async function getReportsByTicker(ticker: string) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/reports/by-ticker/${ticker}`,
+    {
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch reports by ticker");
+  }
+
+  return response.json();
+}
+
 export async function getReportDocument(reportId: string) {
   const response = await fetch(
     `${API_BASE_URL}/api/reports/${reportId}/document`,
@@ -67,21 +82,90 @@ export function getReportPdfUrl(reportId: string) {
   return `${API_BASE_URL}/api/reports/${reportId}/pdf`;
 }
 
-export async function updateReportStatus(reportId: string, status: string) {
+export async function updateReportStatus(
+  reportId: string,
+  status: string,
+  comment?: string
+) {
+  const response = await fetch(`${API_BASE_URL}/api/reports/${reportId}/status`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    cache: "no-store",
+    body: JSON.stringify({ status, comment }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to update report status");
+  }
+
+  return response.json();
+}
+
+export async function updateReportStatusWithComment(
+  reportId: string,
+  status: string,
+  comment: string
+) {
+  const response = await fetch(`${API_BASE_URL}/api/reports/${reportId}/status`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    cache: "no-store",
+    body: JSON.stringify({ status, comment }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to update report status with comment");
+  }
+
+  return response.json();
+}
+
+export async function getReportStatusHistory(reportId: string) {
   const response = await fetch(
-    `${API_BASE_URL}/api/reports/${reportId}/status`,
+    `${API_BASE_URL}/api/reports/${reportId}/status-history`,
     {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
       cache: "no-store",
-      body: JSON.stringify({ status }),
     }
   );
 
   if (!response.ok) {
-    throw new Error("Failed to update report status");
+    throw new Error("Failed to fetch report status history");
+  }
+
+  return response.json();
+}
+
+export async function generateReportFromAgentRun(agentRunId: number) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/reports/generate-from-agent-run/${agentRunId}`,
+    {
+      method: "POST",
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to generate report from agent run");
+  }
+
+  return response.json();
+}
+
+export async function generateLatestReportForTicker(ticker: string) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/reports/generate-latest-for-ticker/${ticker}`,
+    {
+      method: "POST",
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to generate latest report for ticker");
   }
 
   return response.json();
@@ -176,7 +260,7 @@ export async function askFinCredit(question: string) {
   });
 
   if (!response.ok) {
-    throw new Error("Failed to ask FinCredit");
+    throw new Error("Failed to ask FinCredit AI");
   }
 
   return response.json();
@@ -194,55 +278,28 @@ export async function getAgentRuns() {
   return response.json();
 }
 
-export async function generateReportFromAgentRun(agentRunId: number) {
+export async function getAgentRunsByTicker(ticker: string) {
   const response = await fetch(
-    `${API_BASE_URL}/api/reports/generate-from-agent-run/${agentRunId}`,
+    `${API_BASE_URL}/api/ask/runs/by-ticker/${ticker}`,
     {
-      method: "POST",
       cache: "no-store",
     }
   );
 
   if (!response.ok) {
-    throw new Error("Failed to generate report from agent run");
-  }
-
-  return response.json();
-}
-export async function updateReportStatusWithComment(
-  reportId: string,
-  status: string,
-  comment: string
-) {
-  const response = await fetch(
-    `${API_BASE_URL}/api/reports/${reportId}/status`,
-    {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      cache: "no-store",
-      body: JSON.stringify({ status, comment }),
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error("Failed to update report status with comment");
+    throw new Error("Failed to fetch agent runs by ticker");
   }
 
   return response.json();
 }
 
-export async function getReportStatusHistory(reportId: string) {
-  const response = await fetch(
-    `${API_BASE_URL}/api/reports/${reportId}/status-history`,
-    {
-      cache: "no-store",
-    }
-  );
+export async function getAgentRunById(agentRunId: string) {
+  const response = await fetch(`${API_BASE_URL}/api/ask/runs/${agentRunId}`, {
+    cache: "no-store",
+  });
 
   if (!response.ok) {
-    throw new Error("Failed to fetch report status history");
+    throw new Error("Failed to fetch agent run");
   }
 
   return response.json();

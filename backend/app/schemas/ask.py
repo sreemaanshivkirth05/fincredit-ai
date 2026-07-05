@@ -28,6 +28,7 @@ class AskAuditResponse(BaseModel):
 
 
 class AskResponse(BaseModel):
+    agentRunId: int
     question: str
     answer: str
     riskDrivers: list[RiskDriverResponse]
@@ -54,6 +55,13 @@ class AgentRunItemResponse(BaseModel):
 
 
 class AgentRunsResponse(BaseModel):
+    totalRuns: int
+    runs: list[AgentRunItemResponse]
+    message: str
+
+
+class AgentRunsByTickerResponse(BaseModel):
+    ticker: str
     totalRuns: int
     runs: list[AgentRunItemResponse]
     message: str

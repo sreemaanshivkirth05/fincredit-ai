@@ -81,6 +81,40 @@ def get_reports_data(db: Session):
     }
 
 
+def get_reports_by_ticker(ticker: str, db: Session):
+    normalized_ticker = ticker.upper().strip()
+
+    report_rows = (
+        db.query(Report)
+        .filter(Report.ticker == normalized_ticker)
+        .order_by(Report.id.desc())
+        .limit(10)
+        .all()
+    )
+
+    reports = [
+        {
+            "id": report.report_id,
+            "company": report.company,
+            "ticker": report.ticker,
+            "type": report.report_type,
+            "status": report.status,
+            "grounding": report.grounding,
+            "unsupported": report.unsupported,
+            "model": report.model,
+            "created": report.created,
+        }
+        for report in report_rows
+    ]
+
+    return {
+        "ticker": normalized_ticker,
+        "totalReports": len(reports),
+        "reports": reports,
+        "message": f"Latest reports loaded for ticker {normalized_ticker}",
+    }
+
+
 def generate_report_from_agent_run(agent_run_id: int, db: Session):
     agent_run = db.query(AgentRun).filter(AgentRun.id == agent_run_id).first()
 
@@ -172,6 +206,25 @@ def generate_report_from_agent_run(agent_run_id: int, db: Session):
         "created": report.created,
         "message": f"Report {report.report_id} and full report document generated from agent run {agent_run.id}",
     }
+
+
+def generate_latest_report_for_ticker(ticker: str, db: Session):
+    normalized_ticker = ticker.upper().strip()
+
+    latest_agent_run = (
+        db.query(AgentRun)
+        .filter(AgentRun.ticker == normalized_ticker)
+        .order_by(AgentRun.created_at.desc())
+        .first()
+    )
+
+    if not latest_agent_run:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No saved agent run found for ticker {normalized_ticker}. Ask FinCredit AI about {normalized_ticker} first.",
+        )
+
+    return generate_report_from_agent_run(latest_agent_run.id, db)
 
 
 def get_report_document(report_id: str, db: Session):

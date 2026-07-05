@@ -38,6 +38,13 @@ class ReportsResponse(BaseModel):
     message: str
 
 
+class ReportsByTickerResponse(BaseModel):
+    ticker: str
+    totalReports: int
+    reports: list[ReportItemResponse]
+    message: str
+
+
 class GeneratedReportResponse(BaseModel):
     reportId: str
     agentRunId: int
