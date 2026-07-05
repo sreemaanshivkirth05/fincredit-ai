@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import {
@@ -9,7 +9,9 @@ import {
   FileText,
   Gauge,
   Loader2,
+  Search,
   ShieldCheck,
+  SlidersHorizontal,
   Sparkles,
   Workflow,
 } from "lucide-react";
@@ -28,6 +30,7 @@ import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import {
   Table,
@@ -114,6 +117,11 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState("");
 
+  const [searchText, setSearchText] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [groundingFilter, setGroundingFilter] = useState("All");
+  const [sortMode, setSortMode] = useState("Latest");
+
   useEffect(() => {
     async function loadReportsData() {
       try {
@@ -139,7 +147,64 @@ export default function ReportsPage() {
     report.type.toLowerCase().includes("ai")
   );
 
-  const latestReport = reports.reports[0];
+  const filteredReports = useMemo(() => {
+    const search = searchText.trim().toLowerCase();
+
+    let output = reports.reports.filter((report) => {
+      const matchesSearch =
+        search.length === 0 ||
+        report.id.toLowerCase().includes(search) ||
+        report.ticker.toLowerCase().includes(search) ||
+        report.company.toLowerCase().includes(search) ||
+        report.type.toLowerCase().includes(search) ||
+        report.status.toLowerCase().includes(search);
+
+      const matchesStatus =
+        statusFilter === "All" || report.status === statusFilter;
+
+      const matchesGrounding =
+        groundingFilter === "All" ||
+        (groundingFilter === "90+" && report.grounding >= 90) ||
+        (groundingFilter === "80-89" &&
+          report.grounding >= 80 &&
+          report.grounding < 90) ||
+        (groundingFilter === "Below 80" && report.grounding < 80);
+
+      return matchesSearch && matchesStatus && matchesGrounding;
+    });
+
+    output = [...output].sort((a, b) => {
+      if (sortMode === "Grounding High") {
+        return b.grounding - a.grounding;
+      }
+
+      if (sortMode === "Grounding Low") {
+        return a.grounding - b.grounding;
+      }
+
+      if (sortMode === "Ticker") {
+        return a.ticker.localeCompare(b.ticker);
+      }
+
+      return b.id.localeCompare(a.id);
+    });
+
+    return output;
+  }, [reports.reports, searchText, statusFilter, groundingFilter, sortMode]);
+
+  const latestReport = filteredReports[0] ?? reports.reports[0];
+
+  const visibleReportQuality = filteredReports.map((report) => ({
+    report: report.ticker,
+    grounding: report.grounding,
+  }));
+
+  function resetFilters() {
+    setSearchText("");
+    setStatusFilter("All");
+    setGroundingFilter("All");
+    setSortMode("Latest");
+  }
 
   return (
     <AppShell>
@@ -155,9 +220,8 @@ export default function ReportsPage() {
             </h1>
 
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-              Review AI-generated analyst reports created from saved LangGraph
-              agent runs, including grounding scores, unsupported claims, model
-              workflow metadata, and report status.
+              Review, search, filter, approve, export, and audit AI-generated
+              analyst reports created from saved LangGraph agent runs.
             </p>
 
             {loading && (
@@ -210,12 +274,98 @@ export default function ReportsPage() {
           />
         </div>
 
+        <Card className="border-white/10 bg-white/[0.04] text-white">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <SlidersHorizontal className="h-5 w-5 text-violet-300" />
+              Search & Filter Reports
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 lg:grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr_auto]">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                <Input
+                  value={searchText}
+                  onChange={(event) => setSearchText(event.target.value)}
+                  placeholder="Search report ID, ticker, company, type, or status..."
+                  className="border-white/10 bg-black/30 pl-9 text-white placeholder:text-slate-500"
+                />
+              </div>
+
+              <select
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+                className="h-10 rounded-md border border-white/10 bg-black/30 px-3 text-sm text-white outline-none"
+              >
+                <option value="All">All Statuses</option>
+                <option value="Approved">Approved</option>
+                <option value="Needs Review">Needs Review</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+
+              <select
+                value={groundingFilter}
+                onChange={(event) => setGroundingFilter(event.target.value)}
+                className="h-10 rounded-md border border-white/10 bg-black/30 px-3 text-sm text-white outline-none"
+              >
+                <option value="All">All Grounding</option>
+                <option value="90+">90%+</option>
+                <option value="80-89">80% - 89%</option>
+                <option value="Below 80">Below 80%</option>
+              </select>
+
+              <select
+                value={sortMode}
+                onChange={(event) => setSortMode(event.target.value)}
+                className="h-10 rounded-md border border-white/10 bg-black/30 px-3 text-sm text-white outline-none"
+              >
+                <option value="Latest">Latest First</option>
+                <option value="Grounding High">Grounding High</option>
+                <option value="Grounding Low">Grounding Low</option>
+                <option value="Ticker">Ticker A-Z</option>
+              </select>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/10 hover:text-white"
+                onClick={resetFilters}
+              >
+                Reset
+              </Button>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+              <Badge className="bg-white/10 text-slate-300">
+                Showing {filteredReports.length} of {reports.reports.length}
+              </Badge>
+              {searchText && (
+                <Badge className="bg-blue-500/15 text-blue-200">
+                  Search: {searchText}
+                </Badge>
+              )}
+              {statusFilter !== "All" && (
+                <Badge className="bg-amber-500/15 text-amber-200">
+                  Status: {statusFilter}
+                </Badge>
+              )}
+              {groundingFilter !== "All" && (
+                <Badge className="bg-emerald-500/15 text-emerald-200">
+                  Grounding: {groundingFilter}
+                </Badge>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {latestReport && (
           <Card className="border-white/10 bg-white/[0.04] text-white">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-violet-300" />
-                Latest Generated Report
+                Top Matching Report
               </CardTitle>
             </CardHeader>
 
@@ -241,12 +391,9 @@ export default function ReportsPage() {
                   </p>
 
                   <p className="mt-3 text-sm leading-6 text-slate-300">
-                    This report was generated from a saved LangGraph/LLM agent
-                    run and is currently marked as{" "}
-                    <span className="font-medium text-white">
-                      {latestReport.status}
-                    </span>
-                    .
+                    This is the top report matching your current filters. Open
+                    it to review the full AI report, approval history, comments,
+                    and PDF export.
                   </p>
 
                   <div className="mt-4">
@@ -255,7 +402,7 @@ export default function ReportsPage() {
                         type="button"
                         className="bg-blue-500 text-white hover:bg-blue-600"
                       >
-                        View Latest Report
+                        View Report
                       </Button>
                     </Link>
                   </div>
@@ -303,7 +450,7 @@ export default function ReportsPage() {
               </TableHeader>
 
               <TableBody>
-                {reports.reports.map((report) => (
+                {filteredReports.map((report) => (
                   <TableRow key={report.id} className="border-white/10">
                     <TableCell className="font-medium text-white">
                       {report.id}
@@ -360,10 +507,10 @@ export default function ReportsPage() {
               </TableBody>
             </Table>
 
-            {reports.reports.length === 0 && (
+            {filteredReports.length === 0 && (
               <p className="mt-4 text-sm text-slate-400">
-                No reports generated yet. Go to the Governance page and click
-                Generate Report on a saved agent run.
+                No reports match the current filters. Reset filters or generate
+                more reports from the Governance page.
               </p>
             )}
           </CardContent>
@@ -374,14 +521,14 @@ export default function ReportsPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="h-5 w-5 text-emerald-300" />
-                Report Grounding Quality
+                Filtered Grounding Quality
               </CardTitle>
             </CardHeader>
 
             <CardContent>
               <div className="h-[320px] min-h-[320px] min-w-0 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={reports.reportQuality}>
+                  <BarChart data={visibleReportQuality}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                     <XAxis dataKey="report" stroke="#94a3b8" />
                     <YAxis stroke="#94a3b8" />
@@ -402,9 +549,10 @@ export default function ReportsPage() {
                 </ResponsiveContainer>
               </div>
 
-              {reports.reportQuality.length === 0 && (
+              {visibleReportQuality.length === 0 && (
                 <p className="mt-4 text-sm text-slate-400">
-                  Report grounding chart will appear after reports are generated.
+                  Report grounding chart will appear when matching reports are
+                  available.
                 </p>
               )}
             </CardContent>
@@ -465,8 +613,8 @@ export default function ReportsPage() {
               />
               <ProcessStep
                 step="4"
-                title="Report Record"
-                detail="Governance action converts the agent run into a saved report."
+                title="Report Review"
+                detail="Governance action converts the run into a report with comments, approval history, and PDF export."
               />
             </div>
           </CardContent>
@@ -535,9 +683,11 @@ function StatusBadge({ status }: { status: string }) {
   const styles =
     status === "Approved" || status === "Complete" || status === "Ready"
       ? "bg-emerald-500/15 text-emerald-200"
-      : status === "Needs Review" || status === "In Review"
-        ? "bg-amber-500/15 text-amber-200"
-        : "bg-blue-500/15 text-blue-200";
+      : status === "Rejected"
+        ? "bg-red-500/15 text-red-200"
+        : status === "Needs Review" || status === "In Review"
+          ? "bg-amber-500/15 text-amber-200"
+          : "bg-blue-500/15 text-blue-200";
 
   return <Badge className={styles}>{status}</Badge>;
 }

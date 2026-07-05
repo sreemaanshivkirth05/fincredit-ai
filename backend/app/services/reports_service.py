@@ -210,7 +210,20 @@ def get_report_pdf(report_id: str, db: Session):
     if not report_document:
         raise HTTPException(status_code=404, detail="Report document not found")
 
-    return build_report_pdf(report_document)
+    report = db.query(Report).filter(Report.report_id == report_id).first()
+
+    status_events = (
+        db.query(ReportStatusEvent)
+        .filter(ReportStatusEvent.report_id == report_id)
+        .order_by(ReportStatusEvent.changed_at.desc())
+        .all()
+    )
+
+    return build_report_pdf(
+        report_document=report_document,
+        report=report,
+        status_events=status_events,
+    )
 
 
 def update_report_status(

@@ -1,5 +1,4 @@
 from io import BytesIO
-from textwrap import wrap
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import LETTER
@@ -32,7 +31,9 @@ def _clean_markdown(text: str):
     )
 
 
-def build_report_pdf(report_document):
+def build_report_pdf(report_document, report=None, status_events=None):
+    status_events = status_events or []
+
     buffer = BytesIO()
 
     doc = SimpleDocTemplate(
@@ -86,30 +87,53 @@ def build_report_pdf(report_document):
         textColor=colors.HexColor("#4b5563"),
     )
 
+    table_header_style = ParagraphStyle(
+        "FinCreditTableHeader",
+        parent=styles["BodyText"],
+        fontName="Helvetica-Bold",
+        fontSize=8.5,
+        leading=11,
+        textColor=colors.HexColor("#111827"),
+    )
+
     story = []
 
     report_id = _safe_text(report_document.report_id)
     ticker = _safe_text(report_document.ticker or "Portfolio")
     created_at = report_document.created_at.strftime("%Y-%m-%d %H:%M:%S")
 
+    current_status = _safe_text(getattr(report, "status", "Needs Review"))
+    grounding = _safe_text(getattr(report, "grounding", "N/A"))
+    unsupported = _safe_text(getattr(report, "unsupported", "N/A"))
+    model = _safe_text(getattr(report, "model", "LangGraph FinCredit Agent Workflow"))
+
     story.append(Paragraph("FinCredit AI Analyst Report", title_style))
     story.append(
         Paragraph(
-            f"Report ID: <b>{report_id}</b> | Ticker: <b>{ticker}</b> | Agent Run ID: <b>{report_document.agent_run_id}</b>",
+            f"Report ID: <b>{report_id}</b> | Ticker: <b>{ticker}</b> | Status: <b>{current_status}</b>",
             small_style,
         )
     )
-    story.append(Paragraph(f"Created: {created_at}", small_style))
+    story.append(
+        Paragraph(
+            f"Agent Run ID: <b>{report_document.agent_run_id}</b> | Created: {created_at}",
+            small_style,
+        )
+    )
     story.append(Spacer(1, 12))
 
     metadata_table = Table(
         [
             ["Report ID", report_id],
             ["Ticker", ticker],
+            ["Current Status", current_status],
+            ["Grounding Score", f"{grounding}%"],
+            ["Unsupported Claims", unsupported],
+            ["Model / Workflow", model],
             ["Agent Run ID", str(report_document.agent_run_id)],
             ["Created At", created_at],
         ],
-        colWidths=[1.5 * inch, 4.8 * inch],
+        colWidths=[1.7 * inch, 4.6 * inch],
     )
 
     metadata_table.setStyle(
@@ -166,7 +190,13 @@ def build_report_pdf(report_document):
 
     story.append(Paragraph("Evidence Used", section_style))
 
-    evidence_rows = [["Source", "Claim", "Confidence"]]
+    evidence_rows = [
+        [
+            Paragraph("Source", table_header_style),
+            Paragraph("Claim", table_header_style),
+            Paragraph("Confidence", table_header_style),
+        ]
+    ]
 
     for evidence in report_document.evidence:
         evidence_rows.append(
@@ -216,6 +246,69 @@ def build_report_pdf(report_document):
         story.append(ListFlowable(action_items, bulletType="1"))
     else:
         story.append(Paragraph("No suggested actions stored for this report.", body_style))
+
+    story.append(Paragraph("Approval History and Review Comments", section_style))
+
+    if status_events:
+        history_rows = [
+            [
+                Paragraph("Changed At", table_header_style),
+                Paragraph("Old Status", table_header_style),
+                Paragraph("New Status", table_header_style),
+                Paragraph("Comment", table_header_style),
+                Paragraph("Changed By", table_header_style),
+            ]
+        ]
+
+        for event in status_events:
+            changed_at = event.changed_at.strftime("%Y-%m-%d %H:%M:%S")
+            history_rows.append(
+                [
+                    Paragraph(_safe_text(changed_at), small_style),
+                    Paragraph(_safe_text(event.old_status or "Initial"), small_style),
+                    Paragraph(_safe_text(event.new_status), small_style),
+                    Paragraph(_safe_text(event.comment or "No comment added."), small_style),
+                    Paragraph(_safe_text(event.changed_by), small_style),
+                ]
+            )
+
+        history_table = Table(
+            history_rows,
+            colWidths=[
+                1.25 * inch,
+                1.0 * inch,
+                1.0 * inch,
+                2.35 * inch,
+                0.85 * inch,
+            ],
+            repeatRows=1,
+        )
+
+        history_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#e5e7eb")),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#111827")),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 7.5),
+                    ("GRID", (0, 0), (-1, -1), 0.35, colors.HexColor("#d1d5db")),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 5),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+                    ("TOPPADDING", (0, 0), (-1, -1), 5),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                ]
+            )
+        )
+
+        story.append(history_table)
+    else:
+        story.append(
+            Paragraph(
+                "No approval history or review comments have been recorded for this report.",
+                body_style,
+            )
+        )
 
     story.append(Spacer(1, 16))
     story.append(
