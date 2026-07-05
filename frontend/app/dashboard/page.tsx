@@ -1,22 +1,26 @@
 "use client";
 
-import type React from "react";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 import {
-  AlertTriangle,
+  Activity,
   BarChart3,
-  Brain,
-  BriefcaseBusiness,
+  Bot,
+  Building2,
+  CheckCircle2,
+  Database,
   FileText,
   Gauge,
-  LineChart,
+  Loader2,
   ShieldCheck,
+  Sparkles,
+  TrendingDown,
+  TrendingUp,
+  Users,
 } from "lucide-react";
 
 import {
-  Area,
-  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
@@ -30,7 +34,6 @@ import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import {
   Table,
@@ -42,106 +45,110 @@ import {
 } from "@/components/ui/table";
 import { getDashboardData } from "@/lib/api";
 
-type DashboardApiData = {
-  portfolioRisk: number;
+type DashboardMetric = {
+  label: string;
+  value: string;
+  detail: string;
+};
+
+type DashboardReport = {
+  id: string;
+  ticker: string;
+  company: string;
+  status: string;
+  grounding: number;
+  created: string;
+};
+
+type DashboardAgentRun = {
+  id: number;
+  question: string;
+  ticker: string | null;
   groundingScore: number;
-  redFlags: number;
-  watchlistCount: number;
+  unsupportedClaims: number;
+  createdAt: string;
+};
+
+type DashboardMarketSnapshot = {
+  ticker: string;
+  companyName: string;
+  currentPrice: number | null;
+  previousClose: number | null;
+  marketCap: number | null;
+  fetchedAt: string;
+};
+
+type DashboardSecFundamental = {
+  ticker: string;
+  companyName: string;
+  revenue: number | null;
+  netIncome: number | null;
+  assets: number | null;
+  liabilities: number | null;
+  fiscalYear: number | null;
+  filed: string | null;
+  fetchedAt: string;
+};
+
+type DashboardData = {
+  portfolioValue: number;
+  portfolioCount: number;
+  averageRiskScore: number;
+  totalReports: number;
+  approvedReports: number;
+  needsReviewReports: number;
+  rejectedReports: number;
+  avgGrounding: number;
+  unsupportedClaims: number;
+  metrics: DashboardMetric[];
+  latestReports: DashboardReport[];
+  latestAgentRuns: DashboardAgentRun[];
+  latestMarketSnapshots: DashboardMarketSnapshot[];
+  latestSecFundamentals: DashboardSecFundamental[];
   message: string;
 };
 
-const riskTrend = [
-  { month: "Jan", risk: 34 },
-  { month: "Feb", risk: 38 },
-  { month: "Mar", risk: 42 },
-  { month: "Apr", risk: 51 },
-  { month: "May", risk: 46 },
-  { month: "Jun", risk: 57 },
-];
-
-const sectorData = [
-  { sector: "Tech", value: 68 },
-  { sector: "Financials", value: 16 },
-  { sector: "Healthcare", value: 9 },
-  { sector: "Consumer", value: 7 },
-];
-
-const holdings = [
-  {
-    ticker: "TSLA",
-    company: "Tesla Inc.",
-    risk: "High",
-    score: 78,
-    sentiment: "Mixed",
-    exposure: "21%",
-  },
-  {
-    ticker: "NVDA",
-    company: "NVIDIA Corp.",
-    risk: "Medium",
-    score: 54,
-    sentiment: "Positive",
-    exposure: "31%",
-  },
-  {
-    ticker: "MSFT",
-    company: "Microsoft Corp.",
-    risk: "Low",
-    score: 28,
-    sentiment: "Positive",
-    exposure: "34%",
-  },
-  {
-    ticker: "JPM",
-    company: "JPMorgan Chase",
-    risk: "Low",
-    score: 33,
-    sentiment: "Neutral",
-    exposure: "14%",
-  },
-];
-
-const redFlags = [
-  {
-    ticker: "TSLA",
-    issue: "Negative sentiment spike and margin pressure detected",
-    severity: "High",
-  },
-  {
-    ticker: "NVDA",
-    issue: "Portfolio concentration risk above target threshold",
-    severity: "Medium",
-  },
-  {
-    ticker: "MSFT",
-    issue: "Regulatory language expanded in latest filing",
-    severity: "Medium",
-  },
-];
-
-const reports = [
-  {
-    company: "Microsoft",
-    type: "Credit Risk + Filing Analysis",
-    score: "94%",
-    status: "Approved",
-  },
-  {
-    company: "Tesla",
-    type: "Red Flag Review",
-    score: "87%",
-    status: "Needs Review",
-  },
-  {
-    company: "NVIDIA",
-    type: "Peer Benchmark",
-    score: "91%",
-    status: "Draft",
-  },
-];
+const fallbackDashboard: DashboardData = {
+  portfolioValue: 0,
+  portfolioCount: 0,
+  averageRiskScore: 0,
+  totalReports: 0,
+  approvedReports: 0,
+  needsReviewReports: 0,
+  rejectedReports: 0,
+  avgGrounding: 0,
+  unsupportedClaims: 0,
+  metrics: [
+    {
+      label: "Portfolio Value",
+      value: "$0",
+      detail: "No holdings loaded",
+    },
+    {
+      label: "Average Risk Score",
+      value: "0",
+      detail: "No risk score available",
+    },
+    {
+      label: "AI Reports",
+      value: "0",
+      detail: "No reports generated",
+    },
+    {
+      label: "Grounding Score",
+      value: "0%",
+      detail: "No grounding data available",
+    },
+  ],
+  latestReports: [],
+  latestAgentRuns: [],
+  latestMarketSnapshots: [],
+  latestSecFundamentals: [],
+  message: "Fallback dashboard data loaded",
+};
 
 export default function DashboardPage() {
-  const [dashboardData, setDashboardData] = useState<DashboardApiData | null>(
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
     null
   );
   const [loading, setLoading] = useState(true);
@@ -150,11 +157,14 @@ export default function DashboardPage() {
   useEffect(() => {
     async function loadDashboardData() {
       try {
-        const data = await getDashboardData();
-        setDashboardData(data);
+        setLoading(true);
+        setApiError("");
+
+        const response = await getDashboardData();
+        setDashboardData(response);
       } catch (error) {
         console.error(error);
-        setApiError("Backend API is not connected.");
+        setApiError("Dashboard API is not connected. Showing fallback data.");
       } finally {
         setLoading(false);
       }
@@ -163,10 +173,34 @@ export default function DashboardPage() {
     loadDashboardData();
   }, []);
 
-  const portfolioRisk = dashboardData?.portfolioRisk ?? 57;
-  const groundingScore = dashboardData?.groundingScore ?? 94;
-  const redFlagCount = dashboardData?.redFlags ?? 3;
-  const watchlistCount = dashboardData?.watchlistCount ?? 8;
+  const dashboard = dashboardData ?? fallbackDashboard;
+
+  const reportStatusChart = [
+    {
+      status: "Approved",
+      count: dashboard.approvedReports,
+    },
+    {
+      status: "Needs Review",
+      count: dashboard.needsReviewReports,
+    },
+    {
+      status: "Rejected",
+      count: dashboard.rejectedReports,
+    },
+  ];
+
+  const approvedRate =
+    dashboard.totalReports > 0
+      ? Math.round((dashboard.approvedReports / dashboard.totalReports) * 100)
+      : 0;
+
+  const needsReviewRate =
+    dashboard.totalReports > 0
+      ? Math.round(
+          (dashboard.needsReviewReports / dashboard.totalReports) * 100
+        )
+      : 0;
 
   return (
     <AppShell>
@@ -174,25 +208,29 @@ export default function DashboardPage() {
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
             <Badge className="mb-3 bg-blue-500/15 text-blue-200">
-              Portfolio Intelligence
+              Executive Dashboard
             </Badge>
+
             <h1 className="text-3xl font-semibold tracking-tight">
-              Welcome back, Sreemaan
+              FinCredit AI Control Center
             </h1>
-            <p className="mt-2 text-sm text-slate-400">
-              Your portfolio risk increased this week. FinCredit AI found{" "}
-              {redFlagCount} red flags and 1 new filing change.
+
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
+              Monitor portfolio exposure, AI reports, governance status, latest
+              LangGraph agent activity, market snapshots, and SEC fundamentals
+              from one place.
             </p>
 
             {loading && (
-              <p className="mt-2 text-xs text-blue-300">
-                Loading backend dashboard data...
+              <p className="mt-2 flex items-center gap-2 text-xs text-blue-300">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Loading executive dashboard from PostgreSQL...
               </p>
             )}
 
             {!loading && dashboardData && (
               <p className="mt-2 text-xs text-emerald-300">
-                Backend connected: {dashboardData.message}
+                Dashboard connected: {dashboardData.message}
               </p>
             )}
 
@@ -201,93 +239,137 @@ export default function DashboardPage() {
             )}
           </div>
 
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              className="border-white/10 bg-white/5 text-white hover:bg-white/10"
-            >
-              Generate Digest
-            </Button>
-            <Button className="bg-blue-500 hover:bg-blue-600">
-              Run Analysis
-            </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link href="/ask">
+              <Button className="bg-violet-500 text-white hover:bg-violet-600">
+                <Sparkles className="mr-2 h-4 w-4" />
+                Ask FinCredit
+              </Button>
+            </Link>
+
+            <Link href="/reports">
+              <Button className="bg-blue-500 text-white hover:bg-blue-600">
+                <FileText className="mr-2 h-4 w-4" />
+                View Reports
+              </Button>
+            </Link>
           </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
-          <MetricCard
-            title="Portfolio Risk"
-            value={`${portfolioRisk} / 100`}
-            change="+12 this week"
+          {dashboard.metrics.map((metric, index) => (
+            <MetricCard
+              key={metric.label}
+              title={metric.label}
+              value={metric.value}
+              detail={metric.detail}
+              icon={getMetricIcon(index)}
+            />
+          ))}
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-4">
+          <MiniSummaryCard
+            title="Approved Reports"
+            value={String(dashboard.approvedReports)}
+            detail={`${approvedRate}% of total reports`}
+            icon={<CheckCircle2 className="h-5 w-5 text-emerald-300" />}
+          />
+
+          <MiniSummaryCard
+            title="Needs Review"
+            value={String(dashboard.needsReviewReports)}
+            detail={`${needsReviewRate}% waiting for analyst review`}
             icon={<Gauge className="h-5 w-5 text-amber-300" />}
           />
-          <MetricCard
-            title="Grounding Score"
-            value={`${groundingScore}%`}
-            change="Evidence-backed"
-            icon={<ShieldCheck className="h-5 w-5 text-emerald-300" />}
+
+          <MiniSummaryCard
+            title="Rejected Reports"
+            value={String(dashboard.rejectedReports)}
+            detail="Reports rejected during review"
+            icon={<ShieldCheck className="h-5 w-5 text-red-300" />}
           />
-          <MetricCard
-            title="Red Flags"
-            value={String(redFlagCount)}
-            change="1 high severity"
-            icon={<AlertTriangle className="h-5 w-5 text-red-300" />}
-          />
-          <MetricCard
-            title="Watchlist"
-            value={String(watchlistCount)}
-            change="2 need review"
-            icon={<BriefcaseBusiness className="h-5 w-5 text-blue-300" />}
+
+          <MiniSummaryCard
+            title="Future Multi-User"
+            value="Planned"
+            detail="Customer login + admin view roadmap"
+            icon={<Users className="h-5 w-5 text-violet-300" />}
           />
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <Card className="border-white/10 bg-white/[0.04] text-white">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <LineChart className="h-5 w-5 text-blue-300" />
-                Portfolio Risk Timeline
+                <FileText className="h-5 w-5 text-blue-300" />
+                Latest AI Reports
               </CardTitle>
             </CardHeader>
+
             <CardContent>
-              <div className="h-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={riskTrend}>
-                    <defs>
-                      <linearGradient id="risk" x1="0" y1="0" x2="0" y2="1">
-                        <stop
-                          offset="5%"
-                          stopColor="#3b82f6"
-                          stopOpacity={0.45}
-                        />
-                        <stop
-                          offset="95%"
-                          stopColor="#3b82f6"
-                          stopOpacity={0}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                    <XAxis dataKey="month" stroke="#94a3b8" />
-                    <YAxis stroke="#94a3b8" />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#0f172a",
-                        border: "1px solid rgba(255,255,255,0.1)",
-                        borderRadius: "12px",
-                        color: "white",
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="risk"
-                      stroke="#60a5fa"
-                      fillOpacity={1}
-                      fill="url(#risk)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-white/10">
+                    <TableHead className="text-slate-400">Report</TableHead>
+                    <TableHead className="text-slate-400">Ticker</TableHead>
+                    <TableHead className="text-slate-400">Status</TableHead>
+                    <TableHead className="text-slate-400">Grounding</TableHead>
+                    <TableHead className="text-slate-400">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+
+                <TableBody>
+                  {dashboard.latestReports.map((report) => (
+                    <TableRow key={report.id} className="border-white/10">
+                      <TableCell>
+                        <div>
+                          <p className="font-medium text-white">{report.id}</p>
+                          <p className="mt-1 max-w-[260px] truncate text-xs text-slate-400">
+                            {report.company}
+                          </p>
+                        </div>
+                      </TableCell>
+
+                      <TableCell>
+                        <Badge className="bg-blue-500/15 text-blue-200">
+                          {report.ticker}
+                        </Badge>
+                      </TableCell>
+
+                      <TableCell>
+                        <StatusBadge status={report.status} />
+                      </TableCell>
+
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Progress value={report.grounding} className="w-20" />
+                          <span className="text-sm text-slate-300">
+                            {report.grounding}%
+                          </span>
+                        </div>
+                      </TableCell>
+
+                      <TableCell>
+                        <Link href={`/reports/${report.id}`}>
+                          <Button
+                            size="sm"
+                            className="bg-white/10 text-white hover:bg-white/20"
+                          >
+                            Open
+                          </Button>
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {dashboard.latestReports.length === 0 && (
+                <p className="mt-4 text-sm text-slate-400">
+                  No reports yet. Generate one from the Governance page.
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -295,15 +377,16 @@ export default function DashboardPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="h-5 w-5 text-emerald-300" />
-                Sector Exposure
+                Report Approval Status
               </CardTitle>
             </CardHeader>
+
             <CardContent>
-              <div className="h-[280px]">
+              <div className="h-[300px] min-h-[300px] min-w-0 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={sectorData}>
+                  <BarChart data={reportStatusChart}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                    <XAxis dataKey="sector" stroke="#94a3b8" />
+                    <XAxis dataKey="status" stroke="#94a3b8" />
                     <YAxis stroke="#94a3b8" />
                     <Tooltip
                       contentStyle={{
@@ -313,11 +396,7 @@ export default function DashboardPage() {
                         color: "white",
                       }}
                     />
-                    <Bar
-                      dataKey="value"
-                      fill="#34d399"
-                      radius={[8, 8, 0, 0]}
-                    />
+                    <Bar dataKey="count" fill="#60a5fa" radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -325,200 +404,255 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
           <Card className="border-white/10 bg-white/[0.04] text-white">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Brain className="h-5 w-5 text-pink-300" />
-                Ask FinCredit
+                <Bot className="h-5 w-5 text-violet-300" />
+                Latest LangGraph Agent Runs
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="rounded-2xl border border-blue-400/20 bg-blue-500/10 p-4">
-                <p className="text-sm text-blue-100">
-                  Ask a portfolio or risk question
-                </p>
-                <div className="mt-4 flex gap-2">
-                  <Input
-                    className="border-white/10 bg-black/20 text-white placeholder:text-slate-500"
-                    placeholder="Why did my portfolio risk increase?"
-                  />
-                  <Button className="bg-blue-500 hover:bg-blue-600">
-                    Ask
-                  </Button>
-                </div>
-              </div>
 
-              <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
-                <p className="text-sm font-medium">Suggested answer preview</p>
-                <p className="mt-2 text-sm leading-6 text-slate-400">
-                  Your portfolio risk increased mainly because TSLA moved from
-                  medium to high risk, NVDA concentration rose above target, and
-                  MSFT added stronger regulatory language in its latest filing.
-                </p>
+            <CardContent className="space-y-3">
+              {dashboard.latestAgentRuns.map((run) => (
+                <div
+                  key={run.id}
+                  className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-violet-500/15 text-violet-200">
+                        Run #{run.id}
+                      </Badge>
 
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-white/10 bg-white/5 text-white hover:bg-white/10"
-                  >
-                    View Evidence
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-white/10 bg-white/5 text-white hover:bg-white/10"
-                  >
-                    Run Scenario
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-white/10 bg-white/5 text-white hover:bg-white/10"
-                  >
-                    Generate Report
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-white/10 bg-white/[0.04] text-white">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-red-300" />
-                Red Flag Detector
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {redFlags.map((flag) => (
-                  <div
-                    key={flag.ticker}
-                    className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 p-4"
-                  >
-                    <div>
-                      <p className="font-medium">{flag.ticker}</p>
-                      <p className="mt-1 text-sm text-slate-400">
-                        {flag.issue}
-                      </p>
-                    </div>
-                    <RiskBadge risk={flag.severity} />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <Card className="border-white/10 bg-white/[0.04] text-white">
-            <CardHeader>
-              <CardTitle>Portfolio Holdings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-white/10">
-                    <TableHead className="text-slate-400">Ticker</TableHead>
-                    <TableHead className="text-slate-400">Company</TableHead>
-                    <TableHead className="text-slate-400">Risk</TableHead>
-                    <TableHead className="text-slate-400">Score</TableHead>
-                    <TableHead className="text-slate-400">Exposure</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {holdings.map((h) => (
-                    <TableRow key={h.ticker} className="border-white/10">
-                      <TableCell className="font-medium text-white">
-                        {h.ticker}
-                      </TableCell>
-                      <TableCell className="text-slate-300">
-                        {h.company}
-                      </TableCell>
-                      <TableCell>
-                        <RiskBadge risk={h.risk} />
-                      </TableCell>
-                      <TableCell className="text-slate-300">
-                        {h.score}
-                      </TableCell>
-                      <TableCell className="text-slate-300">
-                        {h.exposure}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-
-          <Card className="border-white/10 bg-white/[0.04] text-white">
-            <CardHeader>
-              <CardTitle>Recent Reports</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {reports.map((report) => (
-                  <div
-                    key={report.company}
-                    className="rounded-2xl border border-white/10 bg-black/20 p-4"
-                  >
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium">{report.company}</p>
-                      <Badge className="bg-white/10 text-slate-200">
-                        {report.status}
+                      <Badge className="bg-blue-500/15 text-blue-200">
+                        {run.ticker ?? "Portfolio"}
                       </Badge>
                     </div>
-                    <p className="mt-1 text-sm text-slate-400">
-                      {report.type}
+
+                    <p className="text-xs text-slate-500">
+                      {new Date(run.createdAt).toLocaleString()}
                     </p>
-                    <div className="mt-3">
-                      <div className="mb-1 flex justify-between text-xs text-slate-400">
-                        <span>Grounding score</span>
-                        <span>{report.score}</span>
+                  </div>
+
+                  <p className="mt-3 text-sm leading-6 text-slate-300">
+                    {run.question}
+                  </p>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <MiniMetric
+                      label="Grounding"
+                      value={`${run.groundingScore}%`}
+                    />
+                    <MiniMetric
+                      label="Unsupported Claims"
+                      value={String(run.unsupportedClaims)}
+                    />
+                  </div>
+                </div>
+              ))}
+
+              {dashboard.latestAgentRuns.length === 0 && (
+                <p className="text-sm text-slate-400">
+                  No agent runs yet. Ask a question in Ask FinCredit.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-white/10 bg-white/[0.04] text-white">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5 text-blue-300" />
+                Latest Market Snapshots
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent className="space-y-3">
+              {dashboard.latestMarketSnapshots.map((snapshot, index) => {
+                const priceMove =
+                  snapshot.currentPrice !== null &&
+                  snapshot.previousClose !== null
+                    ? snapshot.currentPrice - snapshot.previousClose
+                    : null;
+
+                return (
+                  <div
+                    key={`${snapshot.ticker}-${snapshot.fetchedAt}-${index}`}
+                    className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-blue-500/15 text-blue-200">
+                            {snapshot.ticker}
+                          </Badge>
+                          <p className="text-sm font-medium text-white">
+                            {snapshot.companyName}
+                          </p>
+                        </div>
+
+                        <p className="mt-2 text-xs text-slate-500">
+                          {new Date(snapshot.fetchedAt).toLocaleString()}
+                        </p>
                       </div>
-                      <Progress
-                        value={Number(report.score.replace("%", ""))}
+
+                      <PriceMoveBadge value={priceMove} />
+                    </div>
+
+                    <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                      <MiniMetric
+                        label="Current Price"
+                        value={formatMoney(snapshot.currentPrice)}
+                      />
+                      <MiniMetric
+                        label="Previous Close"
+                        value={formatMoney(snapshot.previousClose)}
+                      />
+                      <MiniMetric
+                        label="Market Cap"
+                        value={formatLargeMoney(snapshot.marketCap)}
                       />
                     </div>
                   </div>
-                ))}
-              </div>
+                );
+              })}
+
+              {dashboard.latestMarketSnapshots.length === 0 && (
+                <p className="text-sm text-slate-400">
+                  No market snapshots yet. Open a company page to fetch market
+                  data.
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
 
-        <Card className="border-white/10 bg-white/[0.04] text-white">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-blue-300" />
-              AI Product Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-4">
-              <StatusCard title="Primary LLM" value="ChatGPT API" />
-              <StatusCard title="Local LLM" value="Ollama Qwen" />
-              <StatusCard title="Vector Store" value="ChromaDB" />
-              <StatusCard title="Audit Mode" value="Enabled" />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
+          <Card className="border-white/10 bg-white/[0.04] text-white">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="h-5 w-5 text-emerald-300" />
+                Latest SEC Fundamentals
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent className="space-y-3">
+              {dashboard.latestSecFundamentals.map((sec, index) => (
+                <div
+                  key={`${sec.ticker}-${sec.fetchedAt}-${index}`}
+                  className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-emerald-500/15 text-emerald-200">
+                        {sec.ticker}
+                      </Badge>
+                      <p className="text-sm font-medium text-white">
+                        {sec.companyName}
+                      </p>
+                    </div>
+
+                    <Badge className="bg-white/10 text-slate-300">
+                      FY {sec.fiscalYear ?? "N/A"}
+                    </Badge>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <MiniMetric
+                      label="Revenue"
+                      value={formatLargeMoney(sec.revenue)}
+                    />
+                    <MiniMetric
+                      label="Net Income"
+                      value={formatLargeMoney(sec.netIncome)}
+                    />
+                    <MiniMetric
+                      label="Assets"
+                      value={formatLargeMoney(sec.assets)}
+                    />
+                    <MiniMetric
+                      label="Liabilities"
+                      value={formatLargeMoney(sec.liabilities)}
+                    />
+                  </div>
+
+                  <p className="mt-3 text-xs text-slate-500">
+                    Filed: {sec.filed ?? "N/A"} · Fetched:{" "}
+                    {new Date(sec.fetchedAt).toLocaleString()}
+                  </p>
+                </div>
+              ))}
+
+              {dashboard.latestSecFundamentals.length === 0 && (
+                <p className="text-sm text-slate-400">
+                  No SEC fundamentals yet. Open a company page to fetch SEC
+                  data.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-white/10 bg-white/[0.04] text-white">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="h-5 w-5 text-violet-300" />
+                Architecture Roadmap
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent className="space-y-3">
+              <RoadmapItem
+                title="Current Single-Workspace Mode"
+                detail="Portfolio, reports, agent runs, and approvals are stored in PostgreSQL for the current local workspace."
+                status="Current"
+              />
+
+              <RoadmapItem
+                title="Customer Login and User Profiles"
+                detail="Next architecture phase will add user_id, customer profiles, and customer-specific portfolios, reports, watchlists, and agent runs."
+                status="Planned"
+              />
+
+              <RoadmapItem
+                title="Admin Dashboard"
+                detail="Admin role will have a separate admin login page to view all customers and open each customer profile."
+                status="Planned"
+              />
+
+              <RoadmapItem
+                title="Shared Market and SEC Data"
+                detail="Public company data such as market snapshots and SEC fundamentals can remain shared/global to avoid duplicate fetching."
+                status="Planned"
+              />
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </AppShell>
   );
 }
 
+function getMetricIcon(index: number) {
+  const icons = [
+    <Activity key="portfolio" className="h-5 w-5 text-blue-300" />,
+    <Gauge key="risk" className="h-5 w-5 text-amber-300" />,
+    <FileText key="reports" className="h-5 w-5 text-violet-300" />,
+    <ShieldCheck key="grounding" className="h-5 w-5 text-emerald-300" />,
+  ];
+
+  return icons[index] ?? icons[0];
+}
+
 function MetricCard({
   title,
   value,
-  change,
+  detail,
   icon,
 }: {
   title: string;
   value: string;
-  change: string;
+  detail: string;
   icon: React.ReactNode;
 }) {
   return (
@@ -526,31 +660,135 @@ function MetricCard({
       <CardContent className="p-5">
         <div className="flex items-center justify-between">
           {icon}
-          <Badge className="bg-white/10 text-slate-300">{change}</Badge>
+          <Badge className="bg-white/10 text-slate-300">Live</Badge>
         </div>
+
         <p className="mt-5 text-sm text-slate-400">{title}</p>
         <p className="mt-1 text-2xl font-semibold">{value}</p>
+        <p className="mt-2 text-xs leading-5 text-slate-500">{detail}</p>
       </CardContent>
     </Card>
   );
 }
 
-function RiskBadge({ risk }: { risk: string }) {
-  const styles =
-    risk === "High"
-      ? "bg-red-500/15 text-red-200"
-      : risk === "Medium"
-        ? "bg-amber-500/15 text-amber-200"
-        : "bg-emerald-500/15 text-emerald-200";
+function MiniSummaryCard({
+  title,
+  value,
+  detail,
+  icon,
+}: {
+  title: string;
+  value: string;
+  detail: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <Card className="border-white/10 bg-white/[0.04] text-white">
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between">
+          {icon}
+          <Badge className="bg-white/10 text-slate-300">Summary</Badge>
+        </div>
 
-  return <Badge className={styles}>{risk}</Badge>;
+        <p className="mt-5 text-sm text-slate-400">{title}</p>
+        <p className="mt-1 text-2xl font-semibold">{value}</p>
+        <p className="mt-2 text-xs leading-5 text-slate-500">{detail}</p>
+      </CardContent>
+    </Card>
+  );
 }
 
-function StatusCard({ title, value }: { title: string; value: string }) {
+function MiniMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-      <p className="text-sm text-slate-400">{title}</p>
-      <p className="mt-2 font-semibold text-white">{value}</p>
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+      <p className="text-xs text-slate-500">{label}</p>
+      <p className="mt-1 break-words text-sm font-medium text-white">{value}</p>
     </div>
   );
+}
+
+function RoadmapItem({
+  title,
+  detail,
+  status,
+}: {
+  title: string;
+  detail: string;
+  status: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="font-medium text-white">{title}</p>
+        <Badge className="bg-violet-500/15 text-violet-200">{status}</Badge>
+      </div>
+
+      <p className="mt-2 text-sm leading-6 text-slate-400">{detail}</p>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const styles =
+    status === "Approved"
+      ? "bg-emerald-500/15 text-emerald-200"
+      : status === "Rejected"
+        ? "bg-red-500/15 text-red-200"
+        : "bg-amber-500/15 text-amber-200";
+
+  return <Badge className={styles}>{status}</Badge>;
+}
+
+function PriceMoveBadge({ value }: { value: number | null }) {
+  if (value === null) {
+    return <Badge className="bg-white/10 text-slate-300">No price move</Badge>;
+  }
+
+  const isPositive = value >= 0;
+
+  return (
+    <Badge
+      className={
+        isPositive
+          ? "bg-emerald-500/15 text-emerald-200"
+          : "bg-red-500/15 text-red-200"
+      }
+    >
+      {isPositive ? (
+        <TrendingUp className="mr-1 h-3 w-3" />
+      ) : (
+        <TrendingDown className="mr-1 h-3 w-3" />
+      )}
+      {isPositive ? "+" : ""}
+      {value.toFixed(2)}
+    </Badge>
+  );
+}
+
+function formatMoney(value: number | null) {
+  if (value === null || value === undefined) {
+    return "$0.00";
+  }
+
+  return `$${value.toFixed(2)}`;
+}
+
+function formatLargeMoney(value: number | null) {
+  if (value === null || value === undefined) {
+    return "$0";
+  }
+
+  if (value >= 1_000_000_000_000) {
+    return `$${(value / 1_000_000_000_000).toFixed(2)}T`;
+  }
+
+  if (value >= 1_000_000_000) {
+    return `$${(value / 1_000_000_000).toFixed(2)}B`;
+  }
+
+  if (value >= 1_000_000) {
+    return `$${(value / 1_000_000).toFixed(2)}M`;
+  }
+
+  return `$${value.toLocaleString()}`;
 }
