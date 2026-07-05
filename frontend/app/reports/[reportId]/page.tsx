@@ -10,11 +10,14 @@ import {
   BadgeCheck,
   Calendar,
   CheckCircle2,
+  Clock,
   Download,
   FileSearch,
   FileText,
+  History,
   Lightbulb,
   Loader2,
+  MessageSquareText,
   ShieldCheck,
   Sparkles,
   Target,
@@ -26,10 +29,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
 import {
   getReportDocument,
   getReportPdfUrl,
-  updateReportStatus,
+  getReportStatusHistory,
+  updateReportStatusWithComment,
 } from "@/lib/api";
 
 type RiskDriver = {
@@ -59,7 +64,25 @@ type ReportDocument = {
 
 type UpdateStatusResponse = {
   reportId: string;
+  oldStatus: string | null;
   status: string;
+  comment: string | null;
+  message: string;
+};
+
+type StatusEvent = {
+  id: number;
+  reportId: string;
+  oldStatus: string | null;
+  newStatus: string;
+  comment: string | null;
+  changedBy: string;
+  changedAt: string;
+};
+
+type StatusHistoryResponse = {
+  reportId: string;
+  events: StatusEvent[];
   message: string;
 };
 
@@ -69,9 +92,15 @@ export default function ReportDocumentPage() {
 
   const [reportDocument, setReportDocument] =
     useState<ReportDocument | null>(null);
+  const [statusHistory, setStatusHistory] =
+    useState<StatusHistoryResponse | null>(null);
+
   const [loading, setLoading] = useState(true);
+  const [historyLoading, setHistoryLoading] = useState(true);
   const [apiError, setApiError] = useState("");
+
   const [currentStatus, setCurrentStatus] = useState("Needs Review");
+  const [reviewComment, setReviewComment] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [updatingStatus, setUpdatingStatus] = useState("");
 
@@ -95,8 +124,42 @@ export default function ReportDocumentPage() {
       }
     }
 
+    async function loadStatusHistory() {
+      if (!reportId) return;
+
+      try {
+        setHistoryLoading(true);
+
+        const response = await getReportStatusHistory(reportId);
+        setStatusHistory(response);
+
+        if (response.events.length > 0) {
+          setCurrentStatus(response.events[0].newStatus);
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setHistoryLoading(false);
+      }
+    }
+
     loadReportDocument();
+    loadStatusHistory();
   }, [reportId]);
+
+  async function refreshStatusHistory() {
+    try {
+      const response = await getReportStatusHistory(reportId);
+      setStatusHistory(response);
+
+      if (response.events.length > 0) {
+        setCurrentStatus(response.events[0].newStatus);
+      }
+    } catch (error) {
+      console.error(error);
+      setApiError("Failed to refresh report status history.");
+    }
+  }
 
   async function handleStatusUpdate(status: string) {
     try {
@@ -104,13 +167,14 @@ export default function ReportDocumentPage() {
       setStatusMessage("");
       setApiError("");
 
-      const response: UpdateStatusResponse = await updateReportStatus(
-        reportId,
-        status
-      );
+      const response: UpdateStatusResponse =
+        await updateReportStatusWithComment(reportId, status, reviewComment);
 
       setCurrentStatus(response.status);
       setStatusMessage(response.message);
+      setReviewComment("");
+
+      await refreshStatusHistory();
     } catch (error) {
       console.error(error);
       setApiError("Failed to update report status.");
@@ -155,7 +219,8 @@ export default function ReportDocumentPage() {
 
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
               Full AI analyst report document generated from a saved
-              LangGraph/LLM agent run, with approval workflow and PDF export.
+              LangGraph/LLM agent run, with approval workflow, review comments,
+              status history, and PDF export.
             </p>
 
             {loading && (
@@ -181,60 +246,6 @@ export default function ReportDocumentPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Button
-              type="button"
-              className="bg-emerald-500 text-white hover:bg-emerald-600"
-              disabled={updatingStatus === "Approved"}
-              onClick={() => handleStatusUpdate("Approved")}
-            >
-              {updatingStatus === "Approved" ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Approving
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Approve Report
-                </>
-              )}
-            </Button>
-
-            <Button
-              type="button"
-              className="bg-amber-500 text-white hover:bg-amber-600"
-              disabled={updatingStatus === "Needs Review"}
-              onClick={() => handleStatusUpdate("Needs Review")}
-            >
-              {updatingStatus === "Needs Review" ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Updating
-                </>
-              ) : (
-                "Needs Review"
-              )}
-            </Button>
-
-            <Button
-              type="button"
-              className="bg-red-500 text-white hover:bg-red-600"
-              disabled={updatingStatus === "Rejected"}
-              onClick={() => handleStatusUpdate("Rejected")}
-            >
-              {updatingStatus === "Rejected" ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Rejecting
-                </>
-              ) : (
-                <>
-                  <XCircle className="mr-2 h-4 w-4" />
-                  Reject Report
-                </>
-              )}
-            </Button>
-
             <a
               href={getReportPdfUrl(reportId)}
               target="_blank"
@@ -288,19 +299,169 @@ export default function ReportDocumentPage() {
             <Card className="border-white/10 bg-white/[0.04] text-white">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-blue-300" />
-                  Analyst Question
+                  <MessageSquareText className="h-5 w-5 text-amber-300" />
+                  Analyst Review Action
                 </CardTitle>
               </CardHeader>
 
-              <CardContent>
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
-                  <p className="text-sm leading-7 text-slate-200">
-                    {reportDocument.question}
+              <CardContent className="space-y-4">
+                <div>
+                  <p className="mb-2 text-sm text-slate-400">
+                    Add an optional review comment before approving, rejecting,
+                    or marking this report as needing review.
                   </p>
+
+                  <Textarea
+                    value={reviewComment}
+                    onChange={(event) => setReviewComment(event.target.value)}
+                    placeholder="Example: Approved after reviewing SEC evidence, risk drivers, and grounding score."
+                    className="min-h-[110px] border-white/10 bg-black/30 text-slate-100 placeholder:text-slate-500"
+                  />
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button
+                    type="button"
+                    className="bg-emerald-500 text-white hover:bg-emerald-600"
+                    disabled={updatingStatus === "Approved"}
+                    onClick={() => handleStatusUpdate("Approved")}
+                  >
+                    {updatingStatus === "Approved" ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Approving
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        Approve Report
+                      </>
+                    )}
+                  </Button>
+
+                  <Button
+                    type="button"
+                    className="bg-amber-500 text-white hover:bg-amber-600"
+                    disabled={updatingStatus === "Needs Review"}
+                    onClick={() => handleStatusUpdate("Needs Review")}
+                  >
+                    {updatingStatus === "Needs Review" ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Updating
+                      </>
+                    ) : (
+                      "Needs Review"
+                    )}
+                  </Button>
+
+                  <Button
+                    type="button"
+                    className="bg-red-500 text-white hover:bg-red-600"
+                    disabled={updatingStatus === "Rejected"}
+                    onClick={() => handleStatusUpdate("Rejected")}
+                  >
+                    {updatingStatus === "Rejected" ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Rejecting
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="mr-2 h-4 w-4" />
+                        Reject Report
+                      </>
+                    )}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
+
+            <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+              <Card className="border-white/10 bg-white/[0.04] text-white">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-blue-300" />
+                    Analyst Question
+                  </CardTitle>
+                </CardHeader>
+
+                <CardContent>
+                  <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
+                    <p className="text-sm leading-7 text-slate-200">
+                      {reportDocument.question}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-white/10 bg-white/[0.04] text-white">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <History className="h-5 w-5 text-violet-300" />
+                    Approval History
+                  </CardTitle>
+                </CardHeader>
+
+                <CardContent className="space-y-3">
+                  {historyLoading && (
+                    <p className="flex items-center gap-2 text-sm text-blue-300">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Loading status history...
+                    </p>
+                  )}
+
+                  {!historyLoading &&
+                    statusHistory &&
+                    statusHistory.events.length > 0 &&
+                    statusHistory.events.map((event) => (
+                      <div
+                        key={event.id}
+                        className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <StatusBadge
+                              status={event.oldStatus ?? "Initial"}
+                            />
+                            <span className="text-xs text-slate-500">→</span>
+                            <StatusBadge status={event.newStatus} />
+                          </div>
+
+                          <Badge className="bg-white/10 text-slate-300">
+                            {event.changedBy}
+                          </Badge>
+                        </div>
+
+                        {event.comment && (
+                          <p className="mt-3 text-sm leading-6 text-slate-300">
+                            {event.comment}
+                          </p>
+                        )}
+
+                        {!event.comment && (
+                          <p className="mt-3 text-sm leading-6 text-slate-500">
+                            No review comment added.
+                          </p>
+                        )}
+
+                        <p className="mt-3 flex items-center gap-2 text-xs text-slate-500">
+                          <Clock className="h-3 w-3" />
+                          {new Date(event.changedAt).toLocaleString()}
+                        </p>
+                      </div>
+                    ))}
+
+                  {!historyLoading &&
+                    (!statusHistory || statusHistory.events.length === 0) && (
+                      <p className="text-sm text-slate-400">
+                        No approval history yet. Add a review comment and update
+                        the report status.
+                      </p>
+                    )}
+                </CardContent>
+              </Card>
+            </div>
 
             <Card className="border-white/10 bg-white/[0.04] text-white">
               <CardHeader>
@@ -548,7 +709,9 @@ function StatusBadge({ status }: { status: string }) {
       ? "bg-emerald-500/15 text-emerald-200"
       : status === "Rejected"
         ? "bg-red-500/15 text-red-200"
-        : "bg-amber-500/15 text-amber-200";
+        : status === "Initial"
+          ? "bg-blue-500/15 text-blue-200"
+          : "bg-amber-500/15 text-amber-200";
 
-  return <Badge className={styles}>Status: {status}</Badge>;
+  return <Badge className={styles}>{status}</Badge>;
 }

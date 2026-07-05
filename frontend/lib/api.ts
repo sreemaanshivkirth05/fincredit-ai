@@ -209,3 +209,41 @@ export async function generateReportFromAgentRun(agentRunId: number) {
 
   return response.json();
 }
+export async function updateReportStatusWithComment(
+  reportId: string,
+  status: string,
+  comment: string
+) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/reports/${reportId}/status`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+      body: JSON.stringify({ status, comment }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to update report status with comment");
+  }
+
+  return response.json();
+}
+
+export async function getReportStatusHistory(reportId: string) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/reports/${reportId}/status-history`,
+    {
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch report status history");
+  }
+
+  return response.json();
+}

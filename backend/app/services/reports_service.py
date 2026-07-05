@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.models.agent_run import AgentRun
 from app.models.report import Report
 from app.models.report_document import ReportDocument
+from app.models.report_status_event import ReportStatusEvent
 from app.services.pdf_service import build_report_pdf
 
 
@@ -48,12 +49,12 @@ def get_reports_data(db: Session):
         },
         {
             "title": "Report Generation",
-            "detail": "Saved LangGraph runs are converted into analyst report records and full report documents.",
+            "detail": "Saved LangGraph runs are converted into analyst report records and full report documents. Duplicate reports are prevented per agent run.",
             "status": "Complete",
         },
         {
             "title": "Governance Review",
-            "detail": "Grounding score, unsupported claims, evidence, and model workflow metadata are available for audit review.",
+            "detail": "Grounding score, unsupported claims, evidence, review comments, and approval history are available for audit review.",
             "status": "In Review",
         },
     ]
@@ -85,6 +86,35 @@ def generate_report_from_agent_run(agent_run_id: int, db: Session):
 
     if not agent_run:
         raise HTTPException(status_code=404, detail="Agent run not found")
+
+    existing_report_document = (
+        db.query(ReportDocument)
+        .filter(ReportDocument.agent_run_id == agent_run_id)
+        .order_by(ReportDocument.created_at.desc())
+        .first()
+    )
+
+    if existing_report_document:
+        existing_report = (
+            db.query(Report)
+            .filter(Report.report_id == existing_report_document.report_id)
+            .first()
+        )
+
+        if existing_report:
+            return {
+                "reportId": existing_report.report_id,
+                "agentRunId": agent_run.id,
+                "ticker": existing_report.ticker,
+                "company": existing_report.company,
+                "reportType": existing_report.report_type,
+                "status": existing_report.status,
+                "grounding": existing_report.grounding,
+                "unsupported": existing_report.unsupported,
+                "model": existing_report.model,
+                "created": existing_report.created,
+                "message": f"Existing report {existing_report.report_id} returned for agent run {agent_run.id}. No duplicate report was created.",
+            }
 
     ticker = agent_run.ticker or "PORTFOLIO"
 
@@ -183,7 +213,12 @@ def get_report_pdf(report_id: str, db: Session):
     return build_report_pdf(report_document)
 
 
-def update_report_status(report_id: str, status: str, db: Session):
+def update_report_status(
+    report_id: str,
+    status: str,
+    comment: str | None,
+    db: Session,
+):
     allowed_statuses = {"Approved", "Needs Review", "Rejected"}
 
     if status not in allowed_statuses:
@@ -197,13 +232,56 @@ def update_report_status(report_id: str, status: str, db: Session):
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
 
+    old_status = report.status
     report.status = status
 
+    status_event = ReportStatusEvent(
+        report_id=report.report_id,
+        old_status=old_status,
+        new_status=status,
+        comment=comment,
+        changed_by="analyst",
+    )
+
+    db.add(status_event)
     db.commit()
     db.refresh(report)
 
     return {
         "reportId": report.report_id,
+        "oldStatus": old_status,
         "status": report.status,
-        "message": f"Report {report.report_id} status updated to {report.status}",
+        "comment": comment,
+        "message": f"Report {report.report_id} status updated from {old_status} to {report.status}",
+    }
+
+
+def get_report_status_history(report_id: str, db: Session):
+    report = db.query(Report).filter(Report.report_id == report_id).first()
+
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    events = (
+        db.query(ReportStatusEvent)
+        .filter(ReportStatusEvent.report_id == report_id)
+        .order_by(ReportStatusEvent.changed_at.desc())
+        .all()
+    )
+
+    return {
+        "reportId": report_id,
+        "events": [
+            {
+                "id": event.id,
+                "reportId": event.report_id,
+                "oldStatus": event.old_status,
+                "newStatus": event.new_status,
+                "comment": event.comment,
+                "changedBy": event.changed_by,
+                "changedAt": event.changed_at,
+            }
+            for event in events
+        ],
+        "message": f"Status history loaded for report {report_id}",
     }

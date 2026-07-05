@@ -67,9 +67,28 @@ class ReportDocumentResponse(BaseModel):
 
 class UpdateReportStatusRequest(BaseModel):
     status: str
+    comment: str | None = None
 
 
 class UpdateReportStatusResponse(BaseModel):
     reportId: str
+    oldStatus: str | None
     status: str
+    comment: str | None
+    message: str
+
+
+class ReportStatusEventResponse(BaseModel):
+    id: int
+    reportId: str
+    oldStatus: str | None
+    newStatus: str
+    comment: str | None
+    changedBy: str
+    changedAt: datetime
+
+
+class ReportStatusHistoryResponse(BaseModel):
+    reportId: str
+    events: list[ReportStatusEventResponse]
     message: str

@@ -9,6 +9,7 @@ from app.schemas.reports import (
     ReportsResponse,
     UpdateReportStatusRequest,
     UpdateReportStatusResponse,
+    ReportStatusHistoryResponse,
 )
 from app.services.reports_service import (
     generate_report_from_agent_run,
@@ -16,6 +17,7 @@ from app.services.reports_service import (
     get_reports_data,
     get_report_pdf,
     update_report_status,
+    get_report_status_history,
 )
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
@@ -57,4 +59,10 @@ def update_report_status_route(
     request: UpdateReportStatusRequest,
     db: Session = Depends(get_db),
 ):
-    return update_report_status(report_id, request.status, db)
+    return update_report_status(report_id, request.status, request.comment, db)
+@router.get(
+    "/{report_id}/status-history",
+    response_model=ReportStatusHistoryResponse,
+)
+def get_report_status_history_route(report_id: str, db: Session = Depends(get_db)):
+    return get_report_status_history(report_id, db)
