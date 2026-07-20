@@ -1,3 +1,6 @@
+from datetime import datetime
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -10,6 +13,40 @@ class WatchlistCompanyResponse(BaseModel):
     sentiment: str
     filing: str
     status: str
+
+    currentPrice: Optional[float] = None
+    previousClose: Optional[float] = None
+    marketCap: Optional[float] = None
+    volume: Optional[int] = None
+    currency: Optional[str] = None
+    exchange: Optional[str] = None
+    addedAt: Optional[datetime] = None
+
+
+class WatchlistAddRequest(BaseModel):
+    ticker: str
+    company: Optional[str] = None
+    sector: Optional[str] = None
+
+    currentPrice: Optional[float] = None
+    previousClose: Optional[float] = None
+    marketCap: Optional[float] = None
+    volume: Optional[int] = None
+    currency: Optional[str] = None
+    exchange: Optional[str] = None
+
+
+class WatchlistActionResponse(BaseModel):
+    ticker: str
+    isWatchlisted: bool
+    message: str
+    item: Optional[WatchlistCompanyResponse] = None
+
+
+class WatchlistStatusResponse(BaseModel):
+    ticker: str
+    isWatchlisted: bool
+    item: Optional[WatchlistCompanyResponse] = None
 
 
 class SentimentDataResponse(BaseModel):

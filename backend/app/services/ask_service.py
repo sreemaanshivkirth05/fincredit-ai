@@ -106,6 +106,8 @@ def get_agent_runs_by_ticker_service(ticker: str, db: Session):
         ],
         "message": f"Latest AI agent runs loaded for ticker {normalized_ticker}",
     }
+
+
 from fastapi import HTTPException
 
 def get_agent_run_by_id_service(agent_run_id: int, db: Session):

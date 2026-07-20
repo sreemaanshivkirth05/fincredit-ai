@@ -8,6 +8,7 @@ import ReactMarkdown from "react-markdown";
 import {
   ArrowLeft,
   BadgeCheck,
+  BrainCircuit,
   Calendar,
   CheckCircle2,
   Clock,
@@ -220,7 +221,7 @@ export default function ReportDocumentPage() {
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
               Full AI analyst report document generated from a saved
               LangGraph/LLM agent run, with approval workflow, review comments,
-              status history, and PDF export.
+              status history, PDF export, and source run traceability.
             </p>
 
             {loading && (
@@ -246,6 +247,19 @@ export default function ReportDocumentPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            {reportDocument && (
+              <Link href={`/agent-runs/${reportDocument.agentRunId}`}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/10 hover:text-white"
+                >
+                  <BrainCircuit className="mr-2 h-4 w-4" />
+                  View Source Agent Run
+                </Button>
+              </Link>
+            )}
+
             <a
               href={getReportPdfUrl(reportId)}
               target="_blank"
@@ -278,7 +292,7 @@ export default function ReportDocumentPage() {
                 title="Agent Run"
                 value={`#${reportDocument.agentRunId}`}
                 change="Traceable"
-                icon={<Sparkles className="h-5 w-5 text-violet-300" />}
+                icon={<BrainCircuit className="h-5 w-5 text-violet-300" />}
               />
 
               <MetricCard
@@ -295,6 +309,38 @@ export default function ReportDocumentPage() {
                 icon={<ShieldCheck className="h-5 w-5 text-amber-300" />}
               />
             </div>
+
+            <Card className="border-emerald-500/20 bg-emerald-500/[0.05] text-white">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BrainCircuit className="h-5 w-5 text-emerald-300" />
+                  Source Agent Run Traceability
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+                <div>
+                  <p className="text-sm leading-6 text-slate-300">
+                    This report was generated from saved AI agent run{" "}
+                    <span className="font-semibold text-white">
+                      #{reportDocument.agentRunId}
+                    </span>
+                    . Open the source run to inspect the original question,
+                    full AI answer, evidence, risk drivers, and audit metadata.
+                  </p>
+                </div>
+
+                <Link href={`/agent-runs/${reportDocument.agentRunId}`}>
+                  <Button
+                    type="button"
+                    className="w-fit bg-emerald-500 text-white hover:bg-emerald-600"
+                  >
+                    <BrainCircuit className="mr-2 h-4 w-4" />
+                    Open Source Agent Run
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
 
             <Card className="border-white/10 bg-white/[0.04] text-white">
               <CardHeader>
@@ -630,21 +676,39 @@ export default function ReportDocumentPage() {
               </CardHeader>
 
               <CardContent>
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-4">
                   <MiniMetric
                     label="Report ID"
                     value={reportDocument.reportId}
                   />
 
                   <MiniMetric
-                    label="Agent Run ID"
-                    value={String(reportDocument.agentRunId)}
+                    label="Source Agent Run"
+                    value={`#${reportDocument.agentRunId}`}
+                  />
+
+                  <MiniMetric
+                    label="Ticker"
+                    value={reportDocument.ticker ?? "Portfolio"}
                   />
 
                   <MiniMetric
                     label="Created"
                     value={new Date(reportDocument.createdAt).toLocaleString()}
                   />
+                </div>
+
+                <div className="mt-4">
+                  <Link href={`/agent-runs/${reportDocument.agentRunId}`}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/10 hover:text-white"
+                    >
+                      <BrainCircuit className="mr-2 h-4 w-4" />
+                      Open Source Agent Run #{reportDocument.agentRunId}
+                    </Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>

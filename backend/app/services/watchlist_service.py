@@ -1,24 +1,138 @@
+from datetime import datetime
+
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models.watchlist_company import WatchlistCompany
+from app.schemas.watchlist import WatchlistAddRequest
+
+
+def normalize_ticker(ticker: str) -> str:
+    return ticker.strip().upper()
+
+
+def watchlist_company_to_dict(company: WatchlistCompany):
+    return {
+        "ticker": company.ticker,
+        "company": company.company,
+        "sector": company.sector,
+        "risk": company.risk,
+        "riskScore": company.risk_score,
+        "sentiment": company.sentiment,
+        "filing": company.filing,
+        "status": company.status,
+        "currentPrice": company.current_price,
+        "previousClose": company.previous_close,
+        "marketCap": company.market_cap,
+        "volume": company.volume,
+        "currency": company.currency,
+        "exchange": company.exchange,
+        "addedAt": company.added_at,
+    }
+
+
+def get_watchlist_item_by_ticker(db: Session, ticker: str):
+    cleaned_ticker = normalize_ticker(ticker)
+
+    return (
+        db.query(WatchlistCompany)
+        .filter(func.upper(WatchlistCompany.ticker) == cleaned_ticker)
+        .first()
+    )
+
+
+def get_watchlist_status(db: Session, ticker: str):
+    cleaned_ticker = normalize_ticker(ticker)
+    company = get_watchlist_item_by_ticker(db, cleaned_ticker)
+
+    return {
+        "ticker": cleaned_ticker,
+        "isWatchlisted": company is not None,
+        "item": watchlist_company_to_dict(company) if company else None,
+    }
+
+
+def add_stock_to_watchlist(db: Session, request: WatchlistAddRequest):
+    cleaned_ticker = normalize_ticker(request.ticker)
+    existing_company = get_watchlist_item_by_ticker(db, cleaned_ticker)
+
+    if existing_company:
+        existing_company.company = request.company or existing_company.company
+        existing_company.sector = request.sector or existing_company.sector
+        existing_company.current_price = request.currentPrice
+        existing_company.previous_close = request.previousClose
+        existing_company.market_cap = request.marketCap
+        existing_company.volume = request.volume
+        existing_company.currency = request.currency
+        existing_company.exchange = request.exchange
+
+        db.commit()
+        db.refresh(existing_company)
+
+        return {
+            "ticker": cleaned_ticker,
+            "isWatchlisted": True,
+            "message": f"{cleaned_ticker} is already in the watchlist. Existing item updated.",
+            "item": watchlist_company_to_dict(existing_company),
+        }
+
+    new_company = WatchlistCompany(
+        ticker=cleaned_ticker,
+        company=request.company or cleaned_ticker,
+        sector=request.sector or "Unknown",
+        risk="Learning",
+        risk_score=50,
+        sentiment="Neutral",
+        filing="No new filing changes",
+        status="Tracking",
+        current_price=request.currentPrice,
+        previous_close=request.previousClose,
+        market_cap=request.marketCap,
+        volume=request.volume,
+        currency=request.currency or "USD",
+        exchange=request.exchange,
+        added_at=datetime.utcnow(),
+    )
+
+    db.add(new_company)
+    db.commit()
+    db.refresh(new_company)
+
+    return {
+        "ticker": cleaned_ticker,
+        "isWatchlisted": True,
+        "message": f"{cleaned_ticker} added to watchlist.",
+        "item": watchlist_company_to_dict(new_company),
+    }
+
+
+def remove_stock_from_watchlist(db: Session, ticker: str):
+    cleaned_ticker = normalize_ticker(ticker)
+    company = get_watchlist_item_by_ticker(db, cleaned_ticker)
+
+    if not company:
+        return {
+            "ticker": cleaned_ticker,
+            "isWatchlisted": False,
+            "message": f"{cleaned_ticker} was not in the watchlist.",
+            "item": None,
+        }
+
+    db.delete(company)
+    db.commit()
+
+    return {
+        "ticker": cleaned_ticker,
+        "isWatchlisted": False,
+        "message": f"{cleaned_ticker} removed from watchlist.",
+        "item": None,
+    }
 
 
 def get_watchlist_data(db: Session):
     companies = db.query(WatchlistCompany).order_by(WatchlistCompany.id.asc()).all()
 
-    watchlist = [
-        {
-            "ticker": company.ticker,
-            "company": company.company,
-            "sector": company.sector,
-            "risk": company.risk,
-            "riskScore": company.risk_score,
-            "sentiment": company.sentiment,
-            "filing": company.filing,
-            "status": company.status,
-        }
-        for company in companies
-    ]
+    watchlist = [watchlist_company_to_dict(company) for company in companies]
 
     sentiment_data = [
         {
@@ -31,23 +145,12 @@ def get_watchlist_data(db: Session):
 
     news_radar = [
         {
-            "ticker": "TSLA",
-            "headline": "Margin pressure and regulatory concerns increased in recent coverage.",
-            "category": "Risk News",
-            "impact": "High",
-        },
-        {
-            "ticker": "NVDA",
-            "headline": "AI infrastructure demand remains strong across enterprise customers.",
-            "category": "Growth News",
+            "ticker": company["ticker"],
+            "headline": f"{company['ticker']} is being tracked in your learning watchlist.",
+            "category": "Watchlist",
             "impact": "Medium",
-        },
-        {
-            "ticker": "MSFT",
-            "headline": "Cloud and AI revenue outlook remains positive, but regulatory mentions increased.",
-            "category": "Mixed News",
-            "impact": "Medium",
-        },
+        }
+        for company in watchlist[:3]
     ]
 
     needs_review = sum(

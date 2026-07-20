@@ -9,12 +9,14 @@ import {
   Home,
   LineChart,
   MessageSquareText,
+  Search,
   Settings,
   ShieldCheck,
 } from "lucide-react";
 
 const items = [
   { label: "Dashboard", href: "/dashboard", icon: Home },
+  { label: "Explore Stocks", href: "/stock/AMZN", icon: Search },
   { label: "Portfolio", href: "/portfolio", icon: BriefcaseBusiness },
   { label: "Watchlist", href: "/watchlist", icon: Activity },
   { label: "Ask FinCredit", href: "/ask", icon: MessageSquareText },
@@ -41,7 +43,10 @@ export function AppSidebar() {
       <nav className="mt-8 space-y-2">
         {items.map((item) => {
           const Icon = item.icon;
-          const active = pathname === item.href;
+          const active =
+            item.href === "/stock/AMZN"
+              ? pathname.startsWith("/stock")
+              : pathname === item.href;
 
           return (
             <Link

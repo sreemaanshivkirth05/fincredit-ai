@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import Link from "next/link";
 
 import {
@@ -12,7 +12,6 @@ import {
   Database,
   FileText,
   Gauge,
-  Loader2,
   ShieldCheck,
   Sparkles,
   TrendingDown,
@@ -31,10 +30,12 @@ import {
 } from "recharts";
 
 import { AppShell } from "@/components/app-shell";
+import { StockSearch } from "@/components/stock-search";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+
 import {
   Table,
   TableBody,
@@ -43,7 +44,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getDashboardData } from "@/lib/api";
 
 type DashboardMetric = {
   label: string;
@@ -108,7 +108,7 @@ type DashboardData = {
   message: string;
 };
 
-const fallbackDashboard: DashboardData = {
+const dashboard: DashboardData = {
   portfolioValue: 0,
   portfolioCount: 0,
   averageRiskScore: 0,
@@ -122,59 +122,32 @@ const fallbackDashboard: DashboardData = {
     {
       label: "Portfolio Value",
       value: "$0",
-      detail: "No holdings loaded",
+      detail: "Paper-trading portfolio setup is coming in the next phase",
     },
     {
-      label: "Average Risk Score",
-      value: "0",
-      detail: "No risk score available",
+      label: "Watchlist",
+      value: "Phase 40B",
+      detail: "Add/remove watchlist actions will be connected next",
     },
     {
-      label: "AI Reports",
-      value: "0",
-      detail: "No reports generated",
+      label: "Stock Research",
+      value: "Live",
+      detail: "Search tickers and open the new stock detail page",
     },
     {
-      label: "Grounding Score",
-      value: "0%",
-      detail: "No grounding data available",
+      label: "AI Assistant",
+      value: "Ready",
+      detail: "Ask stock and portfolio questions from the AI page",
     },
   ],
   latestReports: [],
   latestAgentRuns: [],
   latestMarketSnapshots: [],
   latestSecFundamentals: [],
-  message: "Fallback dashboard data loaded",
+  message: "Phase 40A static dashboard loaded",
 };
 
 export default function DashboardPage() {
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
-    null
-  );
-  const [loading, setLoading] = useState(true);
-  const [apiError, setApiError] = useState("");
-
-  useEffect(() => {
-    async function loadDashboardData() {
-      try {
-        setLoading(true);
-        setApiError("");
-
-        const response = await getDashboardData();
-        setDashboardData(response);
-      } catch (error) {
-        console.error(error);
-        setApiError("Dashboard API is not connected. Showing fallback data.");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadDashboardData();
-  }, []);
-
-  const dashboard = dashboardData ?? fallbackDashboard;
-
   const reportStatusChart = [
     {
       status: "Approved",
@@ -208,35 +181,22 @@ export default function DashboardPage() {
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
             <Badge className="mb-3 bg-blue-500/15 text-blue-200">
-              Executive Dashboard
+              Stock Research Dashboard
             </Badge>
 
             <h1 className="text-3xl font-semibold tracking-tight">
-              FinCredit AI Control Center
+              FinCredit AI Investing Sandbox
             </h1>
 
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-              Monitor portfolio exposure, AI reports, governance status, latest
-              LangGraph agent activity, market snapshots, and SEC fundamentals
-              from one place.
+              Research stocks, understand fundamentals, ask AI questions, and
+              build confidence before adding paper-trading and portfolio
+              intelligence features.
             </p>
 
-            {loading && (
-              <p className="mt-2 flex items-center gap-2 text-xs text-blue-300">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                Loading executive dashboard from PostgreSQL...
-              </p>
-            )}
-
-            {!loading && dashboardData && (
-              <p className="mt-2 text-xs text-emerald-300">
-                Dashboard connected: {dashboardData.message}
-              </p>
-            )}
-
-            {apiError && (
-              <p className="mt-2 text-xs text-red-300">{apiError}</p>
-            )}
+            <p className="mt-2 text-xs text-emerald-300">
+              Dashboard ready: {dashboard.message}
+            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -255,6 +215,25 @@ export default function DashboardPage() {
             </Link>
           </div>
         </div>
+
+        <Card className="border-white/10 bg-white/[0.04] text-white">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <TrendingUp className="h-5 w-5 text-emerald-300" />
+              Explore Stocks
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            <p className="mb-3 text-sm text-slate-400">
+              Search a ticker such as AAPL, MSFT, NVDA, or TSLA to open the new
+              beginner-friendly stock research page with price, chart, market
+              stats, SEC fundamentals, and AI actions.
+            </p>
+
+            <StockSearch />
+          </CardContent>
+        </Card>
 
         <div className="grid gap-4 md:grid-cols-4">
           {dashboard.metrics.map((metric, index) => (
@@ -291,9 +270,9 @@ export default function DashboardPage() {
           />
 
           <MiniSummaryCard
-            title="Future Multi-User"
-            value="Planned"
-            detail="Customer login + admin view roadmap"
+            title="Paper Trading"
+            value="Next"
+            detail="Portfolio buy/sell simulation comes after watchlist"
             icon={<Users className="h-5 w-5 text-violet-300" />}
           />
         </div>
@@ -314,7 +293,9 @@ export default function DashboardPage() {
                     <TableHead className="text-slate-400">Report</TableHead>
                     <TableHead className="text-slate-400">Ticker</TableHead>
                     <TableHead className="text-slate-400">Status</TableHead>
-                    <TableHead className="text-slate-400">Grounding</TableHead>
+                    <TableHead className="text-slate-400">
+                      Grounding
+                    </TableHead>
                     <TableHead className="text-slate-400">Action</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -367,7 +348,8 @@ export default function DashboardPage() {
 
               {dashboard.latestReports.length === 0 && (
                 <p className="mt-4 text-sm text-slate-400">
-                  No reports yet. Generate one from the Governance page.
+                  Reports are still available as an advanced feature. Phase 40A
+                  does not expand report/governance functionality.
                 </p>
               )}
             </CardContent>
@@ -382,7 +364,7 @@ export default function DashboardPage() {
             </CardHeader>
 
             <CardContent>
-              <div className="h-[300px] min-h-[300px] min-w-0 w-full">
+              <div className="h-[300px] min-h-[300px] w-full min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={reportStatusChart}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
@@ -444,6 +426,7 @@ export default function DashboardPage() {
                       label="Grounding"
                       value={`${run.groundingScore}%`}
                     />
+
                     <MiniMetric
                       label="Unsupported Claims"
                       value={String(run.unsupportedClaims)}
@@ -454,7 +437,7 @@ export default function DashboardPage() {
 
               {dashboard.latestAgentRuns.length === 0 && (
                 <p className="text-sm text-slate-400">
-                  No agent runs yet. Ask a question in Ask FinCredit.
+                  No agent runs yet. Ask a stock question in Ask FinCredit.
                 </p>
               )}
             </CardContent>
@@ -487,6 +470,7 @@ export default function DashboardPage() {
                           <Badge className="bg-blue-500/15 text-blue-200">
                             {snapshot.ticker}
                           </Badge>
+
                           <p className="text-sm font-medium text-white">
                             {snapshot.companyName}
                           </p>
@@ -505,10 +489,12 @@ export default function DashboardPage() {
                         label="Current Price"
                         value={formatMoney(snapshot.currentPrice)}
                       />
+
                       <MiniMetric
                         label="Previous Close"
                         value={formatMoney(snapshot.previousClose)}
                       />
+
                       <MiniMetric
                         label="Market Cap"
                         value={formatLargeMoney(snapshot.marketCap)}
@@ -520,8 +506,8 @@ export default function DashboardPage() {
 
               {dashboard.latestMarketSnapshots.length === 0 && (
                 <p className="text-sm text-slate-400">
-                  No market snapshots yet. Open a company page to fetch market
-                  data.
+                  Market snapshots will appear here after later phases connect
+                  dashboard storage again. For now, use stock search above.
                 </p>
               )}
             </CardContent>
@@ -548,6 +534,7 @@ export default function DashboardPage() {
                       <Badge className="bg-emerald-500/15 text-emerald-200">
                         {sec.ticker}
                       </Badge>
+
                       <p className="text-sm font-medium text-white">
                         {sec.companyName}
                       </p>
@@ -563,14 +550,17 @@ export default function DashboardPage() {
                       label="Revenue"
                       value={formatLargeMoney(sec.revenue)}
                     />
+
                     <MiniMetric
                       label="Net Income"
                       value={formatLargeMoney(sec.netIncome)}
                     />
+
                     <MiniMetric
                       label="Assets"
                       value={formatLargeMoney(sec.assets)}
                     />
+
                     <MiniMetric
                       label="Liabilities"
                       value={formatLargeMoney(sec.liabilities)}
@@ -586,8 +576,8 @@ export default function DashboardPage() {
 
               {dashboard.latestSecFundamentals.length === 0 && (
                 <p className="text-sm text-slate-400">
-                  No SEC fundamentals yet. Open a company page to fetch SEC
-                  data.
+                  SEC fundamentals are now shown on the new stock detail page.
+                  Open a ticker from the search box to view them.
                 </p>
               )}
             </CardContent>
@@ -597,32 +587,32 @@ export default function DashboardPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Building2 className="h-5 w-5 text-violet-300" />
-                Architecture Roadmap
+                Product Roadmap
               </CardTitle>
             </CardHeader>
 
             <CardContent className="space-y-3">
               <RoadmapItem
-                title="Current Single-Workspace Mode"
-                detail="Portfolio, reports, agent runs, and approvals are stored in PostgreSQL for the current local workspace."
+                title="Phase 40A: Stock Research"
+                detail="Create /stock/[ticker], show price, chart, market stats, SEC fundamentals, news placeholder, and AI action links."
                 status="Current"
               />
 
               <RoadmapItem
-                title="Customer Login and User Profiles"
-                detail="Next architecture phase will add user_id, customer profiles, and customer-specific portfolios, reports, watchlists, and agent runs."
+                title="Phase 40B: Watchlist"
+                detail="Connect add/remove watchlist actions from stock detail pages and create persistent watchlist state."
+                status="Next"
+              />
+
+              <RoadmapItem
+                title="Phase 40C: Paper Portfolio"
+                detail="Add simulated buy/sell transactions, holdings, cost basis, current value, and profit/loss."
                 status="Planned"
               />
 
               <RoadmapItem
-                title="Admin Dashboard"
-                detail="Admin role will have a separate admin login page to view all customers and open each customer profile."
-                status="Planned"
-              />
-
-              <RoadmapItem
-                title="Shared Market and SEC Data"
-                detail="Public company data such as market snapshots and SEC fundamentals can remain shared/global to avoid duplicate fetching."
+                title="Phase 40D: Portfolio-Aware AI"
+                detail="Use holdings, watchlist, market data, fundamentals, and risk signals to answer beginner investing questions."
                 status="Planned"
               />
             </CardContent>
@@ -637,8 +627,8 @@ function getMetricIcon(index: number) {
   const icons = [
     <Activity key="portfolio" className="h-5 w-5 text-blue-300" />,
     <Gauge key="risk" className="h-5 w-5 text-amber-300" />,
-    <FileText key="reports" className="h-5 w-5 text-violet-300" />,
-    <ShieldCheck key="grounding" className="h-5 w-5 text-emerald-300" />,
+    <TrendingUp key="stock" className="h-5 w-5 text-emerald-300" />,
+    <ShieldCheck key="ai" className="h-5 w-5 text-violet-300" />,
   ];
 
   return icons[index] ?? icons[0];
@@ -653,14 +643,14 @@ function MetricCard({
   title: string;
   value: string;
   detail: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
 }) {
   return (
     <Card className="border-white/10 bg-white/[0.04] text-white">
       <CardContent className="p-5">
         <div className="flex items-center justify-between">
           {icon}
-          <Badge className="bg-white/10 text-slate-300">Live</Badge>
+          <Badge className="bg-white/10 text-slate-300">MVP</Badge>
         </div>
 
         <p className="mt-5 text-sm text-slate-400">{title}</p>
@@ -680,7 +670,7 @@ function MiniSummaryCard({
   title: string;
   value: string;
   detail: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
 }) {
   return (
     <Card className="border-white/10 bg-white/[0.04] text-white">
