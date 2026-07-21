@@ -37,12 +37,38 @@ export type WatchlistAddPayload = {
   exchange?: string | null;
 };
 
+export type PortfolioBuyPayload = {
+  ticker: string;
+  company?: string | null;
+  sector?: string | null;
+  shares: number;
+  price: number;
+  currency?: string | null;
+  exchange?: string | null;
+};
+
 export async function getDashboardData() {
   return fetchJson(`${API_BASE_URL}/api/dashboard`);
 }
 
 export async function getPortfolioData() {
   return fetchJson(`${API_BASE_URL}/api/portfolio`);
+}
+
+export async function buyStockForPortfolio(payload: PortfolioBuyPayload) {
+  return fetchJson(`${API_BASE_URL}/api/portfolio/buy`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function removePortfolioHolding(ticker: string) {
+  return fetchJson(`${API_BASE_URL}/api/portfolio/${ticker}`, {
+    method: "DELETE",
+  });
 }
 
 export async function getWatchlistData() {
