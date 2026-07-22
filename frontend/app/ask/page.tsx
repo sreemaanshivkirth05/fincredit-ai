@@ -7,13 +7,19 @@ import ReactMarkdown from "react-markdown";
 import {
   BrainCircuit,
   CheckCircle2,
+  Eye,
   FileSearch,
   FileText,
   Loader2,
   MessageSquareText,
+  Newspaper,
+  PieChart,
   ShieldCheck,
   Sparkles,
+  Star,
   Target,
+  TrendingUp,
+  Wallet,
 } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
@@ -55,6 +61,29 @@ type AskResponse = {
   message: string;
 };
 
+const EXAMPLE_QUESTIONS = [
+  {
+    label: "AAPL Portfolio Fit",
+    question:
+      "Should I add more AAPL to my simulated portfolio? Use my current holdings, cost basis, P/L, watchlist, market data, SEC fundamentals, recent news, risk drivers, and evidence.",
+  },
+  {
+    label: "Portfolio Risk",
+    question:
+      "Which holdings in my simulated portfolio need review based on concentration, unrealized P/L, market movement, SEC fundamentals, and recent news?",
+  },
+  {
+    label: "Watchlist Research",
+    question:
+      "Which stock in my watchlist should I research next, and why? Use portfolio fit, market context, SEC fundamentals, recent news, and risk drivers.",
+  },
+  {
+    label: "Beginner Decision",
+    question:
+      "Explain whether MSFT makes sense for a beginner paper-trading portfolio. Include portfolio exposure, market movement, fundamentals, news, and what I should check next.",
+  },
+];
+
 export default function AskPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -90,7 +119,7 @@ export default function AskPage() {
     } catch (error) {
       console.error(error);
       setApiError(
-        "Could not generate an AI answer. Make sure the backend is running and Ollama is available."
+        "Could not generate an AI answer. Make sure the backend is running. If Ollama is unavailable, the backend should still return a deterministic fallback answer."
       );
     } finally {
       setLoading(false);
@@ -136,26 +165,65 @@ export default function AskPage() {
               Ask FinCredit AI
             </Badge>
 
-            <h1 className="text-3xl font-semibold tracking-tight">
-              AI Financial Risk Assistant
+            <h1 className="text-3xl font-semibold tracking-tight text-white">
+              Portfolio-Aware AI Assistant
             </h1>
 
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-              Ask portfolio, market, SEC fundamentals, credit risk, and company
-              intelligence questions. FinCredit AI uses a LangGraph workflow,
-              structured evidence, and a local LangChain/Ollama LLM response.
+              Ask questions about your simulated portfolio, watchlist, market
+              data, SEC fundamentals, stock news, risk drivers, and beginner
+              investing decisions. The assistant uses a LangGraph workflow with
+              structured evidence and a local Ollama/LangChain answer when
+              available.
             </p>
 
             {prefilledQuestion && (
               <p className="mt-2 text-xs text-emerald-300">
-                Question prefilled from company intelligence page.
+                Question prefilled from the stock research page.
               </p>
             )}
           </div>
 
-          <Badge className="w-fit bg-white/10 text-slate-300">
-            LangGraph + LangChain + Ollama
-          </Badge>
+          <div className="flex flex-wrap gap-2">
+            <Badge className="w-fit bg-white/10 text-slate-300">
+              LangGraph
+            </Badge>
+            <Badge className="w-fit bg-white/10 text-slate-300">
+              Portfolio
+            </Badge>
+            <Badge className="w-fit bg-white/10 text-slate-300">
+              Watchlist
+            </Badge>
+            <Badge className="w-fit bg-white/10 text-slate-300">
+              News
+            </Badge>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-4">
+          <FeatureCard
+            title="Portfolio"
+            detail="Uses simulated holdings, average cost, value, weight, and P/L."
+            icon={<Wallet className="h-5 w-5 text-emerald-300" />}
+          />
+
+          <FeatureCard
+            title="Watchlist"
+            detail="Uses saved stocks you are monitoring for future research."
+            icon={<Star className="h-5 w-5 text-yellow-300" />}
+          />
+
+          <FeatureCard
+            title="Market + SEC"
+            detail="Uses stored price snapshots and SEC fundamentals."
+            icon={<TrendingUp className="h-5 w-5 text-blue-300" />}
+          />
+
+          <FeatureCard
+            title="News Context"
+            detail="Uses recent stock news to explain possible catalysts."
+            icon={<Newspaper className="h-5 w-5 text-violet-300" />}
+          />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
@@ -163,7 +231,7 @@ export default function AskPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MessageSquareText className="h-5 w-5 text-violet-300" />
-                Ask a Financial Risk Question
+                Ask a Portfolio-Aware Question
               </CardTitle>
             </CardHeader>
 
@@ -171,8 +239,8 @@ export default function AskPage() {
               <Textarea
                 value={question}
                 onChange={(event) => setQuestion(event.target.value)}
-                placeholder="Example: What is the risk outlook for MSFT? Use market data, SEC fundamentals, portfolio exposure, risk drivers, and evidence."
-                className="min-h-[160px] border-white/10 bg-black/30 text-slate-100 placeholder:text-slate-500"
+                placeholder="Example: Should I add more AAPL to my simulated portfolio? Use my current holdings, watchlist, market data, SEC fundamentals, recent news, risk drivers, and evidence."
+                className="min-h-[180px] border-white/10 bg-black/30 text-slate-100 placeholder:text-slate-500"
               />
 
               <div className="flex flex-wrap items-center gap-3">
@@ -195,31 +263,17 @@ export default function AskPage() {
                   )}
                 </Button>
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/10 hover:text-white"
-                  onClick={() =>
-                    fillExampleQuestion(
-                      "What is the risk outlook for MSFT? Use market data, SEC fundamentals, portfolio exposure, risk drivers, and evidence."
-                    )
-                  }
-                >
-                  MSFT Example
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/10 hover:text-white"
-                  onClick={() =>
-                    fillExampleQuestion(
-                      "Which portfolio holdings need analyst review based on risk drivers, concentration, market movement, and SEC fundamentals?"
-                    )
-                  }
-                >
-                  Portfolio Example
-                </Button>
+                {EXAMPLE_QUESTIONS.map((example) => (
+                  <Button
+                    key={example.label}
+                    type="button"
+                    variant="outline"
+                    className="border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/10 hover:text-white"
+                    onClick={() => fillExampleQuestion(example.question)}
+                  >
+                    {example.label}
+                  </Button>
+                ))}
               </div>
 
               {apiError && (
@@ -251,7 +305,12 @@ export default function AskPage() {
             <CardContent className="space-y-3">
               <WorkflowStep
                 title="Portfolio Agent"
-                detail="Loads portfolio exposure, holdings, and risk context."
+                detail="Loads simulated holdings, average cost, value, P/L, weights, and risk labels."
+              />
+
+              <WorkflowStep
+                title="Watchlist Agent"
+                detail="Loads stocks being monitored for future research."
               />
 
               <WorkflowStep
@@ -265,13 +324,13 @@ export default function AskPage() {
               />
 
               <WorkflowStep
-                title="Risk + Evidence Agents"
-                detail="Creates risk drivers and evidence-backed claims."
+                title="News Agent"
+                detail="Uses recent stock news from the news service."
               />
 
               <WorkflowStep
-                title="LLM Answer Agent"
-                detail="Generates analyst response using local Ollama model."
+                title="Risk + Evidence + Answer"
+                detail="Builds risk drivers, evidence claims, suggested actions, and AI/fallback answer."
               />
             </CardContent>
           </Card>
@@ -362,6 +421,11 @@ export default function AskPage() {
                 <div className="space-y-4 rounded-2xl border border-white/10 bg-black/20 p-5">
                   <ReactMarkdown
                     components={{
+                      h2: ({ children }) => (
+                        <h2 className="pt-2 text-lg font-semibold text-white">
+                          {children}
+                        </h2>
+                      ),
                       strong: ({ children }) => (
                         <strong className="font-semibold text-white">
                           {children}
@@ -543,6 +607,29 @@ export default function AskPage() {
         )}
       </div>
     </AppShell>
+  );
+}
+
+function FeatureCard({
+  title,
+  detail,
+  icon,
+}: {
+  title: string;
+  detail: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <Card className="border-white/10 bg-white/[0.04] text-white">
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between">
+          {icon}
+          <Eye className="h-4 w-4 text-slate-500" />
+        </div>
+        <p className="mt-4 font-semibold text-white">{title}</p>
+        <p className="mt-2 text-sm leading-6 text-slate-400">{detail}</p>
+      </CardContent>
+    </Card>
   );
 }
 
