@@ -15,7 +15,6 @@ def normalize_ticker(ticker: str) -> str:
 
 def calculate_unrealized_pl(value: float, total_cost: float):
     unrealized_pl = value - total_cost
-
     unrealized_pl_percent = (
         (unrealized_pl / total_cost) * 100 if total_cost else 0
     )
@@ -94,6 +93,7 @@ def recalculate_portfolio_weights(db: Session):
         holding.weight = round((holding.value / total_value) * 100, 2) if total_value else 0
 
         total_cost = holding.total_cost or holding.shares * holding.avg_price
+
         unrealized_pl, unrealized_pl_percent = calculate_unrealized_pl(
             value=holding.value,
             total_cost=total_cost,
@@ -103,6 +103,22 @@ def recalculate_portfolio_weights(db: Session):
         holding.unrealized_pl = unrealized_pl
         holding.unrealized_pl_percent = unrealized_pl_percent
         holding.updated_at = datetime.utcnow()
+
+
+def get_portfolio_status(db: Session, ticker: str):
+    cleaned_ticker = normalize_ticker(ticker)
+    holding = get_holding_by_ticker(db, cleaned_ticker)
+
+    if holding:
+        recalculate_portfolio_weights(db)
+        db.commit()
+        db.refresh(holding)
+
+    return {
+        "ticker": cleaned_ticker,
+        "isInPortfolio": holding is not None,
+        "holding": holding_to_dict(holding) if holding else None,
+    }
 
 
 def add_stock_to_portfolio(db: Session, request: PortfolioBuyRequest):
@@ -115,7 +131,6 @@ def add_stock_to_portfolio(db: Session, request: PortfolioBuyRequest):
         raise HTTPException(status_code=400, detail="Price must be greater than 0.")
 
     existing_holding = get_holding_by_ticker(db, cleaned_ticker)
-
     buy_amount = request.shares * request.price
 
     if existing_holding:

@@ -55,6 +55,10 @@ export async function getPortfolioData() {
   return fetchJson(`${API_BASE_URL}/api/portfolio`);
 }
 
+export async function getPortfolioHoldingStatus(ticker: string) {
+  return fetchJson(`${API_BASE_URL}/api/portfolio/${ticker}/status`);
+}
+
 export async function buyStockForPortfolio(payload: PortfolioBuyPayload) {
   return fetchJson(`${API_BASE_URL}/api/portfolio/buy`, {
     method: "POST",
@@ -183,6 +187,12 @@ export async function getMarketHistory(ticker: string, range?: string) {
   }
 
   return fetchJson(`${API_BASE_URL}/api/market/${ticker}/history`);
+}
+
+export async function getStockNews(ticker: string, limit = 8) {
+  return fetchJson(
+    `${API_BASE_URL}/api/news/${ticker}?limit=${encodeURIComponent(limit)}`
+  );
 }
 
 export async function getSecCompanyFacts(ticker: string) {

@@ -63,6 +63,12 @@ class PortfolioActionResponse(BaseModel):
     transaction: Optional[PortfolioTransactionResponse] = None
 
 
+class PortfolioStatusResponse(BaseModel):
+    ticker: str
+    isInPortfolio: bool
+    holding: Optional[HoldingResponse] = None
+
+
 class SectorAllocationResponse(BaseModel):
     name: str
     value: float

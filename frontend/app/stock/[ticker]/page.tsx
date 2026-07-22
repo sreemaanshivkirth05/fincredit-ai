@@ -8,7 +8,9 @@ import {
   Activity,
   BarChart3,
   Building2,
+  CheckCircle2,
   Database,
+  ExternalLink,
   Loader2,
   Newspaper,
   RefreshCcw,
@@ -36,10 +38,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import {
   addStockToWatchlist,
+  buyStockForPortfolio,
   getMarketData,
   getMarketHistory,
+  getPortfolioHoldingStatus,
   getSecCompanyFacts,
   getSecFundamentalsHistory,
+  getStockNews,
   getWatchlistStatus,
   removeStockFromWatchlist,
 } from "@/lib/api";
@@ -58,6 +63,16 @@ type TimeRange =
 type ChartPoint = {
   date: string;
   close: number;
+};
+
+type NewsItem = {
+  title: string;
+  publisher?: string | null;
+  link?: string | null;
+  summary?: string | null;
+  publishedAt?: string | null;
+  thumbnail?: string | null;
+  type?: string | null;
 };
 
 type MetricCardProps = {
@@ -448,6 +463,14 @@ function getLatestFundamentalsRow(fundamentalsHistory: any) {
   })[0];
 }
 
+function normalizeNews(value: any): NewsItem[] {
+  if (Array.isArray(value)) return value;
+  if (Array.isArray(value?.news)) return value.news;
+  if (Array.isArray(value?.items)) return value.items;
+  if (Array.isArray(value?.results)) return value.results;
+  return [];
+}
+
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) return error.message;
   return String(error);
@@ -475,15 +498,24 @@ export default function StockDetailPage() {
   const [marketHistory, setMarketHistory] = useState<any>(null);
   const [companyFacts, setCompanyFacts] = useState<any>(null);
   const [fundamentalsHistory, setFundamentalsHistory] = useState<any>(null);
+  const [newsData, setNewsData] = useState<any>(null);
 
   const [selectedRange, setSelectedRange] = useState<TimeRange>("1M");
   const [isLoading, setIsLoading] = useState(true);
   const [isChartLoading, setIsChartLoading] = useState(false);
+  const [isNewsLoading, setIsNewsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
   const [isWatchlisted, setIsWatchlisted] = useState(false);
   const [isWatchlistLoading, setIsWatchlistLoading] = useState(false);
+
+  const [isInPortfolio, setIsInPortfolio] = useState(false);
+  const [portfolioHolding, setPortfolioHolding] = useState<any>(null);
+  const [showPortfolioForm, setShowPortfolioForm] = useState(false);
+  const [portfolioShares, setPortfolioShares] = useState("1");
+  const [isPortfolioLoading, setIsPortfolioLoading] = useState(false);
+  const [portfolioSuccessMessage, setPortfolioSuccessMessage] = useState("");
 
   const loadCoreStockData = useCallback(async () => {
     if (!ticker) return;
@@ -525,7 +557,11 @@ export default function StockDetailPage() {
       }
 
       setErrors((currentErrors) => [
-        ...currentErrors.filter((item) => item.startsWith("Chart data failed")),
+        ...currentErrors.filter(
+          (item) =>
+            item.startsWith("Chart data failed") ||
+            item.startsWith("News data failed")
+        ),
         ...nextErrors,
       ]);
     } catch (error) {
@@ -555,6 +591,28 @@ export default function StockDetailPage() {
     }
   }, [ticker, selectedRange]);
 
+  const loadNewsData = useCallback(async () => {
+    if (!ticker) return;
+
+    try {
+      setIsNewsLoading(true);
+
+      const response = await getStockNews(ticker, 8);
+      setNewsData(response);
+
+      setErrors((currentErrors) =>
+        currentErrors.filter((item) => !item.startsWith("News data failed"))
+      );
+    } catch (error) {
+      setErrors((currentErrors) => [
+        ...currentErrors.filter((item) => !item.startsWith("News data failed")),
+        `News data failed: ${getErrorMessage(error)}`,
+      ]);
+    } finally {
+      setIsNewsLoading(false);
+    }
+  }, [ticker]);
+
   const loadWatchlistStatus = useCallback(async () => {
     if (!ticker) return;
 
@@ -569,19 +627,35 @@ export default function StockDetailPage() {
     }
   }, [ticker]);
 
+  const loadPortfolioStatus = useCallback(async () => {
+    if (!ticker) return;
+
+    try {
+      const response = await getPortfolioHoldingStatus(ticker);
+      setIsInPortfolio(Boolean(response.isInPortfolio));
+      setPortfolioHolding(response.holding ?? null);
+    } catch (error) {
+      console.error(error);
+    }
+  }, [ticker]);
+
   useEffect(() => {
     async function initialLoad() {
       setIsLoading(true);
-      await loadCoreStockData();
+      await Promise.all([loadCoreStockData(), loadPortfolioStatus()]);
       setIsLoading(false);
     }
 
     initialLoad();
-  }, [loadCoreStockData]);
+  }, [loadCoreStockData, loadPortfolioStatus]);
 
   useEffect(() => {
     loadChartData();
   }, [loadChartData]);
+
+  useEffect(() => {
+    loadNewsData();
+  }, [loadNewsData]);
 
   useEffect(() => {
     loadWatchlistStatus();
@@ -589,7 +663,13 @@ export default function StockDetailPage() {
 
   async function handleRefresh() {
     setIsRefreshing(true);
-    await Promise.all([loadCoreStockData(), loadChartData(), loadWatchlistStatus()]);
+    await Promise.all([
+      loadCoreStockData(),
+      loadChartData(),
+      loadNewsData(),
+      loadWatchlistStatus(),
+      loadPortfolioStatus(),
+    ]);
     setIsRefreshing(false);
   }
 
@@ -707,6 +787,10 @@ export default function StockDetailPage() {
     return normalizeMarketHistory(marketHistory);
   }, [marketHistory]);
 
+  const newsItems = useMemo(() => {
+    return normalizeNews(newsData);
+  }, [newsData]);
+
   const xAxisTicks = useMemo(() => {
     return buildXAxisTicks(chartData, selectedRange);
   }, [chartData, selectedRange]);
@@ -808,7 +892,7 @@ export default function StockDetailPage() {
   ]);
 
   const askAiQuestion = encodeURIComponent(
-    `Analyze ${ticker}. Explain the business, current stock performance, SEC fundamentals, major risks, and whether it would make sense for a beginner paper-trading portfolio.`
+    `Analyze ${ticker}. Explain the business, current stock performance, SEC fundamentals, recent news, major risks, and whether it would make sense for a beginner paper-trading portfolio.`
   );
 
   const askAiHref = `/ask?question=${askAiQuestion}`;
@@ -826,6 +910,14 @@ export default function StockDetailPage() {
     ) : (
       <TrendingDown className="h-4 w-4" />
     );
+
+  const currentPriceNumber = toNumber(currentPrice);
+  const sharesNumber = toNumber(portfolioShares);
+
+  const estimatedCost =
+    currentPriceNumber !== null && sharesNumber !== null
+      ? currentPriceNumber * sharesNumber
+      : null;
 
   async function handleToggleWatchlist() {
     try {
@@ -862,6 +954,55 @@ export default function StockDetailPage() {
     }
   }
 
+  async function handleSimulatedBuy() {
+    try {
+      setIsPortfolioLoading(true);
+      setPortfolioSuccessMessage("");
+
+      const shares = toNumber(portfolioShares);
+      const price = toNumber(currentPrice);
+
+      if (shares === null || shares <= 0) {
+        throw new Error("Enter a share quantity greater than 0.");
+      }
+
+      if (price === null || price <= 0) {
+        throw new Error("Current stock price is unavailable.");
+      }
+
+      await buyStockForPortfolio({
+        ticker,
+        company: companyName ? String(companyName) : ticker,
+        sector: sector ? String(sector) : "Unknown",
+        shares,
+        price,
+        currency: currency ? String(currency) : "USD",
+        exchange: exchange ? String(exchange) : null,
+      });
+
+      setPortfolioSuccessMessage(
+        `Added ${shares} simulated share${shares === 1 ? "" : "s"} of ${ticker} to your portfolio.`
+      );
+
+      await loadPortfolioStatus();
+
+      setErrors((currentErrors) =>
+        currentErrors.filter(
+          (item) => !item.startsWith("Portfolio action failed")
+        )
+      );
+    } catch (error) {
+      setErrors((currentErrors) => [
+        ...currentErrors.filter(
+          (item) => !item.startsWith("Portfolio action failed")
+        ),
+        `Portfolio action failed: ${getErrorMessage(error)}`,
+      ]);
+    } finally {
+      setIsPortfolioLoading(false);
+    }
+  }
+
   if (isLoading) {
     return (
       <AppShell>
@@ -872,7 +1013,7 @@ export default function StockDetailPage() {
               Loading {ticker}...
             </p>
             <p className="mt-2 text-sm text-slate-400">
-              Fetching price, chart, SEC fundamentals, and watchlist status.
+              Fetching price, chart, SEC fundamentals, watchlist, portfolio, and news.
             </p>
           </div>
         </div>
@@ -911,6 +1052,12 @@ export default function StockDetailPage() {
               {isWatchlisted ? (
                 <Badge className="bg-yellow-500/15 text-yellow-200">
                   Watchlisted
+                </Badge>
+              ) : null}
+
+              {isInPortfolio ? (
+                <Badge className="bg-blue-500/15 text-blue-200">
+                  In Portfolio
                 </Badge>
               ) : null}
             </div>
@@ -959,6 +1106,28 @@ export default function StockDetailPage() {
                   <li key={error}>{error}</li>
                 ))}
               </ul>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {portfolioSuccessMessage ? (
+          <Card className="border-emerald-500/30 bg-emerald-500/10 text-emerald-100">
+            <CardContent className="flex flex-col gap-3 p-5 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-300" />
+                <div>
+                  <p className="font-medium">{portfolioSuccessMessage}</p>
+                  <p className="mt-1 text-sm text-emerald-200/80">
+                    This is a paper-trading transaction. No real money was used.
+                  </p>
+                </div>
+              </div>
+
+              <Link href="/portfolio">
+                <Button className="bg-emerald-500 text-white hover:bg-emerald-600">
+                  Open Portfolio
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         ) : null}
@@ -1215,15 +1384,96 @@ export default function StockDetailPage() {
 
             <CardContent>
               <p className="text-sm leading-6 text-slate-400">
-                Add this stock to your watchlist now. Portfolio simulation comes
-                in the next phase.
+                Save this stock, simulate a buy, or ask AI how it fits a beginner paper-trading portfolio.
               </p>
 
+              {isInPortfolio && portfolioHolding ? (
+                <div className="mt-4 rounded-2xl border border-blue-400/20 bg-blue-500/10 p-4 text-sm text-blue-100">
+                  <p className="font-medium">Already in portfolio</p>
+                  <p className="mt-1 text-blue-100/80">
+                    You currently hold {portfolioHolding.shares} simulated share
+                    {portfolioHolding.shares === 1 ? "" : "s"} of {ticker}.
+                  </p>
+                </div>
+              ) : null}
+
               <div className="mt-5 flex flex-col gap-3">
-                <Button disabled className="justify-start bg-white/10 text-white">
+                <Button
+                  onClick={() => setShowPortfolioForm((current) => !current)}
+                  className="justify-start bg-blue-500 text-white hover:bg-blue-600"
+                >
                   <Wallet className="mr-2 h-4 w-4" />
-                  Add to Portfolio
+                  {showPortfolioForm
+                    ? "Close Portfolio Form"
+                    : isInPortfolio
+                      ? "Add More Shares"
+                      : "Add to Portfolio"}
                 </Button>
+
+                {showPortfolioForm ? (
+                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <p className="text-sm font-medium text-white">
+                      Simulate Buying {ticker}
+                    </p>
+
+                    <p className="mt-2 text-xs leading-5 text-slate-400">
+                      This creates a virtual paper-trading position. It does not place a real trade.
+                    </p>
+
+                    <div className="mt-4 space-y-3">
+                      <div>
+                        <label className="text-xs text-slate-400">Shares</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.0001"
+                          value={portfolioShares}
+                          onChange={(event) =>
+                            setPortfolioShares(event.target.value)
+                          }
+                          className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-400"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
+                          <p className="text-xs text-slate-500">Buy Price</p>
+                          <p className="mt-1 font-semibold text-white">
+                            {formatCurrency(currentPrice, String(currency))}
+                          </p>
+                        </div>
+
+                        <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
+                          <p className="text-xs text-slate-500">
+                            Estimated Cost
+                          </p>
+                          <p className="mt-1 font-semibold text-white">
+                            {formatCurrency(estimatedCost, String(currency))}
+                          </p>
+                        </div>
+                      </div>
+
+                      <Button
+                        onClick={handleSimulatedBuy}
+                        disabled={isPortfolioLoading}
+                        className="w-full bg-emerald-500 text-white hover:bg-emerald-600"
+                      >
+                        {isPortfolioLoading ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Wallet className="mr-2 h-4 w-4" />
+                        )}
+                        {isPortfolioLoading ? "Saving..." : "Simulate Buy"}
+                      </Button>
+
+                      <Link href="/portfolio">
+                        <Button className="w-full bg-white/10 text-white hover:bg-white/20">
+                          Open Portfolio
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                ) : null}
 
                 <Button
                   onClick={handleToggleWatchlist}
@@ -1267,20 +1517,122 @@ export default function StockDetailPage() {
 
         <Card className="border-white/10 bg-white/[0.04] text-white">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-2xl">
-              <Newspaper className="h-5 w-5 text-blue-300" />
-              News
-            </CardTitle>
+            <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-2xl">
+                  <Newspaper className="h-5 w-5 text-blue-300" />
+                  Recent News
+                </CardTitle>
 
-            <p className="text-sm text-slate-400">
-              News integration will come in a later phase.
-            </p>
+                <p className="mt-2 text-sm text-slate-400">
+                  Latest market news for {ticker} from yfinance.
+                  {isNewsLoading ? " Loading news..." : ""}
+                </p>
+              </div>
+
+              <Button
+                onClick={loadNewsData}
+                disabled={isNewsLoading}
+                className="bg-white/10 text-white hover:bg-white/20"
+              >
+                {isNewsLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCcw className="mr-2 h-4 w-4" />
+                )}
+                Refresh News
+              </Button>
+            </div>
           </CardHeader>
 
           <CardContent>
-            <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 p-6 text-center text-sm text-slate-400">
-              Stock-related news placeholder for {ticker}.
-            </div>
+            {isNewsLoading ? (
+              <div className="flex min-h-[220px] items-center justify-center rounded-2xl border border-white/10 bg-black/20">
+                <div className="text-center">
+                  <Loader2 className="mx-auto h-7 w-7 animate-spin text-blue-300" />
+                  <p className="mt-3 text-sm text-slate-400">
+                    Loading recent news...
+                  </p>
+                </div>
+              </div>
+            ) : newsItems.length > 0 ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                {newsItems.map((item, index) => (
+                  <div
+                    key={`${item.title}-${index}`}
+                    className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                  >
+                    <div className="flex gap-4">
+                      {item.thumbnail ? (
+                        <img
+                          src={item.thumbnail}
+                          alt=""
+                          className="h-20 w-20 rounded-xl object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-white/10">
+                          <Newspaper className="h-6 w-6 text-slate-500" />
+                        </div>
+                      )}
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {item.publisher ? (
+                            <Badge className="bg-blue-500/15 text-blue-200">
+                              {item.publisher}
+                            </Badge>
+                          ) : null}
+
+                          {item.type ? (
+                            <Badge className="bg-white/10 text-slate-300">
+                              {item.type}
+                            </Badge>
+                          ) : null}
+                        </div>
+
+                        <h3 className="mt-2 line-clamp-2 font-semibold leading-6 text-white">
+                          {item.title}
+                        </h3>
+
+                        <p className="mt-1 text-xs text-slate-500">
+                          {formatDateTime(item.publishedAt)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {item.summary ? (
+                      <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-400">
+                        {item.summary}
+                      </p>
+                    ) : null}
+
+                    {item.link ? (
+                      <a
+                        href={item.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-4 inline-flex items-center text-sm font-medium text-blue-300 hover:text-blue-200"
+                      >
+                        Read article
+                        <ExternalLink className="ml-2 h-3.5 w-3.5" />
+                      </a>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 p-8 text-center">
+                <Newspaper className="mx-auto h-8 w-8 text-slate-500" />
+
+                <h2 className="mt-4 text-lg font-semibold text-white">
+                  No recent news found
+                </h2>
+
+                <p className="mt-2 text-sm text-slate-400">
+                  yfinance did not return news for {ticker}. Try refreshing or search another stock.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -1293,7 +1645,7 @@ export default function StockDetailPage() {
           </CardHeader>
 
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-4">
               <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
                 <p className="font-medium text-white">1. Research</p>
                 <p className="mt-2 text-sm leading-6 text-slate-400">
@@ -1302,17 +1654,23 @@ export default function StockDetailPage() {
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                <p className="font-medium text-white">2. Save</p>
+                <p className="font-medium text-white">2. Read News</p>
                 <p className="mt-2 text-sm leading-6 text-slate-400">
-                  Add the stock to your watchlist when you want to keep tracking
-                  it.
+                  Understand recent events that may explain price movement.
                 </p>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                <p className="font-medium text-white">3. Simulate</p>
+                <p className="font-medium text-white">3. Save or Simulate</p>
                 <p className="mt-2 text-sm leading-6 text-slate-400">
-                  Add to a simulated portfolio in the next phase.
+                  Add the stock to your watchlist or simulate a paper-trading buy.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                <p className="font-medium text-white">4. Track</p>
+                <p className="mt-2 text-sm leading-6 text-slate-400">
+                  Open your portfolio to track cost basis, value, and P/L.
                 </p>
               </div>
             </div>

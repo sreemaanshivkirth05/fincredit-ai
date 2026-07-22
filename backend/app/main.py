@@ -1,19 +1,20 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-from app.api.dashboard import router as dashboard_router
-from app.api.portfolio import router as portfolio_router
-from app.api.watchlist import router as watchlist_router
-from app.api.reports import router as reports_router
-from app.api.governance import router as governance_router
-from app.api.company import router as company_router
-from app.api.ask import router as ask_router
-from app.core.config import settings
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
-from app.db.database import engine
+
+from app.api.ask import router as ask_router
+from app.api.company import router as company_router
+from app.api.dashboard import router as dashboard_router
+from app.api.governance import router as governance_router
 from app.api.market import router as market_router
+from app.api.news import router as news_router
+from app.api.portfolio import router as portfolio_router
+from app.api.reports import router as reports_router
 from app.api.sec import router as sec_router
+from app.api.watchlist import router as watchlist_router
+from app.core.config import settings
+from app.db.database import engine
 from app.routers.market_chart import router as market_chart_router
 
 app = FastAPI(
@@ -46,6 +47,8 @@ def health_check():
         "service": settings.APP_NAME,
         "environment": settings.APP_ENV,
     }
+
+
 @app.get("/api/db-check")
 def database_check():
     try:
@@ -74,4 +77,6 @@ app.include_router(company_router, prefix=settings.API_PREFIX)
 app.include_router(ask_router, prefix=settings.API_PREFIX)
 app.include_router(market_router, prefix=settings.API_PREFIX)
 app.include_router(sec_router, prefix=settings.API_PREFIX)
+app.include_router(news_router, prefix=settings.API_PREFIX)
+
 app.include_router(market_chart_router)
