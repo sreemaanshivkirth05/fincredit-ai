@@ -2,6 +2,8 @@
 
 FinCredit AI is an AI-powered stock research and paper-trading sandbox for beginner investors. It combines stock market data, SEC fundamentals, news, simulated portfolio transactions, watchlist context, and portfolio-aware AI answers so users can practice research workflows without placing real trades.
 
+The public landing page lives at `/`, while the internal working dashboard lives at `/dashboard`. The landing page uses an original modern SaaS layout inspired by clean Figma-style product pages.
+
 ## Key Features
 
 - Stock research pages for ticker-level market data, charts, SEC fundamentals, and news
@@ -58,6 +60,7 @@ npm run dev
 Open the app at:
 
 ```text
+http://localhost:3000/
 http://localhost:3000/dashboard
 ```
 
@@ -89,14 +92,15 @@ npm run test:e2e:headed
 ## Demo Flow
 
 1. Reset demo data from the dashboard or call `POST /api/demo/reset`.
-2. Open `/dashboard` and review the product loop.
-3. Research AAPL from the dashboard CTA.
-4. Add AAPL to the watchlist or simulate a portfolio buy.
-5. Open `/portfolio` and review holdings, weights, and transaction history.
-6. Refresh portfolio prices.
-7. Sell a small simulated share amount.
-8. Ask FinCredit AI about AAPL or portfolio concentration risk.
-9. Generate a report from the AI answer and review evidence/governance details.
+2. Open `/` and use the public landing page CTAs to enter the app.
+3. Open `/dashboard` and review the product loop.
+4. Research AAPL from the landing page or dashboard CTA.
+5. Add AAPL to the watchlist or simulate a portfolio buy.
+6. Open `/portfolio` and review holdings, weights, and transaction history.
+7. Refresh portfolio prices.
+8. Sell a small simulated share amount.
+9. Ask FinCredit AI about AAPL or portfolio concentration risk.
+10. Generate a report from the AI answer and review evidence/governance details.
 
 ## Disclaimer
 

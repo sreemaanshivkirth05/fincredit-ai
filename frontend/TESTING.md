@@ -75,11 +75,24 @@ Dashboard reset button check:
 
 1. Start backend on `http://127.0.0.1:8000`.
 2. Start frontend on `http://localhost:3000`.
-3. Reset demo data from `/dashboard`.
-4. Click `Research AAPL`.
-5. Review price chart, SEC fundamentals, recent news, actions, and page guidance.
-6. Add AAPL to the watchlist or simulate a portfolio buy.
-7. Open `/portfolio`, refresh prices, and open the sell form.
-8. Confirm transaction history shows BUY/SELL rows.
-9. Open `/watchlist` and refresh prices.
-10. Open `/ask`, submit an AAPL or portfolio-risk question, and verify answer, evidence, and governance audit sections.
+3. Open `http://localhost:3000/`.
+4. Confirm the landing page hero, feature grid, how-it-works section, tech stack, and disclaimer are visible.
+5. Click `Try Demo` and confirm it opens `/dashboard`.
+6. Return to `/` and click `Research AAPL`.
+7. Return to `/` and click `Ask FinCredit AI`.
+8. Reset demo data from `/dashboard`.
+9. Review price chart, SEC fundamentals, recent news, actions, and page guidance on `/stock/AAPL`.
+10. Add AAPL to the watchlist or simulate a portfolio buy.
+11. Open `/portfolio`, refresh prices, and open the sell form.
+12. Confirm transaction history shows BUY/SELL rows.
+13. Open `/watchlist` and refresh prices.
+14. Open `/ask`, submit an AAPL or portfolio-risk question, and verify answer, evidence, and governance audit sections.
+
+## Landing Page E2E
+
+The landing page test verifies `/` is a public marketing page and that its CTAs link into the internal app flows.
+
+```powershell
+cd C:\Users\shivk\fincredit-ai\frontend
+npm run test:e2e -- landing.spec.ts
+```

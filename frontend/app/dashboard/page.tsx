@@ -1,7 +1,5 @@
 "use client";
 
-"use client";
-
 import type { ReactNode } from "react";
 import { useState } from "react";
 import Link from "next/link";
@@ -219,6 +217,13 @@ export default function DashboardPage() {
             <Badge className="mb-3 bg-blue-500/15 text-blue-200">
               Stock Research Dashboard
             </Badge>
+
+            <Link
+              href="/"
+              className="mb-3 block w-fit text-sm font-medium text-slate-400 transition hover:text-white"
+            >
+              Back to public homepage
+            </Link>
 
             <h1 className="text-3xl font-semibold tracking-tight">
               FinCredit AI
