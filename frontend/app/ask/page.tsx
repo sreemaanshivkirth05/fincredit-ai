@@ -263,6 +263,7 @@ export default function AskPage() {
               <Textarea
                 value={question}
                 onChange={(event) => setQuestion(event.target.value)}
+                data-testid="ask-question-input"
                 placeholder="Example: Should I add more AAPL to my simulated portfolio? Use my current holdings, watchlist, market data, SEC fundamentals, recent news, risk drivers, and evidence."
                 className="min-h-[180px] border-white/10 bg-black/30 text-slate-100 placeholder:text-slate-500"
               />
@@ -273,6 +274,7 @@ export default function AskPage() {
                   className="bg-violet-500 text-white hover:bg-violet-600"
                   onClick={handleAsk}
                   disabled={loading}
+                  data-testid="ask-submit-button"
                 >
                   {loading ? (
                     <>
@@ -457,7 +459,10 @@ export default function AskPage() {
               />
             </div>
 
-            <Card className="border-white/10 bg-white/[0.04] text-white">
+            <Card
+              data-testid="ask-answer-card"
+              className="border-white/10 bg-white/[0.04] text-white"
+            >
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-violet-300" />
@@ -579,7 +584,10 @@ export default function AskPage() {
               </Card>
             </div>
 
-            <Card className="border-white/10 bg-white/[0.04] text-white">
+            <Card
+              data-testid="ask-evidence-card"
+              className="border-white/10 bg-white/[0.04] text-white"
+            >
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileSearch className="h-5 w-5 text-emerald-300" />
@@ -614,7 +622,10 @@ export default function AskPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-white/10 bg-white/[0.04] text-white">
+            <Card
+              data-testid="ask-audit-card"
+              className="border-white/10 bg-white/[0.04] text-white"
+            >
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ShieldCheck className="h-5 w-5 text-blue-300" />

@@ -400,6 +400,7 @@ export default function PortfolioPage() {
             <Button
               onClick={handleRefreshPrices}
               disabled={refreshingPrices}
+              data-testid="portfolio-refresh-prices"
               className="bg-emerald-500 text-white hover:bg-emerald-600"
             >
               {refreshingPrices ? (
@@ -724,11 +725,12 @@ export default function PortfolioPage() {
                               </Button>
                             </Link>
 
-                            <Button
-                              size="sm"
-                              onClick={() => openSellForm(holding)}
-                              className="bg-amber-500 text-white hover:bg-amber-600"
-                            >
+                              <Button
+                                size="sm"
+                                onClick={() => openSellForm(holding)}
+                                data-testid="portfolio-sell-button"
+                                className="bg-amber-500 text-white hover:bg-amber-600"
+                              >
                               <ReceiptText className="mr-2 h-4 w-4" />
                               Sell
                             </Button>
@@ -753,7 +755,10 @@ export default function PortfolioPage() {
                         {activeSellForm ? (
                           <TableRow className="border-white/10">
                             <TableCell colSpan={9}>
-                              <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4">
+                              <div
+                                data-testid="portfolio-sell-form"
+                                className="rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4"
+                              >
                                 <div className="grid gap-4 lg:grid-cols-[1fr_1fr_1fr_auto] lg:items-end">
                                   <div>
                                     <label className="text-xs text-slate-400">
@@ -864,7 +869,10 @@ export default function PortfolioPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-white/10 bg-white/[0.04] text-white">
+        <Card
+          data-testid="portfolio-transaction-history"
+          className="border-white/10 bg-white/[0.04] text-white"
+        >
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <History className="h-5 w-5 text-blue-300" />

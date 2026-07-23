@@ -1088,7 +1088,10 @@ export default function StockDetailPage() {
             </Button>
 
             <Link href={askAiHref}>
-              <Button className="bg-violet-500 text-white hover:bg-violet-600">
+              <Button
+                data-testid="stock-ask-ai"
+                className="bg-violet-500 text-white hover:bg-violet-600"
+              >
                 <Sparkles className="mr-2 h-4 w-4" />
                 Ask AI
               </Button>
@@ -1402,6 +1405,7 @@ export default function StockDetailPage() {
               <div className="mt-5 flex flex-col gap-3">
                 <Button
                   onClick={() => setShowPortfolioForm((current) => !current)}
+                  data-testid="stock-add-portfolio"
                   className="justify-start bg-blue-500 text-white hover:bg-blue-600"
                 >
                   <Wallet className="mr-2 h-4 w-4" />
@@ -1500,7 +1504,10 @@ export default function StockDetailPage() {
                 </Button>
 
                 <Link href={askAiHref}>
-                  <Button className="w-full justify-start bg-violet-500 text-white hover:bg-violet-600">
+                  <Button
+                    data-testid="stock-ask-ai"
+                    className="w-full justify-start bg-violet-500 text-white hover:bg-violet-600"
+                  >
                     <Sparkles className="mr-2 h-4 w-4" />
                     Ask AI About {ticker}
                   </Button>

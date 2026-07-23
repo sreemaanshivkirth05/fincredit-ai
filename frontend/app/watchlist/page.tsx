@@ -338,6 +338,7 @@ export default function WatchlistPage() {
             <Button
               onClick={handleRefreshPrices}
               disabled={refreshingPrices}
+              data-testid="watchlist-refresh-prices"
               className="bg-emerald-500 text-white hover:bg-emerald-600"
             >
               {refreshingPrices ? (
