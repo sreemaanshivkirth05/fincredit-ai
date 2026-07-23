@@ -1,18 +1,58 @@
 # FinCredit AI
 
-FinCredit AI is a full-stack, beginner-focused stock research and paper-trading MVP. It combines market data, SEC fundamentals, news, user-specific simulated portfolios, watchlists, transaction history, and portfolio-aware AI answers so users can practice research workflows without risking real money.
+AI-powered stock research and paper-trading platform with user-specific portfolios, evidence-backed AI answers, and admin analytics.
+
+![Next.js](https://img.shields.io/badge/Next.js-16-black)
+![FastAPI](https://img.shields.io/badge/FastAPI-backend-009688)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-database-336791)
+![LangGraph](https://img.shields.io/badge/LangGraph-AI-1f6feb)
+![Playwright](https://img.shields.io/badge/Playwright-E2E-45ba4b)
+![Docker](https://img.shields.io/badge/Docker-ready-2496ed)
+![JWT Auth](https://img.shields.io/badge/JWT-auth-6f42c1)
+
+FinCredit AI is a full-stack, beginner-focused stock research and paper-trading MVP. It combines market data, SEC fundamentals, news, simulated portfolios, watchlists, transaction history, and portfolio-aware AI answers so users can practice research workflows without risking real money.
 
 The public landing page lives at `/`; the protected app workspace starts at `/dashboard`.
 
-## Screenshots
+## Product Screenshots
 
-Screenshots can be added later under `docs/screenshots/`.
+Run the screenshot script after starting the app locally:
+
+```powershell
+cd C:\Users\shivk\fincredit-ai\frontend
+npm run screenshots
+```
 
 ![Landing Page](docs/screenshots/landing.png)
 ![Stock Research](docs/screenshots/stock-research.png)
 ![Portfolio](docs/screenshots/portfolio.png)
 ![Ask AI](docs/screenshots/ask-ai.png)
-![Admin Dashboard](docs/screenshots/admin-dashboard.png)
+![Admin Dashboard](docs/screenshots/admin.png)
+
+## Why This Project Matters
+
+FinCredit AI is not just a chatbot bolted onto a stock page. It combines:
+
+- Stock research with market data, charts, SEC fundamentals, and news
+- Paper trading with portfolio positions, cost basis, P/L, weights, and transactions
+- Portfolio intelligence that grounds AI answers in the signed-in user's holdings and history
+- User isolation across portfolios, watchlists, transactions, reports, and AI runs
+- Admin analytics for read-only user and product activity inspection
+- Evidence-backed AI workflow with risk drivers, audit status, and deterministic fallback behavior
+- E2E testing and Docker/deployment preparation for repeatable demos
+
+## 60-Second Demo Flow
+
+1. Open the landing page.
+2. Login as the local demo user.
+3. Reset demo data from the dashboard.
+4. Research `AAPL`.
+5. Add `AAPL` to the paper portfolio and watchlist.
+6. Refresh portfolio prices.
+7. Ask AI about `AAPL` using portfolio-aware context.
+8. Review evidence, risk drivers, and fallback/audit status.
+9. Login as admin.
+10. View user analytics in the admin dashboard.
 
 ## Features
 
@@ -27,6 +67,7 @@ Screenshots can be added later under `docs/screenshots/`.
 - Generated reports and governance/audit pages
 - Read-only admin console for account and usage inspection
 - Playwright E2E coverage for the core demo routes
+- Screenshot capture workflow for GitHub and portfolio presentation
 - Docker Compose support for local full-stack running
 
 ## Architecture
@@ -132,7 +173,7 @@ Local demo only:
 
 ## Demo Script
 
-Use [DEMO_SCRIPT.md](DEMO_SCRIPT.md) for a recruiter/interviewer walkthrough.
+Use [DEMO_SCRIPT.md](DEMO_SCRIPT.md) for recruiter and interviewer walkthroughs.
 
 Short flow:
 
@@ -156,7 +197,7 @@ cd C:\Users\shivk\fincredit-ai\frontend
 npx tsc --noEmit
 npm run build
 npm run test:e2e
-npm run test:e2e:headed
+npm run screenshots
 npm audit
 npm outdated
 ```
@@ -178,13 +219,7 @@ Production reminders:
 - Decide whether `/api/demo/reset` should be disabled or further protected.
 - Treat localStorage JWT storage as an MVP/demo approach, not final production auth hardening.
 
-## Dependency Audit Note
-
-Final review found 10 frontend advisories: 5 moderate and 5 high. Affected packages include `next`, `postcss`, `sharp`, `brace-expansion`, `fast-uri`, `hono`, `@hono/node-server`, `@modelcontextprotocol/sdk`, `js-yaml`, and `shadcn`.
-
-`npm audit fix --dry-run` showed that the non-force fix would still change `shadcn` and remove several transitive packages. Forced fixes would move framework/tooling dependencies such as Next.js and shadcn. Fixes are deferred to keep the final MVP stable until those dependency changes can be regression tested intentionally.
-
-## Known Limitations
+## Security And Product Limitations
 
 - Paper trading only; no brokerage integration and no real orders.
 - Not financial advice.
@@ -193,21 +228,26 @@ Final review found 10 frontend advisories: 5 moderate and 5 high. Affected packa
 - Local Ollama can be slow or unavailable; deterministic fallback is expected.
 - localStorage JWT storage is intentionally simple for the local MVP.
 - Docker Compose does not run Ollama by default.
+- Demo credentials are for local/demo use only and should not be reused for production.
+
+## Dependency Audit Note
+
+Final Phase 40 review found 10 frontend advisories: 5 moderate and 5 high. Affected packages include `next`, `postcss`, `sharp`, `brace-expansion`, `fast-uri`, `hono`, `@hono/node-server`, `@modelcontextprotocol/sdk`, `js-yaml`, and `shadcn`.
+
+`npm audit fix --dry-run` showed that the non-force fix would still change `shadcn` and remove several transitive packages. Forced fixes would move framework/tooling dependencies such as Next.js and shadcn. Fixes are deferred to keep the final MVP stable until those dependency changes can be regression tested intentionally.
 
 ## Roadmap
 
-- Phase 41: cloud deployment and portfolio launch
+- Phase 41: GitHub portfolio launch, screenshots, demo video, and portfolio case study
+- Cloud deployment for backend, frontend, and PostgreSQL
 - Hosted LLM option for production environments
 - Real-time or scheduled price refresh worker
 - Richer allocation analytics and risk explanations
 - OAuth/social login and production-grade session strategy
-- Screenshot capture and portfolio case-study writeup
 
 ## Resume Bullets
 
-- Built a full-stack AI-powered paper-trading research platform with Next.js, FastAPI, PostgreSQL, market data, SEC fundamentals, and portfolio-aware AI workflows.
-- Implemented JWT authentication, user-specific portfolio/watchlist/transaction isolation, demo reset tooling, and a read-only admin dashboard for account and usage inspection.
-- Integrated LangGraph/Ollama fallback AI, yfinance, SEC Company Facts, report/governance views, Playwright E2E tests, environment-based config, and Docker deployment prep.
+See [docs/RESUME_BULLETS.md](docs/RESUME_BULLETS.md) for role-specific resume bullets.
 
 ## Disclaimer
 

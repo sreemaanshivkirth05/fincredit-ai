@@ -4,9 +4,9 @@
 
 Phase 40 MVP completion is complete after final verification.
 
-Next recommended phase:
+Phase 41 has started with GitHub portfolio launch polish:
 
-- Phase 41 - Cloud Deployment / Portfolio Launch
+- Phase 41A - Screenshots + GitHub presentation polish
 
 ## Current Feature Summary
 
@@ -22,23 +22,61 @@ Next recommended phase:
 - Read-only admin dashboard
 - Docker Compose local stack
 - Environment-based security/deployment configuration
+- Playwright E2E tests
+- Screenshot capture script for GitHub README assets
+
+## Phase 40 Completion
+
+- MVP product loop is complete.
+- Auth, portfolio, watchlist, stock research, Ask AI, reports/governance, admin, Docker, and docs are present.
+- SEC CIK handling includes AMZN and a dynamic SEC mapping fallback.
+- Final verification includes backend compile, frontend typecheck, frontend build, and Playwright E2E tests.
+
+## Phase 41 Launch Checklist
+
+- GitHub README polish: in progress
+- Product screenshots: script added; screenshots captured locally after running `npm run screenshots`
+- Demo video: not recorded yet
+- Resume integration: bullets drafted in `docs/RESUME_BULLETS.md`
+- Portfolio website integration: not added yet
+- GitHub topics and repo description: pending after push
+- Public deployment: pending
+
+## Screenshot Status
+
+Expected screenshot files live under `docs/screenshots/`:
+
+- `landing.png`
+- `login.png`
+- `dashboard.png`
+- `stock-research.png`
+- `portfolio.png`
+- `watchlist.png`
+- `ask-ai.png`
+- `admin.png`
+
+Run:
+
+```powershell
+cd C:\Users\shivk\fincredit-ai\frontend
+npm run screenshots
+```
+
+Screenshots should use only local demo data and should not include real secrets, personal emails, tokens, or production data.
 
 ## Test Status
 
-Last verified commands are recorded during the final Phase 40 pass:
+Last verified command set for Phase 41A:
 
 - `.\venv\Scripts\python.exe -m compileall app`
 - `npx tsc --noEmit`
 - `npm run build`
 - `npm run test:e2e`
-- `npm run test:e2e:headed`
-- `npm audit`
-- `npm outdated`
-- Auth, portfolio, and admin API smoke checks
+- `npm run screenshots`
 
-Dependency review:
+Dependency review from Phase 40:
 
-- `npm audit` reports 10 vulnerabilities: 5 moderate, 5 high.
+- `npm audit` reported 10 vulnerabilities: 5 moderate, 5 high.
 - `npm outdated` was reviewed without upgrading packages.
 - Audit fixes were deferred because the safe dry run still changes shadcn/transitive packages, and forced fixes affect framework/tooling dependencies.
 
@@ -53,8 +91,11 @@ Dependency review:
 
 ## Recommended Next Work
 
+- Record a 2-minute demo video
+- Push polished README and screenshots to GitHub
+- Add GitHub repo description and topics
+- Add the project to a portfolio website
+- Add resume bullets from `docs/RESUME_BULLETS.md`
 - Deploy backend, frontend, and PostgreSQL to cloud infrastructure
 - Add hosted LLM configuration for production
 - Add scheduled price refresh jobs
-- Capture screenshots under `docs/screenshots/`
-- Prepare a portfolio case-study writeup
