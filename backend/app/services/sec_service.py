@@ -1,3 +1,5 @@
+import logging
+
 import requests
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -5,18 +7,82 @@ from sqlalchemy.orm import Session
 from app.models.sec_fundamental import SecFundamental
 
 
+logger = logging.getLogger(__name__)
+
 SEC_HEADERS = {
-    "User-Agent": "FinCredit AI sreemaanshivkirthv@smu.edu"
+    "User-Agent": "FinCreditAI/1.0 contact@example.com",
 }
 
 
 TICKER_TO_CIK = {
-    "MSFT": "0000789019",
     "AAPL": "0000320193",
-    "TSLA": "0001318605",
+    "MSFT": "0000789019",
     "NVDA": "0001045810",
+    "TSLA": "0001318605",
     "JPM": "0000019617",
+    "AMZN": "0001018724",
+    "GOOGL": "0001652044",
+    "GOOG": "0001652044",
+    "META": "0001326801",
+    "NFLX": "0001065280",
+    "AMD": "0000002488",
+    "INTC": "0000050863",
+    "ORCL": "0001341439",
+    "CRM": "0001108524",
+    "ADBE": "0000796343",
+    "BAC": "0000070858",
+    "WMT": "0000104169",
+    "COST": "0000909832",
 }
+
+SEC_TICKER_MAPPING_URL = "https://www.sec.gov/files/company_tickers.json"
+_SEC_TICKER_TO_CIK_CACHE: dict[str, str] | None = None
+
+
+def normalize_ticker(ticker: str) -> str:
+    return ticker.strip().upper().replace(".", "-")
+
+
+def pad_cik(cik: str | int) -> str:
+    return str(cik).strip().zfill(10)
+
+
+def load_sec_ticker_mapping() -> dict[str, str]:
+    global _SEC_TICKER_TO_CIK_CACHE
+
+    if _SEC_TICKER_TO_CIK_CACHE is not None:
+        return _SEC_TICKER_TO_CIK_CACHE
+
+    try:
+        response = requests.get(
+            SEC_TICKER_MAPPING_URL,
+            headers=SEC_HEADERS,
+            timeout=10,
+        )
+        response.raise_for_status()
+        mapping_payload = response.json()
+
+        _SEC_TICKER_TO_CIK_CACHE = {
+            normalize_ticker(item["ticker"]): pad_cik(item["cik_str"])
+            for item in mapping_payload.values()
+            if item.get("ticker") and item.get("cik_str") is not None
+        }
+    except Exception as error:
+        logger.warning("SEC ticker mapping fetch failed: %s", error)
+        _SEC_TICKER_TO_CIK_CACHE = {}
+
+    return _SEC_TICKER_TO_CIK_CACHE
+
+
+def resolve_cik_for_ticker(ticker: str) -> str | None:
+    ticker_upper = normalize_ticker(ticker)
+
+    fallback_cik = TICKER_TO_CIK.get(ticker_upper)
+    if fallback_cik:
+        return pad_cik(fallback_cik)
+
+    sec_mapping = load_sec_ticker_mapping()
+    return sec_mapping.get(ticker_upper)
 
 
 def get_latest_annual_fact(facts: dict, taxonomy: str, concept: str):
@@ -84,13 +150,13 @@ def get_first_available_fact(facts: dict, concept_candidates: list[str]):
 
 
 def get_sec_company_facts(ticker: str, db: Session | None = None):
-    ticker_upper = ticker.upper()
-    cik = TICKER_TO_CIK.get(ticker_upper)
+    ticker_upper = normalize_ticker(ticker)
+    cik = resolve_cik_for_ticker(ticker_upper)
 
     if not cik:
         raise HTTPException(
             status_code=404,
-            detail="Ticker CIK mapping not available yet",
+            detail=f"SEC CIK mapping not found for ticker {ticker_upper}",
         )
 
     url = f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json"
@@ -98,10 +164,16 @@ def get_sec_company_facts(ticker: str, db: Session | None = None):
     try:
         response = requests.get(url, headers=SEC_HEADERS, timeout=20)
 
+        if response.status_code == 404:
+            raise HTTPException(
+                status_code=404,
+                detail=f"SEC company facts not available for ticker {ticker_upper}",
+            )
+
         if response.status_code != 200:
             raise HTTPException(
                 status_code=response.status_code,
-                detail="Failed to fetch SEC company facts",
+                detail=f"Failed to fetch SEC company facts for ticker {ticker_upper}",
             )
 
         facts = response.json()
@@ -194,14 +266,15 @@ def get_sec_company_facts(ticker: str, db: Session | None = None):
         raise
 
     except Exception as error:
+        logger.exception("SEC company facts fetch failed for %s", ticker_upper)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to fetch SEC data: {str(error)}",
+            detail=f"Failed to fetch SEC company facts for ticker {ticker_upper}",
         )
 
 
 def get_sec_fundamentals_history(ticker: str, db: Session):
-    ticker_upper = ticker.upper()
+    ticker_upper = normalize_ticker(ticker)
 
     snapshots = (
         db.query(SecFundamental)

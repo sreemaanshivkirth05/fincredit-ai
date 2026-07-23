@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 
 import {
   Activity,
+  AlertTriangle,
   BarChart3,
   Building2,
   CheckCircle2,
@@ -508,6 +509,7 @@ export default function StockDetailPage() {
   const [isNewsLoading, setIsNewsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+  const [secWarnings, setSecWarnings] = useState<string[]>([]);
 
   const [isWatchlisted, setIsWatchlisted] = useState(false);
   const [isWatchlistLoading, setIsWatchlistLoading] = useState(false);
@@ -523,6 +525,7 @@ export default function StockDetailPage() {
     if (!ticker) return;
 
     const nextErrors: string[] = [];
+    const nextSecWarnings: string[] = [];
 
     try {
       const [marketResult, factsResult, fundamentalsResult] =
@@ -543,21 +546,22 @@ export default function StockDetailPage() {
       if (factsResult.status === "fulfilled") {
         setCompanyFacts(factsResult.value);
       } else {
-        nextErrors.push(
-          `SEC company facts failed: ${getErrorMessage(factsResult.reason)}`
+        setCompanyFacts(null);
+        nextSecWarnings.push(
+          "SEC fundamentals are temporarily unavailable for this ticker."
         );
       }
 
       if (fundamentalsResult.status === "fulfilled") {
         setFundamentalsHistory(fundamentalsResult.value);
       } else {
-        nextErrors.push(
-          `SEC fundamentals history failed: ${getErrorMessage(
-            fundamentalsResult.reason
-          )}`
+        setFundamentalsHistory(null);
+        nextSecWarnings.push(
+          "SEC fundamentals history is temporarily unavailable for this ticker."
         );
       }
 
+      setSecWarnings([...new Set(nextSecWarnings)]);
       setErrors((currentErrors) => [
         ...currentErrors.filter(
           (item) =>
@@ -568,6 +572,7 @@ export default function StockDetailPage() {
       ]);
     } catch (error) {
       setErrors([`Stock page failed: ${getErrorMessage(error)}`]);
+      setSecWarnings([]);
     }
   }, [ticker]);
 
@@ -1353,6 +1358,23 @@ export default function StockDetailPage() {
             </CardHeader>
 
             <CardContent>
+              {secWarnings.length > 0 ? (
+                <div className="mb-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
+                    <div>
+                      <p className="font-medium text-amber-100">
+                        SEC fundamentals are temporarily unavailable for this ticker.
+                      </p>
+                      <p className="mt-1 text-amber-100/80">
+                        The rest of the stock page is still available, including
+                        price, chart, news, watchlist, portfolio actions, and Ask AI.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
               <div className="grid gap-4 md:grid-cols-2">
                 <MetricCard
                   label="Revenue"
