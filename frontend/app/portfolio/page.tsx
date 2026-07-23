@@ -2,7 +2,7 @@
 
 import type React from "react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 
 import {
   AlertTriangle,
@@ -11,9 +11,11 @@ import {
   BriefcaseBusiness,
   DollarSign,
   Gauge,
+  History,
   Loader2,
   PieChart,
   Plus,
+  ReceiptText,
   RefreshCcw,
   Search,
   ShieldCheck,
@@ -50,7 +52,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getPortfolioData, removePortfolioHolding } from "@/lib/api";
+import {
+  getPortfolioData,
+  getPortfolioTransactions,
+  removePortfolioHolding,
+  sellStockFromPortfolio,
+} from "@/lib/api";
 
 type Holding = {
   ticker: string;
@@ -84,6 +91,21 @@ type SectorAllocation = {
   value: number;
 };
 
+type PortfolioTransaction = {
+  id: number;
+  ticker: string;
+  company: string;
+  action: "BUY" | "SELL" | string;
+  shares: number;
+  price: number;
+  totalAmount: number;
+  realizedPL?: number | null;
+  realizedPLPercent?: number | null;
+  currency?: string | null;
+  exchange?: string | null;
+  createdAt?: string | null;
+};
+
 type PortfolioApiData = {
   totalValue: number;
   totalCost: number;
@@ -96,6 +118,7 @@ type PortfolioApiData = {
 
   holdings: Holding[];
   sectorAllocation: SectorAllocation[];
+  transactions?: PortfolioTransaction[];
   message: string;
 };
 
@@ -157,9 +180,15 @@ export default function PortfolioPage() {
   const [portfolioData, setPortfolioData] = useState<PortfolioApiData | null>(
     null
   );
+  const [transactions, setTransactions] = useState<PortfolioTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [removingTicker, setRemovingTicker] = useState<string | null>(null);
+  const [sellingTicker, setSellingTicker] = useState<string | null>(null);
+  const [sellShares, setSellShares] = useState("");
+  const [sellPrice, setSellPrice] = useState("");
+  const [submittingSell, setSubmittingSell] = useState(false);
   const [apiError, setApiError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   async function loadPortfolioData() {
     try {
@@ -168,15 +197,27 @@ export default function PortfolioPage() {
 
       const data = await getPortfolioData();
       setPortfolioData(data);
+      setTransactions(data.transactions ?? []);
+
+      try {
+        const transactionData = await getPortfolioTransactions();
+        setTransactions(transactionData.transactions ?? data.transactions ?? []);
+      } catch (transactionError) {
+        console.warn("Portfolio transaction history unavailable.");
+      }
     } catch (error) {
-      console.error(error);
-      setApiError("Backend portfolio API is not connected.");
+      setPortfolioData(null);
+      setTransactions([]);
+      setApiError(
+        "Backend portfolio API is not reachable. Start or restart FastAPI on http://127.0.0.1:8000."
+      );
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadPortfolioData();
   }, []);
 
@@ -184,9 +225,11 @@ export default function PortfolioPage() {
     try {
       setRemovingTicker(ticker);
       setApiError("");
+      setSuccessMessage("");
 
       await removePortfolioHolding(ticker);
       await loadPortfolioData();
+      setSuccessMessage(`${ticker} was deleted from active holdings.`);
     } catch (error) {
       console.error(error);
       setApiError(`Unable to remove ${ticker} from portfolio.`);
@@ -195,8 +238,69 @@ export default function PortfolioPage() {
     }
   }
 
+  function openSellForm(holding: Holding) {
+    const nextTicker = sellingTicker === holding.ticker ? null : holding.ticker;
+
+    setSellingTicker(nextTicker);
+    setApiError("");
+    setSuccessMessage("");
+    setSellShares(nextTicker ? String(Math.min(1, holding.shares)) : "");
+    setSellPrice(nextTicker ? String(holding.currentPrice ?? holding.avgPrice) : "");
+  }
+
+  async function handleSellHolding(holding: Holding) {
+    const shares = Number(sellShares);
+    const price = Number(sellPrice);
+
+    if (!Number.isFinite(shares) || shares <= 0) {
+      setApiError("Sell shares must be greater than 0.");
+      return;
+    }
+
+    if (shares > holding.shares) {
+      setApiError(
+        `You only hold ${formatNumber(holding.shares)} shares of ${holding.ticker}.`
+      );
+      return;
+    }
+
+    if (!Number.isFinite(price) || price <= 0) {
+      setApiError("Sell price must be greater than 0.");
+      return;
+    }
+
+    try {
+      setSubmittingSell(true);
+      setApiError("");
+      setSuccessMessage("");
+
+      await sellStockFromPortfolio({
+        ticker: holding.ticker,
+        shares,
+        price,
+      });
+
+      setSellingTicker(null);
+      setSellShares("");
+      setSellPrice("");
+      await loadPortfolioData();
+      setSuccessMessage(
+        `Sold ${formatNumber(shares)} simulated share${
+          shares === 1 ? "" : "s"
+        } of ${holding.ticker}.`
+      );
+    } catch (error) {
+      console.error(error);
+      setApiError(`Unable to sell ${holding.ticker}.`);
+    } finally {
+      setSubmittingSell(false);
+    }
+  }
+
   const activeHoldings = portfolioData?.holdings ?? [];
   const sectorAllocation = portfolioData?.sectorAllocation ?? [];
+  const transactionHistory =
+    transactions.length > 0 ? transactions : portfolioData?.transactions ?? [];
 
   const riskByHolding = useMemo(() => {
     return activeHoldings.map((holding) => ({
@@ -247,6 +351,12 @@ export default function PortfolioPage() {
 
             {apiError && (
               <p className="mt-2 text-xs text-red-300">{apiError}</p>
+            )}
+
+            {successMessage && (
+              <p className="mt-2 text-xs text-emerald-300">
+                {successMessage}
+              </p>
             )}
           </div>
 
@@ -471,7 +581,7 @@ export default function PortfolioPage() {
                     <TableHead className="text-slate-400">P/L</TableHead>
                     <TableHead className="text-slate-400">Weight</TableHead>
                     <TableHead className="text-right text-slate-400">
-                      Action
+                      Actions
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -482,9 +592,31 @@ export default function PortfolioPage() {
                     const pl = holding.unrealizedPL ?? 0;
                     const plPercent = holding.unrealizedPLPercent ?? 0;
                     const isPositive = pl >= 0;
+                    const activeSellForm = sellingTicker === holding.ticker;
+                    const sellSharesNumber = Number(sellShares);
+                    const sellPriceNumber = Number(sellPrice);
+                    const estimatedProceeds =
+                      activeSellForm &&
+                      Number.isFinite(sellSharesNumber) &&
+                      Number.isFinite(sellPriceNumber)
+                        ? sellSharesNumber * sellPriceNumber
+                        : null;
+                    const estimatedRealizedPL =
+                      estimatedProceeds !== null
+                        ? (sellPriceNumber - holding.avgPrice) * sellSharesNumber
+                        : null;
+                    const estimatedRealizedPLPercent =
+                      activeSellForm &&
+                      Number.isFinite(sellPriceNumber) &&
+                      holding.avgPrice
+                        ? ((sellPriceNumber - holding.avgPrice) /
+                            holding.avgPrice) *
+                          100
+                        : null;
 
                     return (
-                      <TableRow key={holding.ticker} className="border-white/10">
+                      <Fragment key={holding.ticker}>
+                        <TableRow className="border-white/10">
                         <TableCell>
                           <div>
                             <Link href={`/stock/${holding.ticker}`}>
@@ -498,7 +630,7 @@ export default function PortfolioPage() {
                             </p>
 
                             <p className="mt-1 text-xs text-slate-500">
-                              {holding.sector} · Added {formatDate(holding.createdAt)}
+                              {holding.sector} - Added {formatDate(holding.createdAt)}
                             </p>
                           </div>
                         </TableCell>
@@ -553,6 +685,15 @@ export default function PortfolioPage() {
 
                             <Button
                               size="sm"
+                              onClick={() => openSellForm(holding)}
+                              className="bg-amber-500 text-white hover:bg-amber-600"
+                            >
+                              <ReceiptText className="mr-2 h-4 w-4" />
+                              Sell
+                            </Button>
+
+                            <Button
+                              size="sm"
                               disabled={removingTicker === holding.ticker}
                               onClick={() => handleRemoveHolding(holding.ticker)}
                               className="bg-red-500/80 text-white hover:bg-red-600"
@@ -562,11 +703,105 @@ export default function PortfolioPage() {
                               ) : (
                                 <Trash2 className="mr-2 h-4 w-4" />
                               )}
-                              Remove
+                              Delete Holding
                             </Button>
                           </div>
                         </TableCell>
-                      </TableRow>
+                        </TableRow>
+
+                        {activeSellForm ? (
+                          <TableRow className="border-white/10">
+                            <TableCell colSpan={9}>
+                              <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4">
+                                <div className="grid gap-4 lg:grid-cols-[1fr_1fr_1fr_auto] lg:items-end">
+                                  <div>
+                                    <label className="text-xs text-slate-400">
+                                      Shares to Sell
+                                    </label>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      max={holding.shares}
+                                      step="0.0001"
+                                      value={sellShares}
+                                      onChange={(event) =>
+                                        setSellShares(event.target.value)
+                                      }
+                                      className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-amber-400"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label className="text-xs text-slate-400">
+                                      Sell Price
+                                    </label>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      step="0.01"
+                                      value={sellPrice}
+                                      onChange={(event) =>
+                                        setSellPrice(event.target.value)
+                                      }
+                                      className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-amber-400"
+                                    />
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-3 text-sm">
+                                    <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+                                      <p className="text-xs text-slate-500">
+                                        Proceeds
+                                      </p>
+                                      <p className="mt-1 font-semibold text-white">
+                                        {formatCurrency(
+                                          estimatedProceeds,
+                                          currency
+                                        )}
+                                      </p>
+                                    </div>
+
+                                    <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+                                      <p className="text-xs text-slate-500">
+                                        Realized P/L
+                                      </p>
+                                      <p
+                                        className={
+                                          (estimatedRealizedPL ?? 0) >= 0
+                                            ? "mt-1 font-semibold text-emerald-200"
+                                            : "mt-1 font-semibold text-red-200"
+                                        }
+                                      >
+                                        {formatCurrency(
+                                          estimatedRealizedPL,
+                                          currency
+                                        )}{" "}
+                                        (
+                                        {formatPercent(
+                                          estimatedRealizedPLPercent
+                                        )}
+                                        )
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <Button
+                                    onClick={() => handleSellHolding(holding)}
+                                    disabled={submittingSell}
+                                    className="bg-amber-500 text-white hover:bg-amber-600"
+                                  >
+                                    {submittingSell ? (
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <ReceiptText className="mr-2 h-4 w-4" />
+                                    )}
+                                    Confirm Sell
+                                  </Button>
+                                </div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ) : null}
+                      </Fragment>
                     );
                   })}
                 </TableBody>
@@ -582,6 +817,118 @@ export default function PortfolioPage() {
                 <p className="mt-2 text-sm text-slate-400">
                   Search a stock, open its stock research page, and simulate a
                   buy from there.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-white/10 bg-white/[0.04] text-white">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <History className="h-5 w-5 text-blue-300" />
+              Transaction History
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            {transactionHistory.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-white/10">
+                    <TableHead className="text-slate-400">Action</TableHead>
+                    <TableHead className="text-slate-400">Ticker</TableHead>
+                    <TableHead className="text-slate-400">Shares</TableHead>
+                    <TableHead className="text-slate-400">Price</TableHead>
+                    <TableHead className="text-slate-400">Total</TableHead>
+                    <TableHead className="text-slate-400">Realized P/L</TableHead>
+                    <TableHead className="text-slate-400">Date</TableHead>
+                  </TableRow>
+                </TableHeader>
+
+                <TableBody>
+                  {transactionHistory.map((transaction) => {
+                    const currency = transaction.currency ?? "USD";
+                    const isSell = transaction.action === "SELL";
+                    const realizedPL = transaction.realizedPL ?? null;
+                    const isRealizedPositive = (realizedPL ?? 0) >= 0;
+
+                    return (
+                      <TableRow
+                        key={transaction.id}
+                        className="border-white/10"
+                      >
+                        <TableCell>
+                          <Badge
+                            className={
+                              isSell
+                                ? "bg-amber-500/15 text-amber-200"
+                                : "bg-emerald-500/15 text-emerald-200"
+                            }
+                          >
+                            {transaction.action}
+                          </Badge>
+                        </TableCell>
+
+                        <TableCell>
+                          <Link href={`/stock/${transaction.ticker}`}>
+                            <span className="font-medium text-white hover:text-blue-300">
+                              {transaction.ticker}
+                            </span>
+                          </Link>
+                          <p className="mt-1 max-w-[220px] truncate text-xs text-slate-500">
+                            {transaction.company}
+                          </p>
+                        </TableCell>
+
+                        <TableCell className="text-slate-300">
+                          {formatNumber(transaction.shares)}
+                        </TableCell>
+
+                        <TableCell className="text-slate-300">
+                          {formatCurrency(transaction.price, currency)}
+                        </TableCell>
+
+                        <TableCell className="text-slate-300">
+                          {formatCurrency(transaction.totalAmount, currency)}
+                        </TableCell>
+
+                        <TableCell>
+                          {isSell ? (
+                            <Badge
+                              className={
+                                isRealizedPositive
+                                  ? "bg-emerald-500/15 text-emerald-200"
+                                  : "bg-red-500/15 text-red-200"
+                              }
+                            >
+                              {formatCurrency(realizedPL, currency)} (
+                              {formatPercent(transaction.realizedPLPercent)})
+                            </Badge>
+                          ) : (
+                            <span className="text-slate-500">-</span>
+                          )}
+                        </TableCell>
+
+                        <TableCell className="text-slate-300">
+                          {formatDate(transaction.createdAt)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 p-8 text-center">
+                <History className="mx-auto h-8 w-8 text-slate-500" />
+
+                <h2 className="mt-4 text-lg font-semibold text-white">
+                  No transaction history yet
+                </h2>
+
+                <p className="mt-2 text-sm text-slate-400">
+                  Simulated buys and sells will appear here after you trade in
+                  the paper portfolio.
                 </p>
               </div>
             )}

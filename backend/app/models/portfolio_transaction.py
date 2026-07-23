@@ -18,6 +18,9 @@ class PortfolioTransaction(Base):
     price = Column(Float, nullable=False)
     total_amount = Column(Float, nullable=False)
 
+    realized_pl = Column(Float, nullable=True)
+    realized_pl_percent = Column(Float, nullable=True)
+
     currency = Column(String, nullable=True)
     exchange = Column(String, nullable=True)
 

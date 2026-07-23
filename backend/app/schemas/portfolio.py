@@ -43,6 +43,12 @@ class PortfolioBuyRequest(BaseModel):
     exchange: Optional[str] = None
 
 
+class PortfolioSellRequest(BaseModel):
+    ticker: str
+    shares: float
+    price: float
+
+
 class PortfolioTransactionResponse(BaseModel):
     id: int
     ticker: str
@@ -51,9 +57,17 @@ class PortfolioTransactionResponse(BaseModel):
     shares: float
     price: float
     totalAmount: float
+    realizedPL: Optional[float] = None
+    realizedPLPercent: Optional[float] = None
     currency: Optional[str] = None
     exchange: Optional[str] = None
     createdAt: Optional[datetime] = None
+
+
+class PortfolioTransactionsResponse(BaseModel):
+    count: int
+    transactions: list[PortfolioTransactionResponse] = Field(default_factory=list)
+    message: str
 
 
 class PortfolioActionResponse(BaseModel):

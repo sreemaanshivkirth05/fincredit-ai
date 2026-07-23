@@ -11,6 +11,8 @@ class StockNewsItemResponse(BaseModel):
     publishedAt: Optional[str] = None
     thumbnail: Optional[str] = None
     type: Optional[str] = None
+    relevanceScore: int = 0
+    relevanceReason: Optional[str] = None
 
 
 class StockNewsResponse(BaseModel):

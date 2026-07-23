@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.models.holding import Holding
 from app.models.portfolio_transaction import PortfolioTransaction
-from app.schemas.portfolio import PortfolioBuyRequest
+from app.schemas.portfolio import PortfolioBuyRequest, PortfolioSellRequest
 
 
 def normalize_ticker(ticker: str) -> str:
@@ -63,6 +63,8 @@ def transaction_to_dict(transaction: PortfolioTransaction):
         "shares": transaction.shares,
         "price": transaction.price,
         "totalAmount": transaction.total_amount,
+        "realizedPL": transaction.realized_pl,
+        "realizedPLPercent": transaction.realized_pl_percent,
         "currency": transaction.currency or "USD",
         "exchange": transaction.exchange,
         "createdAt": transaction.created_at,
@@ -181,11 +183,13 @@ def add_stock_to_portfolio(db: Session, request: PortfolioBuyRequest):
 
     transaction = PortfolioTransaction(
         ticker=cleaned_ticker,
-        company=request.company or cleaned_ticker,
+        company=request.company or holding.company or cleaned_ticker,
         action="BUY",
         shares=request.shares,
         price=request.price,
         total_amount=buy_amount,
+        realized_pl=None,
+        realized_pl_percent=None,
         currency=request.currency or "USD",
         exchange=request.exchange,
         created_at=datetime.utcnow(),
@@ -204,6 +208,88 @@ def add_stock_to_portfolio(db: Session, request: PortfolioBuyRequest):
         "ticker": cleaned_ticker,
         "message": f"Bought {request.shares:g} simulated shares of {cleaned_ticker}.",
         "holding": holding_to_dict(holding),
+        "transaction": transaction_to_dict(transaction),
+    }
+
+
+def sell_stock_from_portfolio(db: Session, request: PortfolioSellRequest):
+    cleaned_ticker = normalize_ticker(request.ticker)
+
+    if request.shares <= 0:
+        raise HTTPException(status_code=400, detail="Shares must be greater than 0.")
+
+    if request.price <= 0:
+        raise HTTPException(status_code=400, detail="Price must be greater than 0.")
+
+    holding = get_holding_by_ticker(db, cleaned_ticker)
+
+    if not holding:
+        raise HTTPException(
+            status_code=404,
+            detail=f"{cleaned_ticker} is not in the portfolio.",
+        )
+
+    if request.shares > holding.shares:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot sell more shares than currently held.",
+        )
+
+    avg_price = holding.avg_price
+    proceeds = request.shares * request.price
+    realized_pl = (request.price - avg_price) * request.shares
+    realized_pl_percent = ((request.price - avg_price) / avg_price) * 100 if avg_price else 0
+    remaining_shares = holding.shares - request.shares
+
+    transaction = PortfolioTransaction(
+        ticker=cleaned_ticker,
+        company=holding.company,
+        action="SELL",
+        shares=request.shares,
+        price=request.price,
+        total_amount=proceeds,
+        realized_pl=realized_pl,
+        realized_pl_percent=realized_pl_percent,
+        currency=holding.currency or "USD",
+        exchange=holding.exchange,
+        created_at=datetime.utcnow(),
+    )
+
+    db.add(transaction)
+
+    if remaining_shares <= 0:
+        db.delete(holding)
+        response_holding = None
+    else:
+        holding.shares = remaining_shares
+        holding.current_price = request.price
+        holding.total_cost = avg_price * remaining_shares
+        holding.value = remaining_shares * request.price
+
+        unrealized_pl, unrealized_pl_percent = calculate_unrealized_pl(
+            value=holding.value,
+            total_cost=holding.total_cost,
+        )
+
+        holding.unrealized_pl = unrealized_pl
+        holding.unrealized_pl_percent = unrealized_pl_percent
+        holding.updated_at = datetime.utcnow()
+        response_holding = holding
+
+    db.flush()
+
+    recalculate_portfolio_weights(db)
+
+    db.commit()
+    db.refresh(transaction)
+
+    if response_holding:
+        db.refresh(response_holding)
+
+    return {
+        "ticker": cleaned_ticker,
+        "message": f"Sold {request.shares:g} simulated shares of {cleaned_ticker}.",
+        "holding": holding_to_dict(response_holding) if response_holding else None,
         "transaction": transaction_to_dict(transaction),
     }
 
@@ -310,4 +396,25 @@ def get_portfolio_data(db: Session):
         "sectorAllocation": sector_allocation,
         "transactions": transactions_response,
         "message": "Portfolio API connected to PostgreSQL successfully",
+    }
+
+
+def get_portfolio_transactions(db: Session, limit: int = 50):
+    safe_limit = max(1, min(limit, 200))
+
+    transactions = (
+        db.query(PortfolioTransaction)
+        .order_by(PortfolioTransaction.created_at.desc())
+        .limit(safe_limit)
+        .all()
+    )
+
+    transactions_response = [
+        transaction_to_dict(transaction) for transaction in transactions
+    ]
+
+    return {
+        "count": len(transactions_response),
+        "transactions": transactions_response,
+        "message": "Portfolio transaction history loaded successfully",
     }

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.models.holding import Holding
 from app.models.market_snapshot import MarketSnapshot
+from app.models.portfolio_transaction import PortfolioTransaction
 from app.models.sec_fundamental import SecFundamental
 from app.models.watchlist_company import WatchlistCompany
 from app.services.llm_service import generate_llm_answer
@@ -17,6 +18,7 @@ class FinCreditState(TypedDict):
     ticker: str | None
 
     portfolio_context: list[dict]
+    transaction_context: list[dict]
     watchlist_context: list[dict]
     market_context: dict | None
     sec_context: dict | None
@@ -198,6 +200,28 @@ def holding_to_context(holding: Holding):
     }
 
 
+def transaction_to_context(transaction: PortfolioTransaction):
+    return {
+        "ticker": transaction.ticker,
+        "company": transaction.company,
+        "action": transaction.action,
+        "shares": safe_float(transaction.shares) or 0,
+        "price": safe_float(transaction.price) or 0,
+        "totalAmount": safe_float(transaction.total_amount) or 0,
+        "realizedPL": safe_float(getattr(transaction, "realized_pl", None)),
+        "realizedPLPercent": safe_float(
+            getattr(transaction, "realized_pl_percent", None)
+        ),
+        "currency": getattr(transaction, "currency", None) or "USD",
+        "exchange": getattr(transaction, "exchange", None),
+        "createdAt": (
+            transaction.created_at.isoformat()
+            if getattr(transaction, "created_at", None)
+            else None
+        ),
+    }
+
+
 def watchlist_to_context(company: WatchlistCompany):
     return {
         "ticker": company.ticker,
@@ -227,6 +251,17 @@ def create_portfolio_agent(db: Session):
 
         portfolio_context = [holding_to_context(holding) for holding in holdings]
         state["portfolio_context"] = portfolio_context
+
+        transactions = (
+            db.query(PortfolioTransaction)
+            .order_by(PortfolioTransaction.created_at.desc())
+            .limit(12)
+            .all()
+        )
+
+        state["transaction_context"] = [
+            transaction_to_context(transaction) for transaction in transactions
+        ]
 
         candidate_tickers = [holding["ticker"] for holding in portfolio_context]
 
@@ -370,6 +405,7 @@ def news_agent(state: FinCreditState) -> FinCreditState:
 def risk_analysis_agent(state: FinCreditState) -> FinCreditState:
     ticker = state.get("ticker")
     portfolio_context = state.get("portfolio_context", [])
+    transaction_context = state.get("transaction_context", [])
     watchlist_context = state.get("watchlist_context", [])
     market_context = state.get("market_context")
     sec_context = state.get("sec_context")
@@ -666,6 +702,34 @@ def evidence_agent(state: FinCreditState) -> FinCreditState:
                 }
             )
 
+    if transaction_context:
+        relevant_transactions = [
+            transaction
+            for transaction in transaction_context
+            if not ticker or transaction["ticker"] == ticker
+        ]
+
+        if relevant_transactions:
+            transaction_text = "; ".join(
+                [
+                    (
+                        f"{item['action']} {item['shares']:g} {item['ticker']} "
+                        f"at {format_money(item['price'])}"
+                    )
+                    for item in relevant_transactions[:5]
+                ]
+            )
+
+            evidence.append(
+                {
+                    "source": "Recent Portfolio Transactions",
+                    "claim": (
+                        f"Recent simulated transaction history used: {transaction_text}."
+                    ),
+                    "confidence": 92,
+                }
+            )
+
     if watchlist_context:
         if ticker:
             matching_watchlist_item = next(
@@ -793,6 +857,7 @@ def evidence_agent(state: FinCreditState) -> FinCreditState:
 def build_context_summary(state: FinCreditState):
     ticker = state.get("ticker")
     portfolio_context = state.get("portfolio_context", [])
+    transaction_context = state.get("transaction_context", [])
     watchlist_context = state.get("watchlist_context", [])
     market_context = state.get("market_context")
     sec_context = state.get("sec_context")
@@ -822,6 +887,18 @@ def build_context_summary(state: FinCreditState):
                 )
             else:
                 lines.append(f"{ticker} is not currently in the simulated portfolio.")
+
+    if transaction_context:
+        relevant_transactions = [
+            transaction
+            for transaction in transaction_context
+            if not ticker or transaction["ticker"] == ticker
+        ]
+
+        if relevant_transactions:
+            lines.append(
+                f"Recent portfolio transactions loaded: {len(relevant_transactions)}"
+            )
 
     if watchlist_context:
         lines.append(f"Watchlist stocks loaded: {len(watchlist_context)}")
@@ -1047,6 +1124,7 @@ def run_fincredit_graph(question: str, db: Session):
         "question": question,
         "ticker": ticker,
         "portfolio_context": [],
+        "transaction_context": [],
         "watchlist_context": [],
         "market_context": None,
         "sec_context": None,

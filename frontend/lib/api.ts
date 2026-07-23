@@ -47,6 +47,12 @@ export type PortfolioBuyPayload = {
   exchange?: string | null;
 };
 
+export type PortfolioSellPayload = {
+  ticker: string;
+  shares: number;
+  price: number;
+};
+
 export async function getDashboardData() {
   return fetchJson(`${API_BASE_URL}/api/dashboard`);
 }
@@ -59,8 +65,22 @@ export async function getPortfolioHoldingStatus(ticker: string) {
   return fetchJson(`${API_BASE_URL}/api/portfolio/${ticker}/status`);
 }
 
+export async function getPortfolioTransactions() {
+  return fetchJson(`${API_BASE_URL}/api/portfolio/transactions`);
+}
+
 export async function buyStockForPortfolio(payload: PortfolioBuyPayload) {
   return fetchJson(`${API_BASE_URL}/api/portfolio/buy`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function sellStockFromPortfolio(payload: PortfolioSellPayload) {
+  return fetchJson(`${API_BASE_URL}/api/portfolio/sell`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

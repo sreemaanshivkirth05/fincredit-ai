@@ -4,6 +4,19 @@ from typing import Any, Optional
 import yfinance as yf
 
 
+KEYWORD_MAP = {
+    "AAPL": ["AAPL", "Apple", "iPhone", "Mac", "iPad", "App Store", "Tim Cook", "Cupertino"],
+    "TSLA": ["TSLA", "Tesla", "Elon Musk", "Model Y", "Model 3", "Cybertruck", "EV"],
+    "MSFT": ["MSFT", "Microsoft", "Azure", "Windows", "Office", "Copilot", "Satya Nadella"],
+    "NVDA": ["NVDA", "Nvidia", "NVIDIA", "GPU", "AI chip", "Jensen Huang"],
+    "AMZN": ["AMZN", "Amazon", "AWS", "Prime", "Andy Jassy"],
+    "GOOGL": ["GOOGL", "Alphabet", "Google", "Search", "YouTube", "Gemini", "Sundar Pichai"],
+    "GOOG": ["GOOG", "Alphabet", "Google", "Search", "YouTube", "Gemini", "Sundar Pichai"],
+    "META": ["META", "Meta", "Facebook", "Instagram", "WhatsApp", "Reality Labs", "Mark Zuckerberg"],
+    "JPM": ["JPM", "JPMorgan", "JPMorgan Chase", "Jamie Dimon"],
+}
+
+
 def normalize_ticker(ticker: str) -> str:
     return ticker.strip().upper()
 
@@ -126,7 +139,53 @@ def normalize_news_item(item: dict):
         "publishedAt": published_at,
         "thumbnail": extract_thumbnail(item),
         "type": str(news_type) if news_type else None,
+        "relevanceScore": 0,
+        "relevanceReason": None,
     }
+
+
+def get_company_keywords(stock: yf.Ticker, ticker: str):
+    if ticker in KEYWORD_MAP:
+        return KEYWORD_MAP[ticker]
+
+    keywords = [ticker]
+
+    try:
+        info = stock.info or {}
+        company_name = info.get("shortName") or info.get("longName")
+
+        if company_name:
+            keywords.append(str(company_name))
+    except Exception:
+        pass
+
+    return list(dict.fromkeys([keyword for keyword in keywords if keyword]))
+
+
+def score_news_item(item: dict, keywords: list[str]):
+    text = " ".join(
+        [
+            item.get("title") or "",
+            item.get("summary") or "",
+            item.get("publisher") or "",
+        ]
+    ).lower()
+
+    matched_keywords = []
+
+    for keyword in keywords:
+        cleaned_keyword = keyword.strip()
+
+        if cleaned_keyword and cleaned_keyword.lower() in text:
+            matched_keywords.append(cleaned_keyword)
+
+    if not matched_keywords:
+        return 0, None
+
+    score = min(100, 45 + (len(matched_keywords) * 15))
+    reason = "Matched " + ", ".join(matched_keywords[:4])
+
+    return score, reason
 
 
 def get_stock_news_data(ticker: str, limit: int = 8):
@@ -135,8 +194,10 @@ def get_stock_news_data(ticker: str, limit: int = 8):
 
     stock = yf.Ticker(cleaned_ticker)
     raw_news = stock.news or []
+    keywords = get_company_keywords(stock, cleaned_ticker)
 
     normalized_news = []
+    relevant_news = []
 
     for item in raw_news:
         if not isinstance(item, dict):
@@ -145,15 +206,35 @@ def get_stock_news_data(ticker: str, limit: int = 8):
         normalized_item = normalize_news_item(item)
 
         if normalized_item:
+            relevance_score, relevance_reason = score_news_item(
+                normalized_item,
+                keywords,
+            )
+            normalized_item["relevanceScore"] = relevance_score
+            normalized_item["relevanceReason"] = relevance_reason
             normalized_news.append(normalized_item)
 
-        if len(normalized_news) >= safe_limit:
-            break
+            if relevance_score > 0:
+                relevant_news.append(normalized_item)
+
+    if relevant_news:
+        selected_news = sorted(
+            relevant_news,
+            key=lambda item: item.get("relevanceScore", 0),
+            reverse=True,
+        )[:safe_limit]
+        message = f"{cleaned_ticker} relevant news loaded from yfinance"
+    else:
+        selected_news = normalized_news[:safe_limit]
+        message = (
+            f"{cleaned_ticker} broader market/news fallback from yfinance; "
+            "no ticker/company keyword matches were found"
+        )
 
     return {
         "ticker": cleaned_ticker,
-        "count": len(normalized_news),
-        "news": normalized_news,
+        "count": len(selected_news),
+        "news": selected_news,
         "source": "yfinance",
-        "message": f"{cleaned_ticker} news loaded from yfinance",
+        "message": message,
     }

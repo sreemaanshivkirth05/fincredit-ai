@@ -73,6 +73,8 @@ type NewsItem = {
   publishedAt?: string | null;
   thumbnail?: string | null;
   type?: string | null;
+  relevanceScore?: number | null;
+  relevanceReason?: string | null;
 };
 
 type MetricCardProps = {
@@ -1588,6 +1590,12 @@ export default function StockDetailPage() {
                               {item.type}
                             </Badge>
                           ) : null}
+
+                          {item.relevanceScore ? (
+                            <Badge className="bg-emerald-500/15 text-emerald-200">
+                              Relevance {item.relevanceScore}
+                            </Badge>
+                          ) : null}
                         </div>
 
                         <h3 className="mt-2 line-clamp-2 font-semibold leading-6 text-white">
@@ -1597,6 +1605,12 @@ export default function StockDetailPage() {
                         <p className="mt-1 text-xs text-slate-500">
                           {formatDateTime(item.publishedAt)}
                         </p>
+
+                        {item.relevanceReason ? (
+                          <p className="mt-1 text-xs text-emerald-300">
+                            {item.relevanceReason}
+                          </p>
+                        ) : null}
                       </div>
                     </div>
 
