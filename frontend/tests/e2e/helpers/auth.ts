@@ -5,10 +5,18 @@ const AUTH_TOKEN_KEY = "fincredit_access_token";
 const AUTH_USER_KEY = "fincredit_current_user";
 
 export async function loginAsDemo(page: Page) {
+  await loginWithCredentials(page, "demo@fincredit.ai", "DemoPass123!");
+}
+
+export async function loginAsAdmin(page: Page) {
+  await loginWithCredentials(page, "admin@fincredit.ai", "AdminPass123!");
+}
+
+async function loginWithCredentials(page: Page, email: string, password: string) {
   const response = await page.request.post(`${API_BASE_URL}/api/auth/login`, {
     data: {
-      email: "demo@fincredit.ai",
-      password: "DemoPass123!",
+      email,
+      password,
     },
   });
 

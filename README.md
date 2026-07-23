@@ -8,6 +8,7 @@ The public landing page lives at `/`, while the internal working dashboard lives
 
 - User registration and JWT login with `user` and `admin` roles
 - Account-isolated portfolios, watchlists, transactions, and AI history
+- Read-only admin dashboard for user summaries and usage inspection
 - Stock research pages for ticker-level market data, charts, SEC fundamentals, and news
 - Simulated paper trading with buy and sell flows
 - Portfolio holdings, cost basis, unrealized P/L, sector exposure, and risk scoring
@@ -122,6 +123,16 @@ Demo credentials:
 - Admin: `admin@fincredit.ai` / `AdminPass123!`
 
 Each user has isolated portfolio holdings, transaction history, watchlist rows, and AI agent runs. The admin role exists for future admin dashboard access.
+
+## Admin Dashboard
+
+Admins can open `/admin` to view a read-only overview of all users, active accounts, portfolio totals, watchlist usage, transaction counts, and saved AI runs. The admin detail panel can inspect a user summary, holdings, latest transactions, watchlist items, and latest AI runs.
+
+Admin credentials:
+
+- `admin@fincredit.ai` / `AdminPass123!`
+
+The admin dashboard is a local MVP for inspection only. It does not delete users, modify portfolios, show password hashes, expose tokens, or replace production admin controls.
 
 ## Disclaimer
 

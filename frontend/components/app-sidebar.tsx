@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -12,8 +13,10 @@ import {
   Search,
   Settings,
   ShieldCheck,
+  Shield,
   UserCircle,
 } from "lucide-react";
+import { AuthUser, getStoredUser } from "@/lib/api";
 
 const items = [
   { label: "Dashboard", href: "/dashboard", icon: Home },
@@ -23,12 +26,18 @@ const items = [
   { label: "Ask FinCredit", href: "/ask", icon: MessageSquareText },
   { label: "Reports", href: "/reports", icon: FileText },
   { label: "Governance", href: "/governance", icon: ShieldCheck },
+  { label: "Admin", href: "/admin", icon: Shield, adminOnly: true },
   { label: "Profile", href: "/profile", icon: UserCircle },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const [user, setUser] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    setUser(getStoredUser());
+  }, []);
 
   return (
     <aside className="hidden w-72 border-r border-white/10 bg-black/20 p-5 lg:block">
@@ -43,7 +52,9 @@ export function AppSidebar() {
       </Link>
 
       <nav className="mt-8 space-y-2">
-        {items.map((item) => {
+        {items
+          .filter((item) => !item.adminOnly || user?.role === "admin")
+          .map((item) => {
           const Icon = item.icon;
           const active =
             item.href === "/stock/AMZN"

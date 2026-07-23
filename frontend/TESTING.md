@@ -127,6 +127,72 @@ cd C:\Users\shivk\fincredit-ai\frontend
 npm run test:e2e -- auth.spec.ts
 ```
 
+## Admin API Checks
+
+Admin login:
+
+```powershell
+$body = @{
+  email = "admin@fincredit.ai"
+  password = "AdminPass123!"
+} | ConvertTo-Json
+
+$response = Invoke-RestMethod `
+  -Uri "http://127.0.0.1:8000/api/auth/login" `
+  -Method POST `
+  -ContentType "application/json" `
+  -Body $body
+
+$token = $response.accessToken
+$response | ConvertTo-Json -Depth 8
+```
+
+Admin overview:
+
+```powershell
+Invoke-RestMethod `
+  -Uri "http://127.0.0.1:8000/api/admin/overview" `
+  -Headers @{ Authorization = "Bearer $token" } | ConvertTo-Json -Depth 8
+```
+
+Admin users:
+
+```powershell
+Invoke-RestMethod `
+  -Uri "http://127.0.0.1:8000/api/admin/users" `
+  -Headers @{ Authorization = "Bearer $token" } | ConvertTo-Json -Depth 8
+```
+
+Non-admin forbidden check:
+
+```powershell
+$demoBody = @{
+  email = "demo@fincredit.ai"
+  password = "DemoPass123!"
+} | ConvertTo-Json
+
+$demoResponse = Invoke-RestMethod `
+  -Uri "http://127.0.0.1:8000/api/auth/login" `
+  -Method POST `
+  -ContentType "application/json" `
+  -Body $demoBody
+
+$demoToken = $demoResponse.accessToken
+
+Invoke-RestMethod `
+  -Uri "http://127.0.0.1:8000/api/admin/overview" `
+  -Headers @{ Authorization = "Bearer $demoToken" } | ConvertTo-Json -Depth 8
+```
+
+Expected for non-admin: `403 Forbidden`.
+
+## Admin E2E
+
+```powershell
+cd C:\Users\shivk\fincredit-ai\frontend
+npm run test:e2e -- admin.spec.ts
+```
+
 ## Landing Page E2E
 
 The landing page test verifies `/` is a public marketing page and that its CTAs link into the internal app flows.

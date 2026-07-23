@@ -380,3 +380,15 @@ export async function getAgentRunsByTicker(ticker: string) {
 export async function getAgentRunById(agentRunId: string) {
   return fetchJson(`${API_BASE_URL}/api/ask/runs/${agentRunId}`);
 }
+
+export async function getAdminOverview() {
+  return fetchJson(`${API_BASE_URL}/api/admin/overview`);
+}
+
+export async function getAdminUsers() {
+  return fetchJson(`${API_BASE_URL}/api/admin/users`);
+}
+
+export async function getAdminUserDetail(userId: number) {
+  return fetchJson(`${API_BASE_URL}/api/admin/users/${userId}`);
+}
