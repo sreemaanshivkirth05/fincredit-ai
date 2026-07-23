@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class WatchlistCompanyResponse(BaseModel):
@@ -70,4 +70,12 @@ class WatchlistResponse(BaseModel):
     watchlist: list[WatchlistCompanyResponse]
     sentimentData: list[SentimentDataResponse]
     newsRadar: list[NewsRadarResponse]
+    message: str
+
+
+class WatchlistRefreshResponse(BaseModel):
+    refreshedCount: int
+    failedCount: int
+    failedTickers: list[str] = Field(default_factory=list)
+    watchlist: WatchlistResponse
     message: str

@@ -56,6 +56,7 @@ import {
   getPortfolioData,
   getPortfolioTransactions,
   removePortfolioHolding,
+  refreshPortfolioPrices,
   sellStockFromPortfolio,
 } from "@/lib/api";
 
@@ -183,6 +184,7 @@ export default function PortfolioPage() {
   const [transactions, setTransactions] = useState<PortfolioTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [removingTicker, setRemovingTicker] = useState<string | null>(null);
+  const [refreshingPrices, setRefreshingPrices] = useState(false);
   const [sellingTicker, setSellingTicker] = useState<string | null>(null);
   const [sellShares, setSellShares] = useState("");
   const [sellPrice, setSellPrice] = useState("");
@@ -235,6 +237,32 @@ export default function PortfolioPage() {
       setApiError(`Unable to remove ${ticker} from portfolio.`);
     } finally {
       setRemovingTicker(null);
+    }
+  }
+
+  async function handleRefreshPrices() {
+    try {
+      setRefreshingPrices(true);
+      setApiError("");
+      setSuccessMessage("");
+
+      const response = await refreshPortfolioPrices();
+      await loadPortfolioData();
+
+      const failedTickers = response.failedTickers ?? [];
+      const failedMessage =
+        failedTickers.length > 0
+          ? ` Could not refresh: ${failedTickers.join(", ")}.`
+          : "";
+
+      setSuccessMessage(
+        `Portfolio prices refreshed. ${response.refreshedCount ?? 0} holdings updated.${failedMessage}`
+      );
+    } catch (error) {
+      console.error(error);
+      setApiError("Unable to refresh portfolio prices.");
+    } finally {
+      setRefreshingPrices(false);
     }
   }
 
@@ -367,6 +395,19 @@ export default function PortfolioPage() {
             >
               <RefreshCcw className="mr-2 h-4 w-4" />
               Refresh
+            </Button>
+
+            <Button
+              onClick={handleRefreshPrices}
+              disabled={refreshingPrices}
+              className="bg-emerald-500 text-white hover:bg-emerald-600"
+            >
+              {refreshingPrices ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCcw className="mr-2 h-4 w-4" />
+              )}
+              Refresh Prices
             </Button>
 
             <Link href="/dashboard">

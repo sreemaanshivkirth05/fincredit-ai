@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import yfinance as yf
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -9,6 +10,35 @@ from app.schemas.watchlist import WatchlistAddRequest
 
 def normalize_ticker(ticker: str) -> str:
     return ticker.strip().upper()
+
+
+def fetch_latest_watchlist_market_data(ticker: str):
+    cleaned_ticker = normalize_ticker(ticker)
+    stock = yf.Ticker(cleaned_ticker)
+    info = stock.info or {}
+
+    current_price = (
+        info.get("currentPrice")
+        or info.get("regularMarketPrice")
+        or info.get("previousClose")
+    )
+
+    if current_price is None:
+        history = stock.history(period="1d")
+
+        if history.empty:
+            raise ValueError(f"No latest price returned for {cleaned_ticker}.")
+
+        current_price = float(history["Close"].iloc[-1])
+
+    return {
+        "currentPrice": float(current_price),
+        "previousClose": info.get("previousClose"),
+        "marketCap": info.get("marketCap"),
+        "volume": info.get("volume"),
+        "currency": info.get("currency") or "USD",
+        "exchange": info.get("exchange") or info.get("fullExchangeName"),
+    }
 
 
 def watchlist_company_to_dict(company: WatchlistCompany):
@@ -180,4 +210,33 @@ def get_watchlist_data(db: Session):
         "sentimentData": sentiment_data,
         "newsRadar": news_radar,
         "message": "Watchlist API connected to PostgreSQL successfully",
+    }
+
+
+def refresh_watchlist_prices(db: Session):
+    companies = db.query(WatchlistCompany).order_by(WatchlistCompany.id.asc()).all()
+    refreshed_count = 0
+    failed_tickers = []
+
+    for company in companies:
+        try:
+            market_data = fetch_latest_watchlist_market_data(company.ticker)
+            company.current_price = market_data["currentPrice"]
+            company.previous_close = market_data["previousClose"]
+            company.market_cap = market_data["marketCap"]
+            company.volume = market_data["volume"]
+            company.currency = market_data["currency"] or company.currency or "USD"
+            company.exchange = market_data["exchange"] or company.exchange
+            refreshed_count += 1
+        except Exception:
+            failed_tickers.append(company.ticker)
+
+    db.commit()
+
+    return {
+        "refreshedCount": refreshed_count,
+        "failedCount": len(failed_tickers),
+        "failedTickers": failed_tickers,
+        "watchlist": get_watchlist_data(db),
+        "message": f"Watchlist prices refreshed. {refreshed_count} stocks updated.",
     }

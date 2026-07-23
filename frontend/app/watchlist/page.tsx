@@ -9,8 +9,12 @@ import {
   ArrowUpRight,
   Building2,
   FileSearch,
+  Loader2,
   Newspaper,
   Plus,
+  RefreshCcw,
+  Search,
+  Trash2,
   TrendingUp,
 } from "lucide-react";
 
@@ -25,6 +29,7 @@ import {
 } from "recharts";
 
 import { AppShell } from "@/components/app-shell";
+import { StockSearch } from "@/components/stock-search";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,7 +41,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getWatchlistData } from "@/lib/api";
+import {
+  getWatchlistData,
+  refreshWatchlistPrices,
+  removeStockFromWatchlist,
+} from "@/lib/api";
 
 type WatchlistCompany = {
   ticker: string;
@@ -47,6 +56,13 @@ type WatchlistCompany = {
   sentiment: string;
   filing: string;
   status: string;
+  currentPrice?: number | null;
+  previousClose?: number | null;
+  marketCap?: number | null;
+  volume?: number | null;
+  currency?: string | null;
+  exchange?: string | null;
+  addedAt?: string | null;
 };
 
 type SentimentData = {
@@ -158,27 +174,108 @@ const fallbackNewsRadar: NewsRadarItem[] = [
   },
 ];
 
+function formatCurrency(value?: number | null, currency = "USD") {
+  if (value === null || value === undefined || Number.isNaN(value)) return "-";
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function formatCompactNumber(value?: number | null) {
+  if (value === null || value === undefined || Number.isNaN(value)) return "-";
+
+  return new Intl.NumberFormat("en-US", {
+    notation: "compact",
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function formatPercent(value?: number | null) {
+  if (value === null || value === undefined || Number.isNaN(value)) return "-";
+
+  return `${value > 0 ? "+" : ""}${value.toFixed(2)}%`;
+}
+
+function calculateDailyChangePercent(company: WatchlistCompany) {
+  if (!company.currentPrice || !company.previousClose) return null;
+
+  return ((company.currentPrice - company.previousClose) / company.previousClose) * 100;
+}
+
 export default function WatchlistPage() {
   const [watchlistData, setWatchlistData] =
     useState<WatchlistApiData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshingPrices, setRefreshingPrices] = useState(false);
+  const [removingTicker, setRemovingTicker] = useState<string | null>(null);
   const [apiError, setApiError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  async function loadWatchlistData() {
+    try {
+      setLoading(true);
+      setApiError("");
+
+      const data = await getWatchlistData();
+      setWatchlistData(data);
+    } catch (error) {
+      setApiError("Backend watchlist API is not connected.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function loadWatchlistData() {
-      try {
-        const data = await getWatchlistData();
-        setWatchlistData(data);
-      } catch (error) {
-        console.error(error);
-        setApiError("Backend watchlist API is not connected.");
-      } finally {
-        setLoading(false);
-      }
-    }
-
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadWatchlistData();
   }, []);
+
+  async function handleRefreshPrices() {
+    try {
+      setRefreshingPrices(true);
+      setApiError("");
+      setSuccessMessage("");
+
+      const response = await refreshWatchlistPrices();
+      await loadWatchlistData();
+
+      const failedTickers = response.failedTickers ?? [];
+      const failedMessage =
+        failedTickers.length > 0
+          ? ` Could not refresh: ${failedTickers.join(", ")}.`
+          : "";
+
+      setSuccessMessage(
+        `Watchlist prices refreshed. ${response.refreshedCount ?? 0} stocks updated.${failedMessage}`
+      );
+    } catch (error) {
+      console.error(error);
+      setApiError("Unable to refresh watchlist prices.");
+    } finally {
+      setRefreshingPrices(false);
+    }
+  }
+
+  async function handleRemoveTicker(ticker: string) {
+    try {
+      setRemovingTicker(ticker);
+      setApiError("");
+      setSuccessMessage("");
+
+      await removeStockFromWatchlist(ticker);
+      await loadWatchlistData();
+      setSuccessMessage(`${ticker} removed from watchlist.`);
+    } catch (error) {
+      console.error(error);
+      setApiError(`Unable to remove ${ticker} from watchlist.`);
+    } finally {
+      setRemovingTicker(null);
+    }
+  }
 
   const activeWatchlist = watchlistData?.watchlist ?? fallbackWatchlist;
   const sentimentData = watchlistData?.sentimentData ?? fallbackSentimentData;
@@ -221,21 +318,62 @@ export default function WatchlistPage() {
             {apiError && (
               <p className="mt-2 text-xs text-red-300">{apiError}</p>
             )}
+
+            {successMessage && (
+              <p className="mt-2 text-xs text-emerald-300">
+                {successMessage}
+              </p>
+            )}
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <Button
-              variant="outline"
-              className="border-white/10 bg-white/5 text-white hover:bg-white/10"
+              onClick={loadWatchlistData}
+              className="bg-white/10 text-white hover:bg-white/20"
             >
-              Run Watchlist Scan
+              <RefreshCcw className="mr-2 h-4 w-4" />
+              Refresh
             </Button>
-            <Button className="bg-blue-500 hover:bg-blue-600">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Company
+
+            <Button
+              onClick={handleRefreshPrices}
+              disabled={refreshingPrices}
+              className="bg-emerald-500 text-white hover:bg-emerald-600"
+            >
+              {refreshingPrices ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCcw className="mr-2 h-4 w-4" />
+              )}
+              Refresh Prices
             </Button>
+
+            <Link href="/dashboard">
+              <Button className="bg-blue-500 hover:bg-blue-600">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Company
+              </Button>
+            </Link>
           </div>
         </div>
+
+        <Card className="border-white/10 bg-white/[0.04] text-white">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Search className="h-5 w-5 text-blue-300" />
+              Add a Stock
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            <p className="mb-3 text-sm text-slate-400">
+              Search a ticker, open the stock research page, and use Add to
+              Watchlist from there.
+            </p>
+
+            <StockSearch />
+          </CardContent>
+        </Card>
 
         <div className="grid gap-4 md:grid-cols-4">
           <MetricCard
@@ -339,64 +477,125 @@ export default function WatchlistPage() {
             <CardTitle>Tracked Companies</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow className="border-white/10">
-                  <TableHead className="text-slate-400">Ticker</TableHead>
-                  <TableHead className="text-slate-400">Company</TableHead>
-                  <TableHead className="text-slate-400">Sector</TableHead>
-                  <TableHead className="text-slate-400">Risk</TableHead>
-                  <TableHead className="text-slate-400">Score</TableHead>
-                  <TableHead className="text-slate-400">Sentiment</TableHead>
-                  <TableHead className="text-slate-400">Filing</TableHead>
-                  <TableHead className="text-slate-400">Status</TableHead>
-                  <TableHead className="text-slate-400">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-
-              <TableBody>
-                {activeWatchlist.map((w) => (
-                  <TableRow key={w.ticker} className="border-white/10">
-                    <TableCell className="font-medium text-white">
-                      {w.ticker}
-                    </TableCell>
-                    <TableCell className="text-slate-300">
-                      {w.company}
-                    </TableCell>
-                    <TableCell className="text-slate-300">
-                      {w.sector}
-                    </TableCell>
-                    <TableCell>
-                      <RiskBadge risk={w.risk} />
-                    </TableCell>
-                    <TableCell className="text-slate-300">
-                      {w.riskScore}
-                    </TableCell>
-                    <TableCell className="text-slate-300">
-                      {w.sentiment}
-                    </TableCell>
-                    <TableCell className="text-slate-300">
-                      {w.filing}
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={w.status} />
-                    </TableCell>
-                    <TableCell>
-                      <Link href={`/company/${w.ticker}`}>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-white/10 bg-white/5 text-white hover:bg-white/10"
-                        >
-                          Analyze
-                          <ArrowUpRight className="ml-2 h-3.5 w-3.5" />
-                        </Button>
-                      </Link>
-                    </TableCell>
+            {activeWatchlist.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-white/10">
+                    <TableHead className="text-slate-400">Ticker</TableHead>
+                    <TableHead className="text-slate-400">Company</TableHead>
+                    <TableHead className="text-slate-400">Sector</TableHead>
+                    <TableHead className="text-slate-400">Price</TableHead>
+                    <TableHead className="text-slate-400">Prev Close</TableHead>
+                    <TableHead className="text-slate-400">Daily Change</TableHead>
+                    <TableHead className="text-slate-400">Volume</TableHead>
+                    <TableHead className="text-slate-400">Risk</TableHead>
+                    <TableHead className="text-slate-400">Score</TableHead>
+                    <TableHead className="text-slate-400">Sentiment</TableHead>
+                    <TableHead className="text-slate-400">Filing</TableHead>
+                    <TableHead className="text-slate-400">Status</TableHead>
+                    <TableHead className="text-slate-400">Action</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+
+                <TableBody>
+                  {activeWatchlist.map((w) => {
+                  const currency = w.currency ?? "USD";
+                  const dailyChangePercent = calculateDailyChangePercent(w);
+                  const isPositive = (dailyChangePercent ?? 0) >= 0;
+
+                  return (
+                    <TableRow key={w.ticker} className="border-white/10">
+                      <TableCell className="font-medium text-white">
+                        {w.ticker}
+                      </TableCell>
+                      <TableCell className="text-slate-300">
+                        {w.company}
+                      </TableCell>
+                      <TableCell className="text-slate-300">
+                        {w.sector}
+                      </TableCell>
+                      <TableCell className="text-slate-300">
+                        {formatCurrency(w.currentPrice, currency)}
+                      </TableCell>
+                      <TableCell className="text-slate-300">
+                        {formatCurrency(w.previousClose, currency)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          className={
+                            isPositive
+                              ? "bg-emerald-500/15 text-emerald-200"
+                              : "bg-red-500/15 text-red-200"
+                          }
+                        >
+                          {formatPercent(dailyChangePercent)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-slate-300">
+                        {formatCompactNumber(w.volume)}
+                      </TableCell>
+                      <TableCell>
+                        <RiskBadge risk={w.risk} />
+                      </TableCell>
+                      <TableCell className="text-slate-300">
+                        {w.riskScore}
+                      </TableCell>
+                      <TableCell className="text-slate-300">
+                        {w.sentiment}
+                      </TableCell>
+                      <TableCell className="text-slate-300">
+                        {w.filing}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={w.status} />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Link href={`/stock/${w.ticker}`}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-white/10 bg-white/5 text-white hover:bg-white/10"
+                            >
+                              Open
+                              <ArrowUpRight className="ml-2 h-3.5 w-3.5" />
+                            </Button>
+                          </Link>
+
+                          <Button
+                            size="sm"
+                            disabled={removingTicker === w.ticker}
+                            onClick={() => handleRemoveTicker(w.ticker)}
+                            className="bg-red-500/80 text-white hover:bg-red-600"
+                          >
+                            {removingTicker === w.ticker ? (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="mr-2 h-4 w-4" />
+                            )}
+                            Remove
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                  })}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 p-8 text-center">
+                <Search className="mx-auto h-8 w-8 text-slate-500" />
+
+                <h2 className="mt-4 text-lg font-semibold text-white">
+                  Your watchlist is empty
+                </h2>
+
+                <p className="mt-2 text-sm text-slate-400">
+                  Search a stock, open its research page, and add it to the
+                  watchlist.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 

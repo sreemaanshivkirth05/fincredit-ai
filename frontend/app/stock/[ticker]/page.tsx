@@ -894,7 +894,7 @@ export default function StockDetailPage() {
   ]);
 
   const askAiQuestion = encodeURIComponent(
-    `Analyze ${ticker}. Explain the business, current stock performance, SEC fundamentals, recent news, major risks, and whether it would make sense for a beginner paper-trading portfolio.`
+    `Analyze ${ticker}. Use holdings, cost basis, P/L, transaction history, watchlist, market data, SEC fundamentals, recent news, major risks, and whether it would make sense for a beginner paper-trading portfolio.`
   );
 
   const askAiHref = `/ask?question=${askAiQuestion}`;

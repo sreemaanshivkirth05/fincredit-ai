@@ -69,6 +69,12 @@ export async function getPortfolioTransactions() {
   return fetchJson(`${API_BASE_URL}/api/portfolio/transactions`);
 }
 
+export async function refreshPortfolioPrices() {
+  return fetchJson(`${API_BASE_URL}/api/portfolio/refresh-prices`, {
+    method: "POST",
+  });
+}
+
 export async function buyStockForPortfolio(payload: PortfolioBuyPayload) {
   return fetchJson(`${API_BASE_URL}/api/portfolio/buy`, {
     method: "POST",
@@ -97,6 +103,12 @@ export async function removePortfolioHolding(ticker: string) {
 
 export async function getWatchlistData() {
   return fetchJson(`${API_BASE_URL}/api/watchlist`);
+}
+
+export async function refreshWatchlistPrices() {
+  return fetchJson(`${API_BASE_URL}/api/watchlist/refresh-prices`, {
+    method: "POST",
+  });
 }
 
 export async function getWatchlistStatus(ticker: string) {

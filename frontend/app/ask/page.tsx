@@ -65,7 +65,7 @@ const EXAMPLE_QUESTIONS = [
   {
     label: "AAPL Portfolio Fit",
     question:
-      "Should I add more AAPL to my simulated portfolio? Use my current holdings, cost basis, P/L, watchlist, market data, SEC fundamentals, recent news, risk drivers, and evidence.",
+      "Should I add more AAPL to my simulated portfolio? Use my current holdings, cost basis, P/L, recent buy and sell transactions, watchlist, market data, SEC fundamentals, recent news, risk drivers, and evidence.",
   },
   {
     label: "Portfolio Risk",
@@ -311,6 +311,11 @@ export default function AskPage() {
               <WorkflowStep
                 title="Watchlist Agent"
                 detail="Loads stocks being monitored for future research."
+              />
+
+              <WorkflowStep
+                title="Transaction Agent"
+                detail="Loads recent simulated BUY and SELL history, including realized P/L from sells."
               />
 
               <WorkflowStep

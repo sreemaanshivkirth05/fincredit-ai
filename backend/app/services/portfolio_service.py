@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import yfinance as yf
 from fastapi import HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -20,6 +21,52 @@ def calculate_unrealized_pl(value: float, total_cost: float):
     )
 
     return unrealized_pl, unrealized_pl_percent
+
+
+def fetch_latest_market_snapshot_for_ticker(ticker: str):
+    cleaned_ticker = normalize_ticker(ticker)
+    stock = yf.Ticker(cleaned_ticker)
+    info = stock.info or {}
+
+    current_price = (
+        info.get("currentPrice")
+        or info.get("regularMarketPrice")
+        or info.get("previousClose")
+    )
+
+    if current_price is None:
+        history = stock.history(period="1d")
+
+        if history.empty:
+            raise ValueError(f"No latest price returned for {cleaned_ticker}.")
+
+        current_price = float(history["Close"].iloc[-1])
+
+    return {
+        "ticker": cleaned_ticker,
+        "currentPrice": float(current_price),
+        "currency": info.get("currency") or "USD",
+        "exchange": info.get("exchange") or info.get("fullExchangeName"),
+    }
+
+
+def update_holding_market_price(holding: Holding, snapshot: dict):
+    current_price = snapshot["currentPrice"]
+    total_cost = holding.total_cost or holding.shares * holding.avg_price
+    value = holding.shares * current_price
+    unrealized_pl, unrealized_pl_percent = calculate_unrealized_pl(
+        value=value,
+        total_cost=total_cost,
+    )
+
+    holding.current_price = current_price
+    holding.value = value
+    holding.total_cost = total_cost
+    holding.unrealized_pl = unrealized_pl
+    holding.unrealized_pl_percent = unrealized_pl_percent
+    holding.currency = snapshot.get("currency") or holding.currency or "USD"
+    holding.exchange = snapshot.get("exchange") or holding.exchange
+    holding.updated_at = datetime.utcnow()
 
 
 def holding_to_dict(holding: Holding):
@@ -417,4 +464,29 @@ def get_portfolio_transactions(db: Session, limit: int = 50):
         "count": len(transactions_response),
         "transactions": transactions_response,
         "message": "Portfolio transaction history loaded successfully",
+    }
+
+
+def refresh_portfolio_prices(db: Session):
+    holdings = db.query(Holding).order_by(Holding.id.asc()).all()
+    refreshed_count = 0
+    failed_tickers = []
+
+    for holding in holdings:
+        try:
+            snapshot = fetch_latest_market_snapshot_for_ticker(holding.ticker)
+            update_holding_market_price(holding, snapshot)
+            refreshed_count += 1
+        except Exception:
+            failed_tickers.append(holding.ticker)
+
+    recalculate_portfolio_weights(db)
+    db.commit()
+
+    return {
+        "refreshedCount": refreshed_count,
+        "failedCount": len(failed_tickers),
+        "failedTickers": failed_tickers,
+        "portfolio": get_portfolio_data(db),
+        "message": f"Portfolio prices refreshed. {refreshed_count} holdings updated.",
     }

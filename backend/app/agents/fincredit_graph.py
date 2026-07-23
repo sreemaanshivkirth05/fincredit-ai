@@ -2,6 +2,7 @@ import re
 from typing import Any, Optional, TypedDict
 
 from langgraph.graph import END, StateGraph
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models.holding import Holding
@@ -222,6 +223,20 @@ def transaction_to_context(transaction: PortfolioTransaction):
     }
 
 
+def format_transaction_summary(transaction: dict):
+    realized_pl = transaction.get("realizedPL")
+    realized_text = ""
+
+    if transaction.get("action") == "SELL" and realized_pl is not None:
+        realized_text = f" with realized P/L {format_money(realized_pl)}"
+
+    return (
+        f"{transaction.get('action')} {transaction.get('shares', 0):g} shares "
+        f"of {transaction.get('ticker')} at {format_money(transaction.get('price'))}"
+        f"{realized_text}"
+    )
+
+
 def watchlist_to_context(company: WatchlistCompany):
     return {
         "ticker": company.ticker,
@@ -252,17 +267,6 @@ def create_portfolio_agent(db: Session):
         portfolio_context = [holding_to_context(holding) for holding in holdings]
         state["portfolio_context"] = portfolio_context
 
-        transactions = (
-            db.query(PortfolioTransaction)
-            .order_by(PortfolioTransaction.created_at.desc())
-            .limit(12)
-            .all()
-        )
-
-        state["transaction_context"] = [
-            transaction_to_context(transaction) for transaction in transactions
-        ]
-
         candidate_tickers = [holding["ticker"] for holding in portfolio_context]
 
         if state.get("ticker") is None:
@@ -274,6 +278,30 @@ def create_portfolio_agent(db: Session):
         return state
 
     return portfolio_agent
+
+
+def create_transaction_agent(db: Session):
+    def transaction_agent(state: FinCreditState) -> FinCreditState:
+        ticker = state.get("ticker")
+
+        query = db.query(PortfolioTransaction)
+
+        if ticker:
+            query = query.filter(func.upper(PortfolioTransaction.ticker) == ticker)
+
+        transactions = (
+            query.order_by(PortfolioTransaction.created_at.desc())
+            .limit(10)
+            .all()
+        )
+
+        state["transaction_context"] = [
+            transaction_to_context(transaction) for transaction in transactions
+        ]
+
+        return state
+
+    return transaction_agent
 
 
 def create_watchlist_agent(db: Session):
@@ -403,6 +431,7 @@ def news_agent(state: FinCreditState) -> FinCreditState:
 
 
 def risk_analysis_agent(state: FinCreditState) -> FinCreditState:
+    question_lower = state.get("question", "").lower()
     ticker = state.get("ticker")
     portfolio_context = state.get("portfolio_context", [])
     transaction_context = state.get("transaction_context", [])
@@ -487,6 +516,53 @@ def risk_analysis_agent(state: FinCreditState) -> FinCreditState:
                     "impact": "Low",
                 }
             )
+
+        if transaction_context:
+            relevant_transactions = [
+                transaction
+                for transaction in transaction_context
+                if transaction["ticker"] == ticker
+            ]
+            recent_buys = [
+                transaction
+                for transaction in relevant_transactions
+                if transaction["action"] == "BUY"
+            ]
+            recent_sells = [
+                transaction
+                for transaction in relevant_transactions
+                if transaction["action"] == "SELL"
+            ]
+            asks_about_adding = any(
+                phrase in question_lower
+                for phrase in ["add more", "buy", "increase", "add shares"]
+            )
+
+            if recent_sells:
+                risk_drivers.append(
+                    {
+                        "ticker": ticker,
+                        "driver": (
+                            f"You recently sold {ticker}: "
+                            f"{format_transaction_summary(recent_sells[0])}. "
+                            "Review why you reduced the position before adding more."
+                        ),
+                        "impact": "Medium",
+                    }
+                )
+
+            if asks_about_adding and recent_buys:
+                risk_drivers.append(
+                    {
+                        "ticker": ticker,
+                        "driver": (
+                            f"Recent buying activity already exists for {ticker}: "
+                            f"{format_transaction_summary(recent_buys[0])}. "
+                            "Adding more should be checked against position size and cost basis."
+                        ),
+                        "impact": "Medium",
+                    }
+                )
 
         if matching_watchlist_item:
             risk_drivers.append(
@@ -641,6 +717,7 @@ def risk_analysis_agent(state: FinCreditState) -> FinCreditState:
 def evidence_agent(state: FinCreditState) -> FinCreditState:
     ticker = state.get("ticker")
     portfolio_context = state.get("portfolio_context", [])
+    transaction_context = state.get("transaction_context", [])
     watchlist_context = state.get("watchlist_context", [])
     market_context = state.get("market_context")
     sec_context = state.get("sec_context")
@@ -712,19 +789,16 @@ def evidence_agent(state: FinCreditState) -> FinCreditState:
         if relevant_transactions:
             transaction_text = "; ".join(
                 [
-                    (
-                        f"{item['action']} {item['shares']:g} {item['ticker']} "
-                        f"at {format_money(item['price'])}"
-                    )
+                    format_transaction_summary(item)
                     for item in relevant_transactions[:5]
                 ]
             )
 
             evidence.append(
                 {
-                    "source": "Recent Portfolio Transactions",
+                    "source": "PostgreSQL Portfolio Transactions",
                     "claim": (
-                        f"Recent simulated transaction history used: {transaction_text}."
+                        f"Recent transactions for {ticker or 'the portfolio'} include: {transaction_text}."
                     ),
                     "confidence": 92,
                 }
@@ -899,6 +973,10 @@ def build_context_summary(state: FinCreditState):
             lines.append(
                 f"Recent portfolio transactions loaded: {len(relevant_transactions)}"
             )
+            lines.append(
+                "Latest transaction: "
+                f"{format_transaction_summary(relevant_transactions[0])}."
+            )
 
     if watchlist_context:
         lines.append(f"Watchlist stocks loaded: {len(watchlist_context)}")
@@ -1031,6 +1109,7 @@ def answer_agent(state: FinCreditState) -> FinCreditState:
 
     ticker = state.get("ticker")
     portfolio_context = state.get("portfolio_context", [])
+    transaction_context = state.get("transaction_context", [])
     watchlist_context = state.get("watchlist_context", [])
 
     suggested_actions = [
@@ -1069,6 +1148,11 @@ def answer_agent(state: FinCreditState) -> FinCreditState:
             "Ask a ticker-specific follow-up question for deeper stock analysis"
         )
 
+    if transaction_context:
+        suggested_actions.append(
+            "Review recent portfolio transaction history before adding or selling more"
+        )
+
     state["suggested_actions"] = suggested_actions[:5]
 
     state["audit"] = {
@@ -1076,6 +1160,7 @@ def answer_agent(state: FinCreditState) -> FinCreditState:
         "agentsUsed": [
             "Portfolio Agent",
             "Watchlist Agent",
+            "Transaction Agent",
             "Market Data Agent",
             "SEC Fundamentals Agent",
             "News Agent",
@@ -1096,6 +1181,7 @@ def build_fincredit_graph(db: Session):
 
     graph.add_node("portfolio_agent", create_portfolio_agent(db))
     graph.add_node("watchlist_agent", create_watchlist_agent(db))
+    graph.add_node("transaction_agent", create_transaction_agent(db))
     graph.add_node("market_agent", create_market_agent(db))
     graph.add_node("sec_agent", create_sec_agent(db))
     graph.add_node("news_agent", news_agent)
@@ -1106,7 +1192,8 @@ def build_fincredit_graph(db: Session):
     graph.set_entry_point("portfolio_agent")
 
     graph.add_edge("portfolio_agent", "watchlist_agent")
-    graph.add_edge("watchlist_agent", "market_agent")
+    graph.add_edge("watchlist_agent", "transaction_agent")
+    graph.add_edge("transaction_agent", "market_agent")
     graph.add_edge("market_agent", "sec_agent")
     graph.add_edge("sec_agent", "news_agent")
     graph.add_edge("news_agent", "risk_analysis_agent")

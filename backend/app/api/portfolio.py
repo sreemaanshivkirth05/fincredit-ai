@@ -5,6 +5,7 @@ from app.db.database import get_db
 from app.schemas.portfolio import (
     PortfolioActionResponse,
     PortfolioBuyRequest,
+    PortfolioRefreshResponse,
     PortfolioResponse,
     PortfolioSellRequest,
     PortfolioStatusResponse,
@@ -15,6 +16,7 @@ from app.services.portfolio_service import (
     get_portfolio_data,
     get_portfolio_status,
     get_portfolio_transactions,
+    refresh_portfolio_prices,
     remove_holding_from_portfolio,
     sell_stock_from_portfolio,
 )
@@ -30,6 +32,11 @@ def get_portfolio(db: Session = Depends(get_db)):
 @router.get("/transactions", response_model=PortfolioTransactionsResponse)
 def get_transactions(db: Session = Depends(get_db)):
     return get_portfolio_transactions(db)
+
+
+@router.post("/refresh-prices", response_model=PortfolioRefreshResponse)
+def refresh_prices(db: Session = Depends(get_db)):
+    return refresh_portfolio_prices(db)
 
 
 @router.get("/{ticker}/status", response_model=PortfolioStatusResponse)

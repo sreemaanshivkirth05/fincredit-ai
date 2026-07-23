@@ -103,3 +103,11 @@ class PortfolioResponse(BaseModel):
     transactions: list[PortfolioTransactionResponse] = Field(default_factory=list)
 
     message: str
+
+
+class PortfolioRefreshResponse(BaseModel):
+    refreshedCount: int
+    failedCount: int
+    failedTickers: list[str] = Field(default_factory=list)
+    portfolio: PortfolioResponse
+    message: str
