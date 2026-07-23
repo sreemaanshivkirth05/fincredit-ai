@@ -63,24 +63,24 @@ type AskResponse = {
 
 const EXAMPLE_QUESTIONS = [
   {
-    label: "AAPL Portfolio Fit",
+    label: "Should I add more AAPL?",
     question:
       "Should I add more AAPL to my simulated portfolio? Use my current holdings, cost basis, P/L, recent buy and sell transactions, watchlist, market data, SEC fundamentals, recent news, risk drivers, and evidence.",
   },
   {
-    label: "Portfolio Risk",
+    label: "Highest concentration risk?",
     question:
-      "Which holdings in my simulated portfolio need review based on concentration, unrealized P/L, market movement, SEC fundamentals, and recent news?",
+      "Which holding has the highest concentration risk? Use my simulated portfolio weights, market context, SEC fundamentals, recent news, and evidence.",
   },
   {
-    label: "Watchlist Research",
+    label: "Recent buy/sell activity",
     question:
-      "Which stock in my watchlist should I research next, and why? Use portfolio fit, market context, SEC fundamentals, recent news, and risk drivers.",
+      "Summarize my recent buy/sell activity. Include realized P/L where available and explain what changed in the simulated portfolio.",
   },
   {
-    label: "Beginner Decision",
+    label: "Watchlist stock to research",
     question:
-      "Explain whether MSFT makes sense for a beginner paper-trading portfolio. Include portfolio exposure, market movement, fundamentals, news, and what I should check next.",
+      "Which watchlist stock should I research next? Use portfolio fit, market context, SEC fundamentals, recent news, and risk drivers.",
   },
 ];
 
@@ -267,6 +267,11 @@ export default function AskPage() {
                 placeholder="Example: Should I add more AAPL to my simulated portfolio? Use my current holdings, watchlist, market data, SEC fundamentals, recent news, risk drivers, and evidence."
                 className="min-h-[180px] border-white/10 bg-black/30 text-slate-100 placeholder:text-slate-500"
               />
+
+              <p className="text-xs leading-5 text-slate-400">
+                Answers are evidence-backed and may use fallback if local
+                Ollama is slow.
+              </p>
 
               <div className="flex flex-wrap items-center gap-3">
                 <Button

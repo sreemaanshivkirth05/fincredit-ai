@@ -1137,6 +1137,39 @@ export default function StockDetailPage() {
           </Card>
         ) : null}
 
+        <Card className="border-white/10 bg-white/[0.04] text-white">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-emerald-300" />
+              How to Use This Page
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            <div className="grid gap-3 md:grid-cols-5">
+              {[
+                "Check price/chart",
+                "Review SEC fundamentals",
+                "Read news",
+                "Add to watchlist or simulate a buy",
+                "Ask AI for portfolio fit",
+              ].map((step, index) => (
+                <div
+                  key={step}
+                  className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                >
+                  <p className="text-xs font-semibold text-blue-200">
+                    {index + 1}
+                  </p>
+                  <p className="mt-2 text-sm leading-5 text-slate-300">
+                    {step}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <Card className="border-white/10 bg-white/[0.04] text-white md:col-span-2">
             <CardContent className="p-5">

@@ -1,6 +1,9 @@
 "use client";
 
+"use client";
+
 import type { ReactNode } from "react";
+import { useState } from "react";
 import Link from "next/link";
 
 import {
@@ -12,11 +15,15 @@ import {
   Database,
   FileText,
   Gauge,
+  History,
+  RefreshCcw,
   ShieldCheck,
   Sparkles,
+  Star,
   TrendingDown,
   TrendingUp,
   Users,
+  Wallet,
 } from "lucide-react";
 
 import {
@@ -35,6 +42,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { resetDemoData } from "@/lib/api";
 
 import {
   Table,
@@ -122,12 +130,12 @@ const dashboard: DashboardData = {
     {
       label: "Portfolio Value",
       value: "$0",
-      detail: "Paper-trading portfolio setup is coming in the next phase",
+      detail: "Simulated paper-trading holdings and unrealized P/L",
     },
     {
       label: "Watchlist",
-      value: "Phase 40B",
-      detail: "Add/remove watchlist actions will be connected next",
+      value: "Live",
+      detail: "Track stocks before simulating a buy",
     },
     {
       label: "Stock Research",
@@ -137,7 +145,7 @@ const dashboard: DashboardData = {
     {
       label: "AI Assistant",
       value: "Ready",
-      detail: "Ask stock and portfolio questions from the AI page",
+      detail: "Ask evidence-backed portfolio and stock questions",
     },
   ],
   latestReports: [],
@@ -175,6 +183,34 @@ export default function DashboardPage() {
         )
       : 0;
 
+  const [resettingDemo, setResettingDemo] = useState(false);
+  const [resetMessage, setResetMessage] = useState("");
+  const [resetError, setResetError] = useState("");
+
+  async function handleResetDemoData() {
+    const confirmed = window.confirm(
+      "This will reset demo portfolio, transactions, and watchlist data. Continue?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setResettingDemo(true);
+      setResetMessage("");
+      setResetError("");
+
+      const response = await resetDemoData();
+      setResetMessage(
+        `${response.message} Holdings: ${response.holdingsCount}, transactions: ${response.transactionsCount}, watchlist: ${response.watchlistCount}.`
+      );
+    } catch (error) {
+      console.error(error);
+      setResetError("Demo reset failed. Confirm the backend is running.");
+    } finally {
+      setResettingDemo(false);
+    }
+  }
+
   return (
     <AppShell>
       <div className="space-y-6">
@@ -185,13 +221,18 @@ export default function DashboardPage() {
             </Badge>
 
             <h1 className="text-3xl font-semibold tracking-tight">
-              FinCredit AI Investing Sandbox
+              FinCredit AI
             </h1>
 
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-              Research stocks, understand fundamentals, ask AI questions, and
-              build confidence before adding paper-trading and portfolio
-              intelligence features.
+              AI-powered stock research and paper-trading sandbox for beginner
+              investors. Research a ticker, simulate buy/sell decisions, then
+              ask the AI to explain portfolio fit with evidence.
+            </p>
+
+            <p className="mt-2 max-w-3xl text-xs leading-5 text-amber-200">
+              FinCredit AI is a simulated paper-trading and education tool. It
+              is not financial advice and does not place real trades.
             </p>
 
             <p className="mt-2 text-xs text-emerald-300">
@@ -200,20 +241,137 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Link href="/ask">
-              <Button className="bg-violet-500 text-white hover:bg-violet-600">
-                <Sparkles className="mr-2 h-4 w-4" />
-                Ask FinCredit
+            <Link href="/stock/AAPL">
+              <Button className="bg-emerald-500 text-white hover:bg-emerald-600">
+                <TrendingUp className="mr-2 h-4 w-4" />
+                Research AAPL
               </Button>
             </Link>
 
-            <Link href="/reports">
+            <Link href="/portfolio">
               <Button className="bg-blue-500 text-white hover:bg-blue-600">
-                <FileText className="mr-2 h-4 w-4" />
-                View Reports
+                <Wallet className="mr-2 h-4 w-4" />
+                Open Portfolio
               </Button>
             </Link>
+
+            <Link href="/ask">
+              <Button className="bg-violet-500 text-white hover:bg-violet-600">
+                <Sparkles className="mr-2 h-4 w-4" />
+                Ask FinCredit AI
+              </Button>
+            </Link>
+
+            <Link href="/watchlist">
+              <Button className="bg-white/10 text-white hover:bg-white/20">
+                <Star className="mr-2 h-4 w-4" />
+                Open Watchlist
+              </Button>
+            </Link>
+
+            <Button
+              type="button"
+              onClick={handleResetDemoData}
+              disabled={resettingDemo}
+              data-testid="dashboard-reset-demo"
+              className="bg-amber-500 text-white hover:bg-amber-600"
+            >
+              {resettingDemo ? (
+                <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCcw className="mr-2 h-4 w-4" />
+              )}
+              Reset Demo Data
+            </Button>
           </div>
+        </div>
+
+        {(resetMessage || resetError) && (
+          <Card
+            data-testid="dashboard-reset-status"
+            className={
+              resetError
+                ? "border-red-500/30 bg-red-500/10 text-red-100"
+                : "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
+            }
+          >
+            <CardContent className="flex flex-col gap-3 p-5 md:flex-row md:items-center md:justify-between">
+              <p className="text-sm leading-6">
+                {resetError || resetMessage}
+              </p>
+              {!resetError && (
+                <Link href="/portfolio">
+                  <Button className="bg-emerald-500 text-white hover:bg-emerald-600">
+                    Open Portfolio
+                  </Button>
+                </Link>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        <Card className="border-white/10 bg-white/[0.04] text-white">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5 text-emerald-300" />
+              Demo Product Loop
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
+              {[
+                "Search stock",
+                "Research",
+                "Add to watchlist/portfolio",
+                "Refresh prices",
+                "Ask AI",
+                "Review evidence",
+              ].map((step, index) => (
+                <div
+                  key={step}
+                  className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                >
+                  <p className="text-xs font-semibold text-blue-200">
+                    Step {index + 1}
+                  </p>
+                  <p className="mt-2 text-sm font-medium text-white">{step}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <ProductCard
+            title="Stock Research"
+            detail="Open a ticker page with price, historical chart, market stats, SEC fundamentals, and recent news."
+            icon={<TrendingUp className="h-5 w-5 text-emerald-300" />}
+          />
+          <ProductCard
+            title="Paper Portfolio"
+            detail="Simulate buys and sells, track cost basis, weights, and unrealized profit or loss."
+            icon={<Wallet className="h-5 w-5 text-blue-300" />}
+          />
+          <ProductCard
+            title="Watchlist"
+            detail="Monitor stocks before committing them to the paper portfolio."
+            icon={<Star className="h-5 w-5 text-yellow-300" />}
+          />
+          <ProductCard
+            title="Portfolio-Aware AI"
+            detail="Ask questions that use holdings, transactions, watchlist, market, SEC, and news context."
+            icon={<Sparkles className="h-5 w-5 text-violet-300" />}
+          />
+          <ProductCard
+            title="Transaction History"
+            detail="Review simulated BUY and SELL activity, including realized P/L on sells."
+            icon={<History className="h-5 w-5 text-amber-300" />}
+          />
+          <ProductCard
+            title="Evidence & Reports"
+            detail="Inspect evidence, governance audit details, and generated report records."
+            icon={<FileText className="h-5 w-5 text-blue-300" />}
+          />
         </div>
 
         <Card className="border-white/10 bg-white/[0.04] text-white">
@@ -656,6 +814,30 @@ function MetricCard({
         <p className="mt-5 text-sm text-slate-400">{title}</p>
         <p className="mt-1 text-2xl font-semibold">{value}</p>
         <p className="mt-2 text-xs leading-5 text-slate-500">{detail}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ProductCard({
+  title,
+  detail,
+  icon,
+}: {
+  title: string;
+  detail: string;
+  icon: ReactNode;
+}) {
+  return (
+    <Card className="border-white/10 bg-white/[0.04] text-white">
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between">
+          {icon}
+          <Badge className="bg-white/10 text-slate-300">Demo</Badge>
+        </div>
+
+        <p className="mt-4 font-semibold text-white">{title}</p>
+        <p className="mt-2 text-sm leading-6 text-slate-400">{detail}</p>
       </CardContent>
     </Card>
   );

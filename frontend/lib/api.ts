@@ -57,6 +57,12 @@ export async function getDashboardData() {
   return fetchJson(`${API_BASE_URL}/api/dashboard`);
 }
 
+export async function resetDemoData() {
+  return fetchJson(`${API_BASE_URL}/api/demo/reset`, {
+    method: "POST",
+  });
+}
+
 export async function getPortfolioData() {
   return fetchJson(`${API_BASE_URL}/api/portfolio`);
 }

@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 const routes = [
-  { path: "/dashboard", text: /FinCredit AI Investing Sandbox|Explore Stocks/i },
+  { path: "/dashboard", text: /FinCredit AI|AI-powered stock research/i },
   { path: "/portfolio", text: /My Simulated Portfolio|Holdings/i },
   { path: "/watchlist", text: /Company Watchlist|Tracked Companies/i },
   { path: "/stock/AAPL", text: /AAPL|SEC Fundamentals|Recent News/i },

@@ -420,6 +420,12 @@ export default function PortfolioPage() {
           </div>
         </div>
 
+        <p className="max-w-3xl text-sm leading-6 text-slate-400">
+          Use Refresh Prices to fetch the latest available market prices and
+          recalculate each holding's current value, portfolio weight, and
+          unrealized P/L. This is still simulated paper trading only.
+        </p>
+
         <Card className="border-white/10 bg-white/[0.04] text-white">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -862,8 +868,23 @@ export default function PortfolioPage() {
 
                 <p className="mt-2 text-sm text-slate-400">
                   Search a stock, open its stock research page, and simulate a
-                  buy from there.
+                  buy from there. Start with AAPL for the quickest demo path, or
+                  open the watchlist to research names before buying.
                 </p>
+
+                <div className="mt-5 flex flex-wrap justify-center gap-3">
+                  <Link href="/stock/AAPL">
+                    <Button className="bg-blue-500 text-white hover:bg-blue-600">
+                      Research AAPL
+                    </Button>
+                  </Link>
+
+                  <Link href="/watchlist">
+                    <Button className="bg-white/10 text-white hover:bg-white/20">
+                      Open Watchlist
+                    </Button>
+                  </Link>
+                </div>
               </div>
             )}
           </CardContent>
@@ -878,6 +899,11 @@ export default function PortfolioPage() {
               <History className="h-5 w-5 text-blue-300" />
               Transaction History
             </CardTitle>
+            <p className="text-sm leading-6 text-slate-400">
+              BUY rows show simulated entries into the paper portfolio. SELL
+              rows show simulated exits and realized P/L based on the sell
+              price versus the average cost.
+            </p>
           </CardHeader>
 
           <CardContent>

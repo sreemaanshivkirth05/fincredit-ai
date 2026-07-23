@@ -52,3 +52,34 @@ npm run test:e2e:report
 - The Playwright config starts the frontend with `npm run dev` when needed and reuses an existing `localhost:3000` server when one is already running.
 - The backend is not started by Playwright. Start it separately before running E2E tests.
 - The Ask AI test can take 20-30 seconds because the local Ollama call has a 20 second timeout before deterministic fallback returns.
+
+## Demo Reset Test
+
+The demo reset endpoint restores a recruiter-friendly local dataset for the paper portfolio, transaction history, and watchlist only.
+
+```powershell
+Invoke-RestMethod `
+  -Uri "http://127.0.0.1:8000/api/demo/reset" `
+  -Method POST | ConvertTo-Json -Depth 8
+```
+
+Dashboard reset button check:
+
+1. Open `http://localhost:3000/dashboard`.
+2. Confirm the `Reset Demo Data` button is visible.
+3. Click it only when you want to reset portfolio, transactions, and watchlist demo data.
+4. Confirm the browser prompt.
+5. Open `/portfolio` and `/watchlist` to verify seeded demo data.
+
+## Manual Demo Checklist
+
+1. Start backend on `http://127.0.0.1:8000`.
+2. Start frontend on `http://localhost:3000`.
+3. Reset demo data from `/dashboard`.
+4. Click `Research AAPL`.
+5. Review price chart, SEC fundamentals, recent news, actions, and page guidance.
+6. Add AAPL to the watchlist or simulate a portfolio buy.
+7. Open `/portfolio`, refresh prices, and open the sell form.
+8. Confirm transaction history shows BUY/SELL rows.
+9. Open `/watchlist` and refresh prices.
+10. Open `/ask`, submit an AAPL or portfolio-risk question, and verify answer, evidence, and governance audit sections.

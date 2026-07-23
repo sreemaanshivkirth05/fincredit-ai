@@ -358,6 +358,12 @@ export default function WatchlistPage() {
           </div>
         </div>
 
+        <p className="max-w-3xl text-sm leading-6 text-slate-400">
+          Use Refresh Prices to update watchlist prices from yfinance so you
+          can monitor candidates before simulating a buy in the paper
+          portfolio.
+        </p>
+
         <Card className="border-white/10 bg-white/[0.04] text-white">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -592,9 +598,24 @@ export default function WatchlistPage() {
                 </h2>
 
                 <p className="mt-2 text-sm text-slate-400">
-                  Search a stock, open its research page, and add it to the
-                  watchlist.
+                  Use the watchlist to monitor stocks before simulating a buy.
+                  Search a ticker, open its research page, and add it here when
+                  you want to keep tracking price, filings, and AI context.
                 </p>
+
+                <div className="mt-5 flex flex-wrap justify-center gap-3">
+                  <Link href="/stock/AAPL">
+                    <Button className="bg-blue-500 text-white hover:bg-blue-600">
+                      Research AAPL
+                    </Button>
+                  </Link>
+
+                  <Link href="/dashboard">
+                    <Button className="bg-white/10 text-white hover:bg-white/20">
+                      Search Stocks
+                    </Button>
+                  </Link>
+                </div>
               </div>
             )}
           </CardContent>
