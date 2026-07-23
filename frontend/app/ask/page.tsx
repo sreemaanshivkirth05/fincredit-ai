@@ -84,6 +84,14 @@ const EXAMPLE_QUESTIONS = [
   },
 ];
 
+const LOADING_STAGES = [
+  "Loading portfolio context...",
+  "Reading transaction history...",
+  "Checking market and SEC data...",
+  "Reviewing news...",
+  "Generating AI answer or fallback...",
+];
+
 export default function AskPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -92,6 +100,7 @@ export default function AskPage() {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<AskResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingStageIndex, setLoadingStageIndex] = useState(0);
   const [generatingReport, setGeneratingReport] = useState(false);
   const [apiError, setApiError] = useState("");
   const [reportMessage, setReportMessage] = useState("");
@@ -101,6 +110,21 @@ export default function AskPage() {
       setQuestion(prefilledQuestion);
     }
   }, [prefilledQuestion]);
+
+  useEffect(() => {
+    if (!loading) {
+      setLoadingStageIndex(0);
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setLoadingStageIndex((currentIndex) =>
+        (currentIndex + 1) % LOADING_STAGES.length
+      );
+    }, 3500);
+
+    return () => window.clearInterval(intervalId);
+  }, [loading]);
 
   async function handleAsk() {
     if (!question.trim()) {
@@ -268,6 +292,7 @@ export default function AskPage() {
                     key={example.label}
                     type="button"
                     variant="outline"
+                    disabled={loading}
                     className="border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/10 hover:text-white"
                     onClick={() => fillExampleQuestion(example.question)}
                   >
@@ -275,6 +300,24 @@ export default function AskPage() {
                   </Button>
                 ))}
               </div>
+
+              {loading && (
+                <div className="rounded-2xl border border-violet-400/20 bg-violet-500/10 p-4">
+                  <div className="flex items-center gap-3">
+                    <Loader2 className="h-5 w-5 animate-spin text-violet-200" />
+                    <div>
+                      <p className="text-sm font-medium text-violet-100">
+                        {LOADING_STAGES[loadingStageIndex]}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-slate-400">
+                        FinCredit is gathering evidence first. If the local LLM
+                        is slow, a deterministic fallback will return after the
+                        timeout.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {apiError && (
                 <p className="text-sm leading-6 text-red-300">{apiError}</p>

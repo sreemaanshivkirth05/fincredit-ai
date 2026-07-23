@@ -1,4 +1,17 @@
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
+
 from langchain_ollama import ChatOllama
+
+
+LLM_TIMEOUT_SECONDS = 20
+MAX_CONTEXT_ITEMS = 6
+
+
+def limit_context_items(items):
+    if isinstance(items, list):
+        return items[:MAX_CONTEXT_ITEMS]
+
+    return items
 
 
 def build_fincredit_prompt(
@@ -25,7 +38,7 @@ Detected ticker:
 {ticker}
 
 Portfolio context:
-{portfolio_context}
+{limit_context_items(portfolio_context)}
 
 Latest stored market snapshot:
 {market_context}
@@ -34,10 +47,10 @@ Latest stored SEC fundamentals:
 {sec_context}
 
 Risk drivers:
-{risk_drivers}
+{limit_context_items(risk_drivers)}
 
 Evidence:
-{evidence}
+{limit_context_items(evidence)}
 
 Write your answer in clean Markdown with clear spacing.
 
@@ -90,11 +103,29 @@ def generate_llm_answer(
         evidence=evidence,
     )
 
-    llm = ChatOllama(
-        model="llama3.1:8b",
-        temperature=0.2,
-    )
+    def invoke_llm():
+        llm = ChatOllama(
+            model="llama3.1:8b",
+            temperature=0.2,
+        )
 
-    response = llm.invoke(prompt)
+        return llm.invoke(prompt)
+
+    executor = ThreadPoolExecutor(max_workers=1)
+    future = executor.submit(invoke_llm)
+
+    try:
+        response = future.result(timeout=LLM_TIMEOUT_SECONDS)
+    except TimeoutError as error:
+        future.cancel()
+        executor.shutdown(wait=False, cancel_futures=True)
+        raise RuntimeError(
+            f"Local LLM timed out after {LLM_TIMEOUT_SECONDS} seconds"
+        ) from error
+    except Exception:
+        executor.shutdown(wait=False, cancel_futures=True)
+        raise
+    else:
+        executor.shutdown(wait=False)
 
     return response.content

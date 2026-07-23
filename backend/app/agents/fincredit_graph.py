@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 from typing import Any, Optional, TypedDict
 
 from langgraph.graph import END, StateGraph
@@ -160,6 +161,19 @@ def calculate_unrealized_pl(value, total_cost):
     return unrealized_pl, unrealized_pl_percent
 
 
+def parse_iso_datetime(value: Any):
+    if not value:
+        return None
+
+    if isinstance(value, datetime):
+        return value
+
+    try:
+        return datetime.fromisoformat(str(value))
+    except ValueError:
+        return None
+
+
 def holding_to_context(holding: Holding):
     shares = safe_float(getattr(holding, "shares", None)) or 0
     avg_price = safe_float(getattr(holding, "avg_price", None)) or 0
@@ -198,6 +212,11 @@ def holding_to_context(holding: Holding):
         "sentiment": holding.sentiment,
         "currency": getattr(holding, "currency", None) or "USD",
         "exchange": getattr(holding, "exchange", None),
+        "updatedAt": (
+            holding.updated_at.isoformat()
+            if getattr(holding, "updated_at", None)
+            else None
+        ),
     }
 
 
@@ -258,6 +277,66 @@ def watchlist_to_context(company: WatchlistCompany):
             else None
         ),
     }
+
+
+def market_context_from_holding(holding: dict):
+    return {
+        "ticker": holding.get("ticker"),
+        "companyName": holding.get("company"),
+        "sector": holding.get("sector"),
+        "currentPrice": holding.get("currentPrice"),
+        "previousClose": None,
+        "dayHigh": None,
+        "dayLow": None,
+        "volume": None,
+        "marketCap": None,
+        "currency": holding.get("currency") or "USD",
+        "exchange": holding.get("exchange"),
+        "fetchedAt": holding.get("updatedAt"),
+        "source": "Portfolio Holding Current Price",
+    }
+
+
+def market_context_from_watchlist(item: dict):
+    return {
+        "ticker": item.get("ticker"),
+        "companyName": item.get("company"),
+        "sector": item.get("sector"),
+        "currentPrice": item.get("currentPrice"),
+        "previousClose": item.get("previousClose"),
+        "dayHigh": None,
+        "dayLow": None,
+        "volume": item.get("volume"),
+        "marketCap": item.get("marketCap"),
+        "currency": item.get("currency") or "USD",
+        "exchange": item.get("exchange"),
+        "fetchedAt": item.get("addedAt"),
+        "source": "Watchlist Current Price",
+    }
+
+
+def choose_fresh_market_context(
+    snapshot_context: dict | None,
+    holding_context: dict | None,
+    watchlist_context: dict | None,
+):
+    if holding_context and holding_context.get("currentPrice") is not None:
+        if not snapshot_context:
+            return market_context_from_holding(holding_context)
+
+        snapshot_time = parse_iso_datetime(snapshot_context.get("fetchedAt"))
+        holding_time = parse_iso_datetime(holding_context.get("updatedAt"))
+
+        if holding_time and (not snapshot_time or holding_time > snapshot_time):
+            return market_context_from_holding(holding_context)
+
+    if snapshot_context:
+        return snapshot_context
+
+    if watchlist_context and watchlist_context.get("currentPrice") is not None:
+        return market_context_from_watchlist(watchlist_context)
+
+    return None
 
 
 def create_portfolio_agent(db: Session):
@@ -334,10 +413,21 @@ def create_watchlist_agent(db: Session):
 def create_market_agent(db: Session):
     def market_agent(state: FinCreditState) -> FinCreditState:
         ticker = state.get("ticker")
+        portfolio_context = state.get("portfolio_context", [])
+        watchlist_context = state.get("watchlist_context", [])
 
         if not ticker:
             state["market_context"] = None
             return state
+
+        matching_holding = next(
+            (holding for holding in portfolio_context if holding["ticker"] == ticker),
+            None,
+        )
+        matching_watchlist_item = next(
+            (item for item in watchlist_context if item["ticker"] == ticker),
+            None,
+        )
 
         latest_snapshot = (
             db.query(MarketSnapshot)
@@ -346,26 +436,32 @@ def create_market_agent(db: Session):
             .first()
         )
 
-        if not latest_snapshot:
-            state["market_context"] = None
-            return state
+        snapshot_context = None
 
-        state["market_context"] = {
-            "ticker": latest_snapshot.ticker,
-            "companyName": latest_snapshot.company_name,
-            "sector": latest_snapshot.sector,
-            "currentPrice": latest_snapshot.current_price,
-            "previousClose": latest_snapshot.previous_close,
-            "dayHigh": latest_snapshot.day_high,
-            "dayLow": latest_snapshot.day_low,
-            "volume": latest_snapshot.volume,
-            "marketCap": latest_snapshot.market_cap,
-            "currency": latest_snapshot.currency,
-            "exchange": latest_snapshot.exchange,
-            "fetchedAt": latest_snapshot.fetched_at.isoformat()
-            if latest_snapshot.fetched_at
-            else None,
-        }
+        if latest_snapshot:
+            snapshot_context = {
+                "ticker": latest_snapshot.ticker,
+                "companyName": latest_snapshot.company_name,
+                "sector": latest_snapshot.sector,
+                "currentPrice": latest_snapshot.current_price,
+                "previousClose": latest_snapshot.previous_close,
+                "dayHigh": latest_snapshot.day_high,
+                "dayLow": latest_snapshot.day_low,
+                "volume": latest_snapshot.volume,
+                "marketCap": latest_snapshot.market_cap,
+                "currency": latest_snapshot.currency,
+                "exchange": latest_snapshot.exchange,
+                "fetchedAt": latest_snapshot.fetched_at.isoformat()
+                if latest_snapshot.fetched_at
+                else None,
+                "source": "PostgreSQL Market Snapshot",
+            }
+
+        state["market_context"] = choose_fresh_market_context(
+            snapshot_context=snapshot_context,
+            holding_context=matching_holding,
+            watchlist_context=matching_watchlist_item,
+        )
 
         return state
 
@@ -857,12 +953,13 @@ def evidence_agent(state: FinCreditState) -> FinCreditState:
         market_cap = market_context.get("marketCap")
         exchange = market_context.get("exchange")
         fetched_at = market_context.get("fetchedAt")
+        market_source = market_context.get("source") or "PostgreSQL Market Snapshot"
 
         evidence.append(
             {
-                "source": "PostgreSQL Market Snapshots",
+                "source": market_source,
                 "claim": (
-                    f"Latest stored market snapshot used for {ticker}: current price "
+                    f"Market context used for {ticker} from {market_source}: current price "
                     f"{format_money(current_price)}, previous close "
                     f"{format_money(previous_close)}, day high {format_money(day_high)}, "
                     f"day low {format_money(day_low)}, volume "
@@ -983,7 +1080,8 @@ def build_context_summary(state: FinCreditState):
 
     if market_context:
         lines.append(
-            f"Market snapshot: price {format_money(market_context.get('currentPrice'))}, "
+            f"Market context ({market_context.get('source') or 'PostgreSQL Market Snapshot'}): "
+            f"price {format_money(market_context.get('currentPrice'))}, "
             f"previous close {format_money(market_context.get('previousClose'))}."
         )
 
@@ -1002,27 +1100,103 @@ def build_context_summary(state: FinCreditState):
 
 
 def build_deterministic_answer(state: FinCreditState, error_message: str):
-    question = state["question"]
     ticker = state.get("ticker")
+    portfolio_context = state.get("portfolio_context", [])
+    transaction_context = state.get("transaction_context", [])
+    market_context = state.get("market_context")
+    sec_context = state.get("sec_context")
     risk_drivers = state.get("risk_drivers", [])
     evidence = state.get("evidence", [])
     news_context = state.get("news_context", [])
 
     sections = []
+    matching_holding = None
+
+    if ticker:
+        matching_holding = next(
+            (holding for holding in portfolio_context if holding["ticker"] == ticker),
+            None,
+        )
 
     sections.append("## FinCredit AI Analysis")
 
     if ticker:
         sections.append(
-            f"I analyzed **{ticker}** using the available portfolio, watchlist, market, SEC, and news context."
+            f"I analyzed **{ticker}** as a simulated paper-trading decision, not a real-money recommendation. Review position size, cost basis, recent transactions, market context, SEC fundamentals, and news before changing the position."
         )
     else:
         sections.append(
-            "I analyzed your available simulated portfolio, watchlist, market, SEC, and news context."
+            "I analyzed your simulated portfolio, watchlist, market, SEC, news, and transaction context. Focus on concentration, unrealized P/L, recent trades, and whether each holding still has a clear beginner-friendly research reason."
         )
 
     sections.append("## Context Used")
     sections.append(build_context_summary(state) or "Limited context was available.")
+
+    sections.append("## Portfolio Position Summary")
+    if matching_holding:
+        sections.append(
+            f"- **{ticker}:** {matching_holding['shares']:g} simulated shares, "
+            f"average price {format_money(matching_holding['avgPrice'])}, "
+            f"current value {format_money(matching_holding['value'])}, "
+            f"total cost {format_money(matching_holding['totalCost'])}, "
+            f"unrealized P/L {format_money(matching_holding['unrealizedPL'])} "
+            f"({format_percent(matching_holding['unrealizedPLPercent'])}), "
+            f"portfolio weight {format_percent(matching_holding['weight'])}."
+        )
+    elif portfolio_context:
+        largest_holding = max(
+            portfolio_context,
+            key=lambda holding: holding.get("weight", 0),
+        )
+        sections.append(
+            f"- Portfolio holdings loaded: {len(portfolio_context)}. Largest position is "
+            f"{largest_holding['ticker']} at {format_percent(largest_holding.get('weight'))}."
+        )
+    else:
+        sections.append("- No simulated portfolio holdings were available.")
+
+    sections.append("## Recent Transactions Summary")
+    relevant_transactions = [
+        transaction
+        for transaction in transaction_context
+        if not ticker or transaction["ticker"] == ticker
+    ]
+
+    if relevant_transactions:
+        sections.append(
+            "\n".join(
+                [
+                    f"- {format_transaction_summary(transaction)}"
+                    for transaction in relevant_transactions[:5]
+                ]
+            )
+        )
+    else:
+        sections.append("- No recent simulated transactions were available for this context.")
+
+    sections.append("## Market Context")
+    if market_context:
+        sections.append(
+            f"- Source: {market_context.get('source') or 'PostgreSQL Market Snapshot'}.\n"
+            f"- Current price: {format_money(market_context.get('currentPrice'))}.\n"
+            f"- Previous close: {format_money(market_context.get('previousClose'))}.\n"
+            f"- Exchange: {market_context.get('exchange') or 'not available'}."
+        )
+    else:
+        sections.append("- Market context was not available.")
+
+    sections.append("## SEC Fundamentals Summary")
+    if sec_context:
+        sections.append(
+            f"- Revenue: {format_money(sec_context.get('revenue'))}.\n"
+            f"- Net income: {format_money(sec_context.get('netIncome'))}.\n"
+            f"- Assets: {format_money(sec_context.get('assets'))}.\n"
+            f"- Liabilities: {format_money(sec_context.get('liabilities'))}.\n"
+            f"- Filing: {sec_context.get('form') or 'not available'} for fiscal year "
+            f"{sec_context.get('fiscalYear') or 'not available'}."
+        )
+    else:
+        sections.append("- SEC fundamentals were not available.")
 
     if risk_drivers:
         sections.append("## Main Risk Drivers")
@@ -1040,7 +1214,7 @@ def build_deterministic_answer(state: FinCreditState, error_message: str):
         sections.append(
             "\n".join(
                 [
-                    f"- {item.get('title')} — {item.get('publisher') or 'Unknown publisher'}"
+                    f"- {item.get('title')} - {item.get('publisher') or 'Unknown publisher'}"
                     for item in news_context[:3]
                     if item.get("title")
                 ]
@@ -1058,12 +1232,11 @@ def build_deterministic_answer(state: FinCreditState, error_message: str):
             )
         )
 
-    sections.append("## Beginner Portfolio Takeaway")
+    sections.append("## Suggested Beginner Action")
 
     if ticker:
         sections.append(
-            f"For a beginner paper-trading portfolio, treat **{ticker}** as a research candidate, not an automatic buy. "
-            "Review concentration, current P/L, recent price movement, SEC fundamentals, and news before adding more simulated shares."
+            f"Before changing the simulated **{ticker}** position, review whether the position size fits your beginner paper-trading plan, whether recent BUY/SELL activity already changed your exposure, and whether the latest evidence still supports the original research reason."
         )
     else:
         sections.append(
@@ -1071,7 +1244,7 @@ def build_deterministic_answer(state: FinCreditState, error_message: str):
         )
 
     sections.append(
-        f"\n_Local LLM fallback was used because Ollama/LangChain failed: {error_message}_"
+        f"_Fast deterministic fallback used because the local LLM was unavailable or slow: {error_message}._"
     )
 
     return "\n\n".join(sections)
@@ -1098,14 +1271,19 @@ def answer_agent(state: FinCreditState) -> FinCreditState:
         )
 
         state["answer"] = llm_answer
-        llm_status = "Generated with LangChain ChatOllama local LLM"
+        llm_status = "Generated with LangChain ChatOllama local LLM in under timeout"
 
     except Exception as error:
+        error_message = str(error)
         state["answer"] = build_deterministic_answer(
             state=state,
-            error_message=str(error),
+            error_message=error_message,
         )
-        llm_status = f"Fallback used because local LLM failed: {str(error)}"
+
+        if "timed out after 20 seconds" in error_message:
+            llm_status = "Fallback used because local LLM timed out after 20 seconds"
+        else:
+            llm_status = f"Fallback used because local LLM failed: {error_message}"
 
     ticker = state.get("ticker")
     portfolio_context = state.get("portfolio_context", [])

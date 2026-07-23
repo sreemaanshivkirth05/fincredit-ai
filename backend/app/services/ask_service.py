@@ -1,3 +1,5 @@
+import time
+
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
@@ -24,12 +26,14 @@ def agent_run_to_dict(run: AgentRun):
 
 
 def ask_fincredit_service(question: str, db: Session):
+    start_time = time.perf_counter()
     cleaned_question = question.strip()
 
     if not cleaned_question:
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
 
     graph_result = run_fincredit_graph(cleaned_question, db)
+    runtime_seconds = time.perf_counter() - start_time
     audit = graph_result["audit"]
 
     agent_run = AgentRun(
@@ -58,7 +62,10 @@ def ask_fincredit_service(question: str, db: Session):
         "evidence": graph_result["evidence"],
         "suggestedActions": graph_result["suggested_actions"],
         "audit": audit,
-        "message": "Ask FinCredit response generated with portfolio, watchlist, market, SEC, news, and LangGraph context",
+        "message": (
+            f"Ask FinCredit response generated in {runtime_seconds:.1f}s "
+            "with portfolio, transactions, watchlist, market, SEC, news, and LangGraph context"
+        ),
     }
 
 
