@@ -551,7 +551,7 @@ function AskPageContent() {
                   {answer.riskDrivers.map((risk, index) => (
                     <div
                       key={`${risk.ticker}-${risk.driver}-${index}`}
-                      className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                      className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-red-300/25"
                     >
                       <div className="flex items-center justify-between gap-4">
                         <Badge className="bg-blue-500/15 text-blue-200">
@@ -587,7 +587,7 @@ function AskPageContent() {
                   {answer.suggestedActions.map((action, index) => (
                     <div
                       key={`${action}-${index}`}
-                      className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                      className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-emerald-300/25"
                     >
                       <div className="flex items-start gap-3">
                         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-semibold text-emerald-200">
@@ -625,7 +625,7 @@ function AskPageContent() {
                 {answer.evidence.map((item, index) => (
                   <div
                     key={`${item.source}-${index}`}
-                    className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                    className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-emerald-300/25"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <Badge className="bg-emerald-500/15 text-emerald-200">
@@ -673,7 +673,7 @@ function AskPageContent() {
                   />
                 </div>
 
-                <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+                <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-violet-300/25">
                   <p className="text-sm text-slate-400">Agents Used</p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {answer.audit.agentsUsed.map((agent) => (
@@ -705,10 +705,12 @@ function FeatureCard({
   icon: React.ReactNode;
 }) {
   return (
-    <Card className="border-white/10 bg-white/[0.04] text-white">
+    <Card className="border-white/10 bg-[#0d1424]/80 text-white shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-300/25">
       <CardContent className="p-5">
         <div className="flex items-center justify-between">
-          {icon}
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.05]">
+            {icon}
+          </div>
           <Eye className="h-4 w-4 text-slate-500" />
         </div>
         <p className="mt-4 font-semibold text-white">{title}</p>
@@ -720,7 +722,7 @@ function FeatureCard({
 
 function WorkflowStep({ title, detail }: { title: string; detail: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+    <div className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-violet-300/25">
       <p className="font-medium text-white">{title}</p>
       <p className="mt-2 text-sm leading-6 text-slate-400">{detail}</p>
     </div>
@@ -739,10 +741,12 @@ function MetricCard({
   icon: React.ReactNode;
 }) {
   return (
-    <Card className="border-white/10 bg-white/[0.04] text-white">
+    <Card className="border-white/10 bg-[#0d1424]/80 text-white shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-300/25">
       <CardContent className="p-5">
         <div className="flex items-center justify-between">
-          {icon}
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.05]">
+            {icon}
+          </div>
           <Badge className="bg-white/10 text-slate-300">{change}</Badge>
         </div>
 
@@ -755,7 +759,7 @@ function MetricCard({
 
 function MiniMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+    <div className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-blue-300/25">
       <p className="text-sm text-slate-400">{label}</p>
       <p className="mt-2 break-words text-sm font-medium leading-6 text-white">
         {value}

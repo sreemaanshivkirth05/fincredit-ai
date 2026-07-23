@@ -480,7 +480,7 @@ function getErrorMessage(error: unknown) {
 
 function MetricCard({ label, value, helper }: MetricCardProps) {
   return (
-    <Card className="border-white/10 bg-white/[0.04] text-white">
+    <Card className="border-white/10 bg-[#0d1424]/80 text-white shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-300/25">
       <CardContent className="p-5">
         <p className="text-sm text-slate-400">{label}</p>
         <p className="mt-2 text-2xl font-semibold">{value}</p>
@@ -1156,7 +1156,7 @@ export default function StockDetailPage() {
               ].map((step, index) => (
                 <div
                   key={step}
-                  className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                  className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-blue-300/25"
                 >
                   <p className="text-xs font-semibold text-blue-200">
                     {index + 1}
@@ -1171,7 +1171,7 @@ export default function StockDetailPage() {
         </Card>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Card className="border-white/10 bg-white/[0.04] text-white md:col-span-2">
+          <Card className="border-white/10 bg-[#0d1424]/80 text-white shadow-lg shadow-black/10 md:col-span-2">
             <CardContent className="p-5">
               <p className="text-sm text-slate-400">Current Price</p>
 
@@ -1450,7 +1450,7 @@ export default function StockDetailPage() {
                 </Button>
 
                 {showPortfolioForm ? (
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-blue-300/25">
                     <p className="text-sm font-medium text-white">
                       Simulate Buying {ticker}
                     </p>
@@ -1700,28 +1700,28 @@ export default function StockDetailPage() {
 
           <CardContent>
             <div className="grid gap-4 md:grid-cols-4">
-              <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-blue-300/25">
                 <p className="font-medium text-white">1. Research</p>
                 <p className="mt-2 text-sm leading-6 text-slate-400">
                   Review price, chart, market stats, and SEC fundamentals.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-blue-300/25">
                 <p className="font-medium text-white">2. Read News</p>
                 <p className="mt-2 text-sm leading-6 text-slate-400">
                   Understand recent events that may explain price movement.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-emerald-300/25">
                 <p className="font-medium text-white">3. Save or Simulate</p>
                 <p className="mt-2 text-sm leading-6 text-slate-400">
                   Add the stock to your watchlist or simulate a paper-trading buy.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-emerald-300/25">
                 <p className="font-medium text-white">4. Track</p>
                 <p className="mt-2 text-sm leading-6 text-slate-400">
                   Open your portfolio to track cost basis, value, and P/L.

@@ -334,7 +334,7 @@ export default function DashboardPage() {
               ].map((step, index) => (
                 <div
                   key={step}
-                  className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                  className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-blue-300/25"
                 >
                   <p className="text-xs font-semibold text-blue-200">
                     Step {index + 1}
@@ -562,7 +562,7 @@ export default function DashboardPage() {
               {dashboard.latestAgentRuns.map((run) => (
                 <div
                   key={run.id}
-                  className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                  className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-violet-300/25"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
@@ -625,7 +625,7 @@ export default function DashboardPage() {
                 return (
                   <div
                     key={`${snapshot.ticker}-${snapshot.fetchedAt}-${index}`}
-                    className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                    className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-blue-300/25"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
@@ -690,7 +690,7 @@ export default function DashboardPage() {
               {dashboard.latestSecFundamentals.map((sec, index) => (
                 <div
                   key={`${sec.ticker}-${sec.fetchedAt}-${index}`}
-                  className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                  className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-emerald-300/25"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
@@ -809,10 +809,12 @@ function MetricCard({
   icon: ReactNode;
 }) {
   return (
-    <Card className="border-white/10 bg-white/[0.04] text-white">
+    <Card className="border-white/10 bg-[#0d1424]/80 text-white shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300/25">
       <CardContent className="p-5">
         <div className="flex items-center justify-between">
-          {icon}
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.05]">
+            {icon}
+          </div>
           <Badge className="bg-white/10 text-slate-300">MVP</Badge>
         </div>
 
@@ -834,10 +836,12 @@ function ProductCard({
   icon: ReactNode;
 }) {
   return (
-    <Card className="border-white/10 bg-white/[0.04] text-white">
+    <Card className="border-white/10 bg-[#0d1424]/80 text-white shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-300/25">
       <CardContent className="p-5">
         <div className="flex items-center justify-between">
-          {icon}
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.05]">
+            {icon}
+          </div>
           <Badge className="bg-white/10 text-slate-300">Demo</Badge>
         </div>
 
@@ -860,10 +864,12 @@ function MiniSummaryCard({
   icon: ReactNode;
 }) {
   return (
-    <Card className="border-white/10 bg-white/[0.04] text-white">
+    <Card className="border-white/10 bg-[#0d1424]/80 text-white shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-300/25">
       <CardContent className="p-5">
         <div className="flex items-center justify-between">
-          {icon}
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.05]">
+            {icon}
+          </div>
           <Badge className="bg-white/10 text-slate-300">Summary</Badge>
         </div>
 
@@ -877,7 +883,7 @@ function MiniSummaryCard({
 
 function MiniMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+    <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3 transition-colors duration-200 hover:border-white/20">
       <p className="text-xs text-slate-500">{label}</p>
       <p className="mt-1 break-words text-sm font-medium text-white">{value}</p>
     </div>
@@ -894,7 +900,7 @@ function RoadmapItem({
   status: string;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+    <div className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-violet-300/25">
       <div className="flex items-center justify-between gap-3">
         <p className="font-medium text-white">{title}</p>
         <Badge className="bg-violet-500/15 text-violet-200">{status}</Badge>

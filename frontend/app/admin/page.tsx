@@ -347,7 +347,7 @@ function AdminConsole() {
 
             {!loadingDetail && selectedUser && (
               <>
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                <div className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-emerald-300/25">
                   <p className="text-sm font-semibold text-white">
                     {selectedUser.fullName || selectedUser.email}
                   </p>
@@ -424,10 +424,12 @@ function MetricCard({
   icon: React.ReactNode;
 }) {
   return (
-    <Card className="border-white/10 bg-white/[0.04] text-white">
+    <Card className="border-white/10 bg-[#0d1424]/80 text-white shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-300/25">
       <CardContent className="p-5">
         <div className="flex items-center justify-between">
-          {icon}
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.05]">
+            {icon}
+          </div>
           <Badge className="bg-white/10 text-slate-300">Admin</Badge>
         </div>
         <p className="mt-5 text-sm text-slate-400">{title}</p>
@@ -450,9 +452,11 @@ function DetailSection({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+    <div className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-blue-300/25">
       <div className="flex items-center gap-2">
-        {icon}
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/[0.05]">
+          {icon}
+        </div>
         <p className="text-sm font-semibold text-white">{title}</p>
       </div>
       <div className="mt-3 space-y-2">

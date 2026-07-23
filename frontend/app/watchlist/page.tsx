@@ -459,7 +459,7 @@ export default function WatchlistPage() {
               {newsRadar.map((item) => (
                 <div
                   key={`${item.ticker}-${item.category}`}
-                  className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                  className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-amber-300/25"
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -665,10 +665,12 @@ function MetricCard({
   icon: React.ReactNode;
 }) {
   return (
-    <Card className="border-white/10 bg-white/[0.04] text-white">
+    <Card className="border-white/10 bg-[#0d1424]/80 text-white shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300/25">
       <CardContent className="p-5">
         <div className="flex items-center justify-between">
-          {icon}
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.05]">
+            {icon}
+          </div>
           <Badge className="bg-white/10 text-slate-300">{change}</Badge>
         </div>
         <p className="mt-5 text-sm text-slate-400">{title}</p>
@@ -710,7 +712,7 @@ function MonitorCard({
   detail: string;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+    <div className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-blue-300/25">
       <p className="text-sm text-slate-400">{title}</p>
       <p className="mt-2 font-semibold text-white">{value}</p>
       <p className="mt-1 text-sm text-slate-500">{detail}</p>
