@@ -3,6 +3,7 @@ node_modules/
 frontend/node_modules/
 
 # Next.js
+.next/
 frontend/.next/
 frontend/out/
 
@@ -17,6 +18,8 @@ venv/
 .env
 
 # Environment files
+.env.local
+.env.*.local
 frontend/.env
 frontend/.env.local
 frontend/.env.development.local
@@ -46,5 +49,7 @@ dist/
 build/
 
 # Playwright
+playwright-report/
+test-results/
 frontend/playwright-report/
 frontend/test-results/

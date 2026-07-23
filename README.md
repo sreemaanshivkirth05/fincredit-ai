@@ -34,16 +34,31 @@ The public landing page lives at `/`, while the internal working dashboard lives
 - AI workflow: LangGraph coordinates portfolio, transaction, watchlist, market, SEC, news, risk, evidence, and answer generation. Ollama is used locally when available, with deterministic fallback when slow or unavailable.
 - External data: yfinance powers market/news data, and SEC Company Facts powers fundamentals.
 
+## Environment Setup
+
+Local secrets and machine-specific URLs live in ignored env files. Start by copying the examples:
+
+```powershell
+cd C:\Users\shivk\fincredit-ai\backend
+Copy-Item .env.example .env
+
+cd C:\Users\shivk\fincredit-ai\frontend
+Copy-Item .env.example .env.local
+```
+
+Update `backend\.env` with your local PostgreSQL password. Update `frontend\.env.local` only if the backend is not running at `http://127.0.0.1:8000`.
+
 ## Local Setup
 
-Create and activate the backend virtual environment, then install backend dependencies according to your local environment:
+Create and activate the backend virtual environment, then install backend dependencies:
 
 ```powershell
 cd C:\Users\shivk\fincredit-ai\backend
 .\venv\Scripts\Activate.ps1
+.\venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-Make sure PostgreSQL is running and the backend environment points at the correct database. Local `.env` files are intentionally ignored by git.
+Make sure PostgreSQL is running and `DATABASE_URL` in `backend\.env` points at the correct database.
 
 Run the auth migration once for an existing local database:
 
@@ -56,7 +71,7 @@ Start the backend:
 
 ```powershell
 cd C:\Users\shivk\fincredit-ai\backend
-python -m uvicorn app.main:app --reload
+.\venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```
 
 Install and run the frontend:
@@ -80,7 +95,7 @@ Backend compile:
 
 ```powershell
 cd C:\Users\shivk\fincredit-ai\backend
-python -m compileall app
+.\venv\Scripts\python.exe -m compileall app
 ```
 
 Frontend TypeScript:
@@ -97,6 +112,13 @@ cd C:\Users\shivk\fincredit-ai\frontend
 npx playwright install chromium
 npm run test:e2e
 npm run test:e2e:headed
+```
+
+Review frontend dependency advisories:
+
+```powershell
+cd C:\Users\shivk\fincredit-ai\frontend
+npm audit
 ```
 
 ## Demo Flow
@@ -117,12 +139,29 @@ npm run test:e2e:headed
 
 FinCredit AI now uses JWT-based authentication for the local MVP. The frontend stores the access token in `localStorage` and sends it as `Authorization: Bearer <token>` for protected API calls. This is intentionally simple for a portfolio/demo project and is not production hardening.
 
-Demo credentials:
+Local demo credentials only:
 
 - User: `demo@fincredit.ai` / `DemoPass123!`
 - Admin: `admin@fincredit.ai` / `AdminPass123!`
 
 Each user has isolated portfolio holdings, transaction history, watchlist rows, and AI agent runs. The admin role exists for future admin dashboard access.
+
+## Security Notes
+
+- Replace `JWT_SECRET_KEY` with a long random value before deployment.
+- Do not commit `.env` or `.env.local` files.
+- Use HTTPS in production.
+- Treat localStorage token storage as an MVP/demo approach, not final production auth hardening.
+- Configure `CORS_ALLOWED_ORIGINS` to the exact production frontend origin.
+- Do not expose tokens or password hashes in logs, API responses, or admin UI.
+
+## Deployment Notes
+
+- Backend deployment needs a reachable PostgreSQL `DATABASE_URL`.
+- Frontend deployment needs `NEXT_PUBLIC_API_BASE_URL` set to the deployed backend origin.
+- Serverless hosts usually cannot run a local Ollama daemon. Use an environment where Ollama is available, or rely on the deterministic fallback answer when local LLM calls are unavailable.
+- `POST /api/demo/reset` is for local demo data reset. Protect or disable equivalent functionality before production use.
+- See [DEPLOYMENT.md](DEPLOYMENT.md) for the pre-deployment checklist.
 
 ## Admin Dashboard
 

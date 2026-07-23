@@ -13,6 +13,9 @@ from app.models.user import User
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 bearer_scheme = HTTPBearer(auto_error=False)
 
+# The frontend stores JWTs in localStorage for this local MVP/demo. Production
+# deployments should use HTTPS and a hardened token storage/rotation strategy.
+
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
@@ -63,7 +66,10 @@ def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    user = db.query(User).filter(User.id == int(user_id)).first()
+    try:
+        user = db.query(User).filter(User.id == int(user_id)).first()
+    except (TypeError, ValueError):
+        user = None
 
     if not user or not user.is_active:
         raise HTTPException(

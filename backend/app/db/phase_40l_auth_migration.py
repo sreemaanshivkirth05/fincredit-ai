@@ -1,12 +1,13 @@
 from sqlalchemy import text
 
+from app.core.config import settings
 from app.core.security import get_password_hash
 from app.db.database import SessionLocal, engine
 
-DEMO_EMAIL = "demo@fincredit.ai"
-DEMO_PASSWORD = "DemoPass123!"
-ADMIN_EMAIL = "admin@fincredit.ai"
-ADMIN_PASSWORD = "AdminPass123!"
+DEMO_EMAIL = settings.DEMO_USER_EMAIL
+DEMO_PASSWORD = settings.DEMO_USER_PASSWORD
+ADMIN_EMAIL = settings.ADMIN_USER_EMAIL
+ADMIN_PASSWORD = settings.ADMIN_USER_PASSWORD
 
 
 def ensure_user(db, email: str, password: str, role: str, full_name: str):

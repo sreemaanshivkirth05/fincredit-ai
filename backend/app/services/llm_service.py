@@ -2,8 +2,8 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
 from langchain_ollama import ChatOllama
 
+from app.core.config import settings
 
-LLM_TIMEOUT_SECONDS = 20
 MAX_CONTEXT_ITEMS = 6
 
 
@@ -105,7 +105,7 @@ def generate_llm_answer(
 
     def invoke_llm():
         llm = ChatOllama(
-            model="llama3.1:8b",
+            model=settings.OLLAMA_MODEL,
             temperature=0.2,
         )
 
@@ -115,12 +115,12 @@ def generate_llm_answer(
     future = executor.submit(invoke_llm)
 
     try:
-        response = future.result(timeout=LLM_TIMEOUT_SECONDS)
+        response = future.result(timeout=settings.LLM_TIMEOUT_SECONDS)
     except TimeoutError as error:
         future.cancel()
         executor.shutdown(wait=False, cancel_futures=True)
         raise RuntimeError(
-            f"Local LLM timed out after {LLM_TIMEOUT_SECONDS} seconds"
+            f"Local LLM timed out after {settings.LLM_TIMEOUT_SECONDS} seconds"
         ) from error
     except Exception:
         executor.shutdown(wait=False, cancel_futures=True)

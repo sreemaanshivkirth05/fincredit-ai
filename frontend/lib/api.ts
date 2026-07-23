@@ -1,4 +1,5 @@
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 const AUTH_TOKEN_KEY = "fincredit_access_token";
 const AUTH_USER_KEY = "fincredit_current_user";
 

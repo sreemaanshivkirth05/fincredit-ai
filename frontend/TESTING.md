@@ -7,12 +7,24 @@ FinCredit AI uses Playwright for browser-level smoke and workflow tests.
 1. Backend running on `http://127.0.0.1:8000`
 2. Frontend available on `http://localhost:3000`
 3. Phase 40L auth migration has been run
+4. Backend has a valid `backend\.env`
+5. Frontend has `NEXT_PUBLIC_API_BASE_URL` in `frontend\.env.local`, or uses the default `http://127.0.0.1:8000`
+
+Create env files from the examples:
+
+```powershell
+cd C:\Users\shivk\fincredit-ai\backend
+Copy-Item .env.example .env
+
+cd C:\Users\shivk\fincredit-ai\frontend
+Copy-Item .env.example .env.local
+```
 
 Start the backend:
 
 ```powershell
 cd C:\Users\shivk\fincredit-ai\backend
-python -m uvicorn app.main:app --reload
+.\venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```
 
 ## Install
@@ -35,7 +47,18 @@ Demo credentials:
 - `demo@fincredit.ai` / `DemoPass123!`
 - `admin@fincredit.ai` / `AdminPass123!`
 
+Playwright auth helpers use these local demo/admin credentials and call the backend API URL from `NEXT_PUBLIC_API_BASE_URL`, falling back to `http://127.0.0.1:8000`.
+
 ## Run Tests
+
+TypeScript:
+
+```powershell
+cd C:\Users\shivk\fincredit-ai\frontend
+npx tsc --noEmit
+```
+
+E2E:
 
 ```powershell
 cd C:\Users\shivk\fincredit-ai\frontend
@@ -59,6 +82,14 @@ Open the HTML report:
 ```powershell
 npm run test:e2e:report
 ```
+
+Dependency audit:
+
+```powershell
+npm audit
+```
+
+Review the advisories before applying fixes. Do not run `npm audit fix --force` unless you have checked the breaking upgrades it would install.
 
 ## Notes
 
