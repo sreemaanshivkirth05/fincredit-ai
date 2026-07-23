@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, LogIn, Sparkles } from "lucide-react";
@@ -12,6 +12,25 @@ const DEMO_EMAIL = "demo@fincredit.ai";
 const DEMO_PASSWORD = "DemoPass123!";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginPageFallback />}>
+      <LoginPageContent />
+    </Suspense>
+  );
+}
+
+function LoginPageFallback() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-[#f7faf7] px-5 text-slate-950">
+      <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-5 py-4 text-sm text-slate-600 shadow-sm">
+        <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />
+        Loading login...
+      </div>
+    </main>
+  );
+}
+
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get("next") || "/dashboard";
@@ -61,6 +80,13 @@ export default function LoginPage() {
               Each account has a separate simulated portfolio, watchlist,
               transaction history, and AI evidence trail.
             </p>
+            <div className="mt-8 rounded-lg border border-white/10 bg-white/[0.04] p-4 text-sm text-slate-300">
+              <p className="font-medium text-white">Local demo account</p>
+              <p className="mt-2 break-all">demo@fincredit.ai / DemoPass123!</p>
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                These credentials are for the local MVP demo only.
+              </p>
+            </div>
           </section>
 
           <section className="p-8 md:p-10">

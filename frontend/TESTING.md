@@ -51,6 +51,21 @@ Playwright auth helpers use these local demo/admin credentials and call the back
 
 ## Run Tests
 
+Final Phase 40 sequence:
+
+```powershell
+cd C:\Users\shivk\fincredit-ai\backend
+.\venv\Scripts\python.exe -m compileall app
+
+cd C:\Users\shivk\fincredit-ai\frontend
+npx tsc --noEmit
+npm run build
+npm run test:e2e
+npm run test:e2e:headed
+npm audit
+npm outdated
+```
+
 TypeScript:
 
 ```powershell
@@ -91,11 +106,76 @@ npm audit
 
 Review the advisories before applying fixes. Do not run `npm audit fix --force` unless you have checked the breaking upgrades it would install.
 
+Outdated dependency review:
+
+```powershell
+npm outdated
+```
+
+Review only. Do not upgrade major dependencies during a stability pass.
+
+## Backend Smoke Checks
+
+Demo auth and portfolio:
+
+```powershell
+$body = @{
+  email = "demo@fincredit.ai"
+  password = "DemoPass123!"
+} | ConvertTo-Json
+
+$response = Invoke-RestMethod `
+  -Uri "http://127.0.0.1:8000/api/auth/login" `
+  -Method POST `
+  -ContentType "application/json" `
+  -Body $body
+
+$token = $response.accessToken
+
+Invoke-RestMethod `
+  -Uri "http://127.0.0.1:8000/api/auth/me" `
+  -Headers @{ Authorization = "Bearer $token" } | ConvertTo-Json -Depth 8
+
+Invoke-RestMethod `
+  -Uri "http://127.0.0.1:8000/api/portfolio" `
+  -Headers @{ Authorization = "Bearer $token" } | ConvertTo-Json -Depth 8
+```
+
+Admin smoke:
+
+```powershell
+$adminBody = @{
+  email = "admin@fincredit.ai"
+  password = "AdminPass123!"
+} | ConvertTo-Json
+
+$adminResponse = Invoke-RestMethod `
+  -Uri "http://127.0.0.1:8000/api/auth/login" `
+  -Method POST `
+  -ContentType "application/json" `
+  -Body $adminBody
+
+$adminToken = $adminResponse.accessToken
+
+Invoke-RestMethod `
+  -Uri "http://127.0.0.1:8000/api/admin/overview" `
+  -Headers @{ Authorization = "Bearer $adminToken" } | ConvertTo-Json -Depth 8
+```
+
 ## Notes
 
 - The Playwright config starts the frontend with `npm run dev` when needed and reuses an existing `localhost:3000` server when one is already running.
 - The backend is not started by Playwright. Start it separately before running E2E tests.
 - The Ask AI test can take 20-30 seconds because the local Ollama call has a 20 second timeout before deterministic fallback returns.
+
+## Troubleshooting
+
+- `Failed to fetch`: backend is down, CORS is wrong, or `NEXT_PUBLIC_API_BASE_URL` points to the wrong API origin.
+- `401 Unauthorized`: missing, expired, or cleared JWT token. Login again.
+- `403 Forbidden`: the route requires admin role and the current account is not admin.
+- Backend `500`: check the uvicorn traceback first, then verify `DATABASE_URL` and migrations.
+- Hydration mismatch: stop the frontend, remove `.next`, and restart `npm run dev`.
+- Ask AI timeout: expected when local Ollama is slow or unavailable; the backend should return deterministic fallback context.
 
 ## Demo Reset Test
 

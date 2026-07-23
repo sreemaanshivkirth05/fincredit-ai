@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 
@@ -93,6 +93,27 @@ const LOADING_STAGES = [
 ];
 
 export default function AskPage() {
+  return (
+    <Suspense fallback={<AskPageFallback />}>
+      <AskPageContent />
+    </Suspense>
+  );
+}
+
+function AskPageFallback() {
+  return (
+    <AppShell>
+      <div className="flex min-h-[360px] items-center justify-center">
+        <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-slate-300">
+          <Loader2 className="h-4 w-4 animate-spin text-violet-300" />
+          Loading Ask FinCredit...
+        </div>
+      </div>
+    </AppShell>
+  );
+}
+
+function AskPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const prefilledQuestion = searchParams.get("question") ?? "";

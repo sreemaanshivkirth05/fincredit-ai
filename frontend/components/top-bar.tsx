@@ -27,8 +27,8 @@ export function TopBar() {
 
   return (
     <header className="sticky top-0 z-20 border-b border-white/10 bg-[#070B14]/80 backdrop-blur">
-      <div className="flex items-center justify-between px-6 py-4">
-        <div className="relative max-w-md flex-1">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
+        <div className="relative hidden min-w-0 max-w-md flex-1 md:block">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
           <Input
             placeholder="Search ticker, report, thesis..."
@@ -36,7 +36,7 @@ export function TopBar() {
           />
         </div>
 
-        <div className="ml-4 flex items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3 md:ml-4">
           <Button
             size="icon"
             variant="outline"
@@ -48,7 +48,7 @@ export function TopBar() {
           <Link href="/profile">
             <Button
               variant="outline"
-              className="max-w-48 border-white/10 bg-white/[0.04] text-white hover:bg-white/10"
+              className="max-w-40 border-white/10 bg-white/[0.04] text-white hover:bg-white/10 sm:max-w-48"
             >
               <UserCircle className="mr-2 h-4 w-4" />
               <span className="truncate">{displayName}</span>
@@ -62,7 +62,7 @@ export function TopBar() {
             className="border-white/10 bg-white/[0.04] text-white hover:bg-white/10"
           >
             <LogOut className="mr-2 h-4 w-4" />
-            Logout
+            <span className="hidden sm:inline">Logout</span>
           </Button>
 
           <div className="hidden h-9 w-9 items-center justify-center rounded-full bg-blue-500/20 text-sm font-semibold text-blue-100 sm:flex">

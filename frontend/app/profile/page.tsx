@@ -79,7 +79,9 @@ function ProfileRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
       <p className="text-xs text-slate-500">{label}</p>
-      <p className="mt-1 text-sm font-medium text-white">{value}</p>
+      <p className="mt-1 break-words text-sm font-medium text-white">
+        {value}
+      </p>
     </div>
   );
 }
