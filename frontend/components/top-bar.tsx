@@ -1,11 +1,30 @@
 "use client";
 
-import { Bell, Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Bell, LogOut, Search, UserCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AuthUser, getStoredUser, logoutUser } from "@/lib/api";
 
 export function TopBar() {
+  const router = useRouter();
+  const [user, setUser] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    setUser(getStoredUser());
+  }, []);
+
+  async function handleLogout() {
+    await logoutUser();
+    router.replace("/login");
+  }
+
+  const displayName = user?.fullName || user?.email || "User";
+  const initial = displayName.charAt(0).toUpperCase();
+
   return (
     <header className="sticky top-0 z-20 border-b border-white/10 bg-[#070B14]/80 backdrop-blur">
       <div className="flex items-center justify-between px-6 py-4">
@@ -21,13 +40,33 @@ export function TopBar() {
           <Button
             size="icon"
             variant="outline"
-            className="border-white/10 bg-white/[0.04] text-white hover:bg-white/10"
+            className="hidden border-white/10 bg-white/[0.04] text-white hover:bg-white/10 sm:inline-flex"
           >
             <Bell className="h-4 w-4" />
           </Button>
 
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-500/20 text-sm font-semibold text-blue-100">
-            S
+          <Link href="/profile">
+            <Button
+              variant="outline"
+              className="max-w-48 border-white/10 bg-white/[0.04] text-white hover:bg-white/10"
+            >
+              <UserCircle className="mr-2 h-4 w-4" />
+              <span className="truncate">{displayName}</span>
+            </Button>
+          </Link>
+
+          <Button
+            type="button"
+            onClick={handleLogout}
+            variant="outline"
+            className="border-white/10 bg-white/[0.04] text-white hover:bg-white/10"
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+          </Button>
+
+          <div className="hidden h-9 w-9 items-center justify-center rounded-full bg-blue-500/20 text-sm font-semibold text-blue-100 sm:flex">
+            {initial}
           </div>
         </div>
       </div>

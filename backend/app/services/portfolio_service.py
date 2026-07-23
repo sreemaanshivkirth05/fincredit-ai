@@ -118,18 +118,24 @@ def transaction_to_dict(transaction: PortfolioTransaction):
     }
 
 
-def get_holding_by_ticker(db: Session, ticker: str):
+def get_holding_by_ticker(db: Session, ticker: str, user_id: int):
     cleaned_ticker = normalize_ticker(ticker)
 
     return (
         db.query(Holding)
         .filter(func.upper(Holding.ticker) == cleaned_ticker)
+        .filter(Holding.user_id == user_id)
         .first()
     )
 
 
-def recalculate_portfolio_weights(db: Session):
-    holdings = db.query(Holding).order_by(Holding.id.asc()).all()
+def recalculate_portfolio_weights(db: Session, user_id: int):
+    holdings = (
+        db.query(Holding)
+        .filter(Holding.user_id == user_id)
+        .order_by(Holding.id.asc())
+        .all()
+    )
 
     total_value = 0
 
@@ -154,12 +160,12 @@ def recalculate_portfolio_weights(db: Session):
         holding.updated_at = datetime.utcnow()
 
 
-def get_portfolio_status(db: Session, ticker: str):
+def get_portfolio_status(db: Session, ticker: str, user_id: int):
     cleaned_ticker = normalize_ticker(ticker)
-    holding = get_holding_by_ticker(db, cleaned_ticker)
+    holding = get_holding_by_ticker(db, cleaned_ticker, user_id)
 
     if holding:
-        recalculate_portfolio_weights(db)
+        recalculate_portfolio_weights(db, user_id)
         db.commit()
         db.refresh(holding)
 
@@ -170,7 +176,7 @@ def get_portfolio_status(db: Session, ticker: str):
     }
 
 
-def add_stock_to_portfolio(db: Session, request: PortfolioBuyRequest):
+def add_stock_to_portfolio(db: Session, request: PortfolioBuyRequest, user_id: int):
     cleaned_ticker = normalize_ticker(request.ticker)
 
     if request.shares <= 0:
@@ -179,7 +185,7 @@ def add_stock_to_portfolio(db: Session, request: PortfolioBuyRequest):
     if request.price <= 0:
         raise HTTPException(status_code=400, detail="Price must be greater than 0.")
 
-    existing_holding = get_holding_by_ticker(db, cleaned_ticker)
+    existing_holding = get_holding_by_ticker(db, cleaned_ticker, user_id)
     buy_amount = request.shares * request.price
 
     if existing_holding:
@@ -206,6 +212,7 @@ def add_stock_to_portfolio(db: Session, request: PortfolioBuyRequest):
         holding = existing_holding
     else:
         holding = Holding(
+            user_id=user_id,
             ticker=cleaned_ticker,
             company=request.company or cleaned_ticker,
             shares=request.shares,
@@ -229,6 +236,7 @@ def add_stock_to_portfolio(db: Session, request: PortfolioBuyRequest):
         db.add(holding)
 
     transaction = PortfolioTransaction(
+        user_id=user_id,
         ticker=cleaned_ticker,
         company=request.company or holding.company or cleaned_ticker,
         action="BUY",
@@ -245,7 +253,7 @@ def add_stock_to_portfolio(db: Session, request: PortfolioBuyRequest):
     db.add(transaction)
     db.flush()
 
-    recalculate_portfolio_weights(db)
+    recalculate_portfolio_weights(db, user_id)
 
     db.commit()
     db.refresh(holding)
@@ -259,7 +267,11 @@ def add_stock_to_portfolio(db: Session, request: PortfolioBuyRequest):
     }
 
 
-def sell_stock_from_portfolio(db: Session, request: PortfolioSellRequest):
+def sell_stock_from_portfolio(
+    db: Session,
+    request: PortfolioSellRequest,
+    user_id: int,
+):
     cleaned_ticker = normalize_ticker(request.ticker)
 
     if request.shares <= 0:
@@ -268,7 +280,7 @@ def sell_stock_from_portfolio(db: Session, request: PortfolioSellRequest):
     if request.price <= 0:
         raise HTTPException(status_code=400, detail="Price must be greater than 0.")
 
-    holding = get_holding_by_ticker(db, cleaned_ticker)
+    holding = get_holding_by_ticker(db, cleaned_ticker, user_id)
 
     if not holding:
         raise HTTPException(
@@ -289,6 +301,7 @@ def sell_stock_from_portfolio(db: Session, request: PortfolioSellRequest):
     remaining_shares = holding.shares - request.shares
 
     transaction = PortfolioTransaction(
+        user_id=user_id,
         ticker=cleaned_ticker,
         company=holding.company,
         action="SELL",
@@ -325,7 +338,7 @@ def sell_stock_from_portfolio(db: Session, request: PortfolioSellRequest):
 
     db.flush()
 
-    recalculate_portfolio_weights(db)
+    recalculate_portfolio_weights(db, user_id)
 
     db.commit()
     db.refresh(transaction)
@@ -341,9 +354,9 @@ def sell_stock_from_portfolio(db: Session, request: PortfolioSellRequest):
     }
 
 
-def remove_holding_from_portfolio(db: Session, ticker: str):
+def remove_holding_from_portfolio(db: Session, ticker: str, user_id: int):
     cleaned_ticker = normalize_ticker(ticker)
-    holding = get_holding_by_ticker(db, cleaned_ticker)
+    holding = get_holding_by_ticker(db, cleaned_ticker, user_id)
 
     if not holding:
         return {
@@ -356,7 +369,7 @@ def remove_holding_from_portfolio(db: Session, ticker: str):
     db.delete(holding)
     db.flush()
 
-    recalculate_portfolio_weights(db)
+    recalculate_portfolio_weights(db, user_id)
 
     db.commit()
 
@@ -368,13 +381,23 @@ def remove_holding_from_portfolio(db: Session, ticker: str):
     }
 
 
-def get_portfolio_data(db: Session):
-    holdings = db.query(Holding).order_by(Holding.id.asc()).all()
+def get_portfolio_data(db: Session, user_id: int):
+    holdings = (
+        db.query(Holding)
+        .filter(Holding.user_id == user_id)
+        .order_by(Holding.id.asc())
+        .all()
+    )
 
-    recalculate_portfolio_weights(db)
+    recalculate_portfolio_weights(db, user_id)
     db.commit()
 
-    holdings = db.query(Holding).order_by(Holding.id.asc()).all()
+    holdings = (
+        db.query(Holding)
+        .filter(Holding.user_id == user_id)
+        .order_by(Holding.id.asc())
+        .all()
+    )
     holdings_response = [holding_to_dict(holding) for holding in holdings]
 
     transactions = (
@@ -446,11 +469,12 @@ def get_portfolio_data(db: Session):
     }
 
 
-def get_portfolio_transactions(db: Session, limit: int = 50):
+def get_portfolio_transactions(db: Session, user_id: int, limit: int = 50):
     safe_limit = max(1, min(limit, 200))
 
     transactions = (
         db.query(PortfolioTransaction)
+        .filter(PortfolioTransaction.user_id == user_id)
         .order_by(PortfolioTransaction.created_at.desc())
         .limit(safe_limit)
         .all()
@@ -467,8 +491,13 @@ def get_portfolio_transactions(db: Session, limit: int = 50):
     }
 
 
-def refresh_portfolio_prices(db: Session):
-    holdings = db.query(Holding).order_by(Holding.id.asc()).all()
+def refresh_portfolio_prices(db: Session, user_id: int):
+    holdings = (
+        db.query(Holding)
+        .filter(Holding.user_id == user_id)
+        .order_by(Holding.id.asc())
+        .all()
+    )
     refreshed_count = 0
     failed_tickers = []
 
@@ -480,13 +509,13 @@ def refresh_portfolio_prices(db: Session):
         except Exception:
             failed_tickers.append(holding.ticker)
 
-    recalculate_portfolio_weights(db)
+    recalculate_portfolio_weights(db, user_id)
     db.commit()
 
     return {
         "refreshedCount": refreshed_count,
         "failedCount": len(failed_tickers),
         "failedTickers": failed_tickers,
-        "portfolio": get_portfolio_data(db),
+        "portfolio": get_portfolio_data(db, user_id),
         "message": f"Portfolio prices refreshed. {refreshed_count} holdings updated.",
     }

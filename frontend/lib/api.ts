@@ -1,10 +1,73 @@
 const API_BASE_URL = "http://127.0.0.1:8000";
+const AUTH_TOKEN_KEY = "fincredit_access_token";
+const AUTH_USER_KEY = "fincredit_current_user";
+
+export type AuthUser = {
+  id: number;
+  email: string;
+  fullName?: string | null;
+  role: string;
+  isActive: boolean;
+  createdAt: string;
+};
+
+export type AuthResponse = {
+  accessToken: string;
+  tokenType: string;
+  user: AuthUser;
+};
+
+function isBrowser() {
+  return typeof window !== "undefined";
+}
+
+export function getStoredToken() {
+  if (!isBrowser()) return null;
+  return window.localStorage.getItem(AUTH_TOKEN_KEY);
+}
+
+export function getStoredUser(): AuthUser | null {
+  if (!isBrowser()) return null;
+
+  const storedUser = window.localStorage.getItem(AUTH_USER_KEY);
+  if (!storedUser) return null;
+
+  try {
+    return JSON.parse(storedUser);
+  } catch {
+    return null;
+  }
+}
+
+export function storeAuthSession(auth: AuthResponse) {
+  if (!isBrowser()) return;
+  window.localStorage.setItem(AUTH_TOKEN_KEY, auth.accessToken);
+  window.localStorage.setItem(AUTH_USER_KEY, JSON.stringify(auth.user));
+}
+
+export function clearAuthSession() {
+  if (!isBrowser()) return;
+  window.localStorage.removeItem(AUTH_TOKEN_KEY);
+  window.localStorage.removeItem(AUTH_USER_KEY);
+}
 
 async function fetchJson(url: string, options?: RequestInit) {
+  const token = getStoredToken();
+  const headers = new Headers(options?.headers);
+
+  if (token && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
   const response = await fetch(url, {
     cache: "no-store",
     ...options,
+    headers,
   });
+
+  if (response.status === 401) {
+    clearAuthSession();
+  }
 
   if (!response.ok) {
     let errorBody = "";
@@ -61,6 +124,61 @@ export async function resetDemoData() {
   return fetchJson(`${API_BASE_URL}/api/demo/reset`, {
     method: "POST",
   });
+}
+
+export type RegisterPayload = {
+  email: string;
+  password: string;
+  fullName?: string | null;
+};
+
+export type LoginPayload = {
+  email: string;
+  password: string;
+};
+
+export async function registerUser(payload: RegisterPayload) {
+  const response = await fetchJson(`${API_BASE_URL}/api/auth/register`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  storeAuthSession(response);
+  return response;
+}
+
+export async function loginUser(payload: LoginPayload) {
+  const response = await fetchJson(`${API_BASE_URL}/api/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  storeAuthSession(response);
+  return response;
+}
+
+export async function getCurrentUser() {
+  const user = await fetchJson(`${API_BASE_URL}/api/auth/me`);
+  if (isBrowser()) {
+    window.localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+  }
+  return user;
+}
+
+export async function logoutUser() {
+  try {
+    await fetchJson(`${API_BASE_URL}/api/auth/logout`, {
+      method: "POST",
+    });
+  } finally {
+    clearAuthSession();
+  }
 }
 
 export async function getPortfolioData() {

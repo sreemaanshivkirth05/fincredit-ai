@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.core.security import get_current_user
 from app.db.database import get_db
+from app.models.user import User
 from app.schemas.portfolio import (
     PortfolioActionResponse,
     PortfolioBuyRequest,
@@ -25,41 +27,60 @@ router = APIRouter(prefix="/portfolio", tags=["Portfolio"])
 
 
 @router.get("", response_model=PortfolioResponse)
-def get_portfolio(db: Session = Depends(get_db)):
-    return get_portfolio_data(db)
+def get_portfolio(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return get_portfolio_data(db, current_user.id)
 
 
 @router.get("/transactions", response_model=PortfolioTransactionsResponse)
-def get_transactions(db: Session = Depends(get_db)):
-    return get_portfolio_transactions(db)
+def get_transactions(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return get_portfolio_transactions(db, current_user.id)
 
 
 @router.post("/refresh-prices", response_model=PortfolioRefreshResponse)
-def refresh_prices(db: Session = Depends(get_db)):
-    return refresh_portfolio_prices(db)
+def refresh_prices(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return refresh_portfolio_prices(db, current_user.id)
 
 
 @router.get("/{ticker}/status", response_model=PortfolioStatusResponse)
-def check_portfolio_status(ticker: str, db: Session = Depends(get_db)):
-    return get_portfolio_status(db, ticker)
+def check_portfolio_status(
+    ticker: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return get_portfolio_status(db, ticker, current_user.id)
 
 
 @router.post("/buy", response_model=PortfolioActionResponse)
 def buy_stock_for_portfolio(
     request: PortfolioBuyRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    return add_stock_to_portfolio(db, request)
+    return add_stock_to_portfolio(db, request, current_user.id)
 
 
 @router.post("/sell", response_model=PortfolioActionResponse)
 def sell_stock_for_portfolio(
     request: PortfolioSellRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    return sell_stock_from_portfolio(db, request)
+    return sell_stock_from_portfolio(db, request, current_user.id)
 
 
 @router.delete("/{ticker}", response_model=PortfolioActionResponse)
-def delete_portfolio_holding(ticker: str, db: Session = Depends(get_db)):
-    return remove_holding_from_portfolio(db, ticker)
+def delete_portfolio_holding(
+    ticker: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return remove_holding_from_portfolio(db, ticker, current_user.id)

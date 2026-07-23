@@ -12,6 +12,7 @@ import {
   Search,
   Settings,
   ShieldCheck,
+  UserCircle,
 } from "lucide-react";
 
 const items = [
@@ -22,6 +23,7 @@ const items = [
   { label: "Ask FinCredit", href: "/ask", icon: MessageSquareText },
   { label: "Reports", href: "/reports", icon: FileText },
   { label: "Governance", href: "/governance", icon: ShieldCheck },
+  { label: "Profile", href: "/profile", icon: UserCircle },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 
@@ -66,11 +68,17 @@ export function AppSidebar() {
       </nav>
 
       <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-        <p className="text-sm font-medium text-white">Dual-LLM Routing</p>
+        <p className="text-sm font-medium text-white">Account Workspace</p>
         <p className="mt-2 text-xs leading-5 text-slate-400">
-          ChatGPT API handles final reasoning. Ollama handles local sentiment,
-          red flags, and extraction.
+          Portfolio, watchlist, transactions, and AI history are scoped to the
+          signed-in user.
         </p>
+        <Link
+          href="/"
+          className="mt-3 block text-xs font-medium text-blue-300 hover:text-blue-200"
+        >
+          Open public homepage
+        </Link>
       </div>
     </aside>
   );

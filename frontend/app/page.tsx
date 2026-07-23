@@ -193,13 +193,25 @@ export default function LandingPage() {
               ask evidence-backed AI questions - without risking real money.
             </p>
 
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+              Each account has a separate simulated portfolio, watchlist,
+              transaction history, and AI evidence trail.
+            </p>
+
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
-                href="/dashboard"
+                href="/login"
                 className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/10 transition hover:bg-emerald-700"
               >
-                Try Demo
+                Try Demo / Login
                 <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+
+              <Link
+                href="/register"
+                className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-950 shadow-sm transition hover:border-slate-400 hover:bg-slate-50"
+              >
+                Create Account
               </Link>
 
               <Link
@@ -382,9 +394,9 @@ export default function LandingPage() {
                 Ready to try the demo flow?
               </h2>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600">
-                Start at the internal dashboard, reset the demo data with
-                confirmation, then walk through portfolio, watchlist, stock
-                research, AI answers, evidence, and reports.
+                Login with the demo account, reset the demo data with
+                confirmation on the dashboard, then walk through portfolio,
+                watchlist, stock research, AI answers, evidence, and reports.
               </p>
             </div>
 

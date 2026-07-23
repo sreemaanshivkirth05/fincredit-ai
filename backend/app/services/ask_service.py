@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.agents.fincredit_graph import run_fincredit_graph
 from app.models.agent_run import AgentRun
+from app.models.user import User
 
 
 def agent_run_to_dict(run: AgentRun):
@@ -25,18 +26,19 @@ def agent_run_to_dict(run: AgentRun):
     }
 
 
-def ask_fincredit_service(question: str, db: Session):
+def ask_fincredit_service(question: str, db: Session, user_id: int):
     start_time = time.perf_counter()
     cleaned_question = question.strip()
 
     if not cleaned_question:
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
 
-    graph_result = run_fincredit_graph(cleaned_question, db)
+    graph_result = run_fincredit_graph(cleaned_question, db, user_id)
     runtime_seconds = time.perf_counter() - start_time
     audit = graph_result["audit"]
 
     agent_run = AgentRun(
+        user_id=user_id,
         question=cleaned_question,
         ticker=graph_result.get("ticker"),
         answer=graph_result["answer"],
@@ -69,13 +71,13 @@ def ask_fincredit_service(question: str, db: Session):
     }
 
 
-def get_agent_runs_service(db: Session):
-    agent_runs = (
-        db.query(AgentRun)
-        .order_by(AgentRun.created_at.desc())
-        .limit(25)
-        .all()
-    )
+def get_agent_runs_service(db: Session, current_user: User):
+    query = db.query(AgentRun)
+
+    if current_user.role != "admin":
+        query = query.filter(AgentRun.user_id == current_user.id)
+
+    agent_runs = query.order_by(AgentRun.created_at.desc()).limit(25).all()
 
     return {
         "totalRuns": len(agent_runs),
@@ -84,16 +86,15 @@ def get_agent_runs_service(db: Session):
     }
 
 
-def get_agent_runs_by_ticker_service(ticker: str, db: Session):
+def get_agent_runs_by_ticker_service(ticker: str, db: Session, current_user: User):
     normalized_ticker = ticker.upper().strip()
 
-    agent_runs = (
-        db.query(AgentRun)
-        .filter(AgentRun.ticker == normalized_ticker)
-        .order_by(AgentRun.created_at.desc())
-        .limit(10)
-        .all()
-    )
+    query = db.query(AgentRun).filter(AgentRun.ticker == normalized_ticker)
+
+    if current_user.role != "admin":
+        query = query.filter(AgentRun.user_id == current_user.id)
+
+    agent_runs = query.order_by(AgentRun.created_at.desc()).limit(10).all()
 
     return {
         "ticker": normalized_ticker,
@@ -103,10 +104,13 @@ def get_agent_runs_by_ticker_service(ticker: str, db: Session):
     }
 
 
-def get_agent_run_by_id_service(agent_run_id: int, db: Session):
+def get_agent_run_by_id_service(agent_run_id: int, db: Session, current_user: User):
     agent_run = db.query(AgentRun).filter(AgentRun.id == agent_run_id).first()
 
     if not agent_run:
+        raise HTTPException(status_code=404, detail="Agent run not found")
+
+    if current_user.role != "admin" and agent_run.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Agent run not found")
 
     return agent_run_to_dict(agent_run)

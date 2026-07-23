@@ -6,6 +6,8 @@ The public landing page lives at `/`, while the internal working dashboard lives
 
 ## Key Features
 
+- User registration and JWT login with `user` and `admin` roles
+- Account-isolated portfolios, watchlists, transactions, and AI history
 - Stock research pages for ticker-level market data, charts, SEC fundamentals, and news
 - Simulated paper trading with buy and sell flows
 - Portfolio holdings, cost basis, unrealized P/L, sector exposure, and risk scoring
@@ -41,6 +43,13 @@ cd C:\Users\shivk\fincredit-ai\backend
 ```
 
 Make sure PostgreSQL is running and the backend environment points at the correct database. Local `.env` files are intentionally ignored by git.
+
+Run the auth migration once for an existing local database:
+
+```powershell
+cd C:\Users\shivk\fincredit-ai\backend
+.\venv\Scripts\python.exe -m app.db.phase_40l_auth_migration
+```
 
 Start the backend:
 
@@ -91,16 +100,28 @@ npm run test:e2e:headed
 
 ## Demo Flow
 
-1. Reset demo data from the dashboard or call `POST /api/demo/reset`.
-2. Open `/` and use the public landing page CTAs to enter the app.
-3. Open `/dashboard` and review the product loop.
-4. Research AAPL from the landing page or dashboard CTA.
-5. Add AAPL to the watchlist or simulate a portfolio buy.
-6. Open `/portfolio` and review holdings, weights, and transaction history.
-7. Refresh portfolio prices.
-8. Sell a small simulated share amount.
-9. Ask FinCredit AI about AAPL or portfolio concentration risk.
-10. Generate a report from the AI answer and review evidence/governance details.
+1. Open `/` and use the public landing page CTAs to enter the app.
+2. Login with `demo@fincredit.ai` / `DemoPass123!`.
+3. Reset demo data from the dashboard or call `POST /api/demo/reset` with the demo token.
+4. Open `/dashboard` and review the product loop.
+5. Research AAPL from the landing page or dashboard CTA.
+6. Add AAPL to the watchlist or simulate a portfolio buy.
+7. Open `/portfolio` and review holdings, weights, and transaction history.
+8. Refresh portfolio prices.
+9. Sell a small simulated share amount.
+10. Ask FinCredit AI about AAPL or portfolio concentration risk.
+11. Generate a report from the AI answer and review evidence/governance details.
+
+## Authentication
+
+FinCredit AI now uses JWT-based authentication for the local MVP. The frontend stores the access token in `localStorage` and sends it as `Authorization: Bearer <token>` for protected API calls. This is intentionally simple for a portfolio/demo project and is not production hardening.
+
+Demo credentials:
+
+- User: `demo@fincredit.ai` / `DemoPass123!`
+- Admin: `admin@fincredit.ai` / `AdminPass123!`
+
+Each user has isolated portfolio holdings, transaction history, watchlist rows, and AI agent runs. The admin role exists for future admin dashboard access.
 
 ## Disclaimer
 

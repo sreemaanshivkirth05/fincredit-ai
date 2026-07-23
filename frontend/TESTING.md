@@ -6,6 +6,7 @@ FinCredit AI uses Playwright for browser-level smoke and workflow tests.
 
 1. Backend running on `http://127.0.0.1:8000`
 2. Frontend available on `http://localhost:3000`
+3. Phase 40L auth migration has been run
 
 Start the backend:
 
@@ -21,6 +22,18 @@ cd C:\Users\shivk\fincredit-ai\frontend
 npm install
 npx playwright install chromium
 ```
+
+## Auth Migration
+
+```powershell
+cd C:\Users\shivk\fincredit-ai\backend
+.\venv\Scripts\python.exe -m app.db.phase_40l_auth_migration
+```
+
+Demo credentials:
+
+- `demo@fincredit.ai` / `DemoPass123!`
+- `admin@fincredit.ai` / `AdminPass123!`
 
 ## Run Tests
 
@@ -58,8 +71,22 @@ npm run test:e2e:report
 The demo reset endpoint restores a recruiter-friendly local dataset for the paper portfolio, transaction history, and watchlist only.
 
 ```powershell
+$body = @{
+  email = "demo@fincredit.ai"
+  password = "DemoPass123!"
+} | ConvertTo-Json
+
+$response = Invoke-RestMethod `
+  -Uri "http://127.0.0.1:8000/api/auth/login" `
+  -Method POST `
+  -ContentType "application/json" `
+  -Body $body
+
+$token = $response.accessToken
+
 Invoke-RestMethod `
   -Uri "http://127.0.0.1:8000/api/demo/reset" `
+  -Headers @{ Authorization = "Bearer $token" } `
   -Method POST | ConvertTo-Json -Depth 8
 ```
 
@@ -78,15 +105,27 @@ Dashboard reset button check:
 3. Open `http://localhost:3000/`.
 4. Confirm the landing page hero, feature grid, how-it-works section, tech stack, and disclaimer are visible.
 5. Click `Try Demo` and confirm it opens `/dashboard`.
-6. Return to `/` and click `Research AAPL`.
-7. Return to `/` and click `Ask FinCredit AI`.
-8. Reset demo data from `/dashboard`.
-9. Review price chart, SEC fundamentals, recent news, actions, and page guidance on `/stock/AAPL`.
-10. Add AAPL to the watchlist or simulate a portfolio buy.
-11. Open `/portfolio`, refresh prices, and open the sell form.
-12. Confirm transaction history shows BUY/SELL rows.
-13. Open `/watchlist` and refresh prices.
-14. Open `/ask`, submit an AAPL or portfolio-risk question, and verify answer, evidence, and governance audit sections.
+6. Login with `demo@fincredit.ai` / `DemoPass123!`.
+7. Open `/profile` and verify the demo user email and role.
+8. Return to `/` and click `Research AAPL`.
+9. Return to `/` and click `Ask FinCredit AI`.
+10. Reset demo data from `/dashboard`.
+11. Review price chart, SEC fundamentals, recent news, actions, and page guidance on `/stock/AAPL`.
+12. Add AAPL to the watchlist or simulate a portfolio buy.
+13. Open `/portfolio`, refresh prices, and open the sell form.
+14. Confirm transaction history shows BUY/SELL rows.
+15. Open `/watchlist` and refresh prices.
+16. Open `/ask`, submit an AAPL or portfolio-risk question, and verify answer, evidence, and governance audit sections.
+17. Logout from the top bar or profile page and confirm protected pages redirect to `/login`.
+
+## Auth E2E
+
+The auth test verifies `/login`, demo login, `/profile`, and logout.
+
+```powershell
+cd C:\Users\shivk\fincredit-ai\frontend
+npm run test:e2e -- auth.spec.ts
+```
 
 ## Landing Page E2E
 

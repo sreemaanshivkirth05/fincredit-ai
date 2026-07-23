@@ -1,7 +1,10 @@
 import { expect, test } from "@playwright/test";
 
+import { loginAsDemo } from "./helpers/auth";
+
 test.describe("watchlist page", () => {
   test("loads watchlist, refreshes prices, and shows search", async ({ page }) => {
+    await loginAsDemo(page);
     await page.goto("/watchlist");
 
     await expect(page.locator("body")).toContainText(/Company Watchlist|Tracked Companies/i);

@@ -1,11 +1,14 @@
 import { expect, test } from "@playwright/test";
 
+import { loginAsDemo } from "./helpers/auth";
+
 test.describe("stock page", () => {
   test("loads AAPL research page and navigates to Ask with prefilled question", async ({
     page,
   }) => {
     test.setTimeout(90_000);
 
+    await loginAsDemo(page);
     await page.goto("/stock/AAPL");
 
     await expect(page.locator("body")).toContainText(/AAPL/i);

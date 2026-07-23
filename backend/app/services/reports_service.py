@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.models.agent_run import AgentRun
+from app.models.user import User
 from app.models.report import Report
 from app.models.report_document import ReportDocument
 from app.models.report_status_event import ReportStatusEvent
@@ -115,10 +116,17 @@ def get_reports_by_ticker(ticker: str, db: Session):
     }
 
 
-def generate_report_from_agent_run(agent_run_id: int, db: Session):
+def generate_report_from_agent_run(
+    agent_run_id: int,
+    db: Session,
+    current_user: User,
+):
     agent_run = db.query(AgentRun).filter(AgentRun.id == agent_run_id).first()
 
     if not agent_run:
+        raise HTTPException(status_code=404, detail="Agent run not found")
+
+    if current_user.role != "admin" and agent_run.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Agent run not found")
 
     existing_report_document = (
@@ -208,15 +216,15 @@ def generate_report_from_agent_run(agent_run_id: int, db: Session):
     }
 
 
-def generate_latest_report_for_ticker(ticker: str, db: Session):
+def generate_latest_report_for_ticker(ticker: str, db: Session, current_user: User):
     normalized_ticker = ticker.upper().strip()
 
-    latest_agent_run = (
-        db.query(AgentRun)
-        .filter(AgentRun.ticker == normalized_ticker)
-        .order_by(AgentRun.created_at.desc())
-        .first()
-    )
+    query = db.query(AgentRun).filter(AgentRun.ticker == normalized_ticker)
+
+    if current_user.role != "admin":
+        query = query.filter(AgentRun.user_id == current_user.id)
+
+    latest_agent_run = query.order_by(AgentRun.created_at.desc()).first()
 
     if not latest_agent_run:
         raise HTTPException(
@@ -224,7 +232,7 @@ def generate_latest_report_for_ticker(ticker: str, db: Session):
             detail=f"No saved agent run found for ticker {normalized_ticker}. Ask FinCredit AI about {normalized_ticker} first.",
         )
 
-    return generate_report_from_agent_run(latest_agent_run.id, db)
+    return generate_report_from_agent_run(latest_agent_run.id, db, current_user)
 
 
 def get_report_document(report_id: str, db: Session):

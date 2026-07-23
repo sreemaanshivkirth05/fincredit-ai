@@ -1,11 +1,14 @@
 import { expect, test } from "@playwright/test";
 
+import { loginAsDemo } from "./helpers/auth";
+
 test.describe("ask page", () => {
   test(
     "submits a portfolio-aware AAPL question and renders answer sections",
     async ({ page }) => {
       test.setTimeout(70_000);
 
+      await loginAsDemo(page);
       await page.goto("/ask");
 
       const questionInput = page.getByTestId("ask-question-input");

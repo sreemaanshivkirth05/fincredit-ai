@@ -8,6 +8,7 @@ from app.models.report import Report
 from app.models.report_document import ReportDocument
 from app.models.report_status_event import ReportStatusEvent
 from app.models.sec_fundamental import SecFundamental
+from app.models.user import User
 from app.models.watchlist_company import WatchlistCompany
 
 

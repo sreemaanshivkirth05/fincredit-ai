@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { loginAsDemo } from "./helpers/auth";
+
 const routes = [
   { path: "/dashboard", text: /FinCredit AI|AI-powered stock research/i },
   { path: "/portfolio", text: /My Simulated Portfolio|Holdings/i },
@@ -13,6 +15,7 @@ const routes = [
 test.describe("route smoke tests", () => {
   for (const route of routes) {
     test(`${route.path} renders visible content`, async ({ page }) => {
+      await loginAsDemo(page);
       await page.goto(route.path);
 
       await expect(page).toHaveURL(new RegExp(`${route.path.replace("/", "\\/")}`));

@@ -18,7 +18,13 @@ test.describe("public landing page", () => {
       /not financial advice/i
     );
 
-    await expect(page.getByRole("link", { name: /Try Demo/i })).toHaveAttribute(
+    await expect(
+      page.getByRole("link", { name: /Try Demo \/ Login/i })
+    ).toHaveAttribute("href", "/login");
+    await expect(
+      page.getByRole("link", { name: /Create Account/i })
+    ).toHaveAttribute("href", "/register");
+    await expect(page.getByTestId("landing-open-app")).toHaveAttribute(
       "href",
       "/dashboard"
     );
@@ -31,7 +37,7 @@ test.describe("public landing page", () => {
       "/ask"
     );
 
-    await page.getByRole("link", { name: /Try Demo/i }).click();
-    await expect(page).toHaveURL(/\/dashboard/);
+    await page.getByRole("link", { name: /Try Demo \/ Login/i }).click();
+    await expect(page).toHaveURL(/\/login/);
   });
 });

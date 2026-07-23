@@ -339,9 +339,14 @@ def choose_fresh_market_context(
     return None
 
 
-def create_portfolio_agent(db: Session):
+def create_portfolio_agent(db: Session, user_id: int):
     def portfolio_agent(state: FinCreditState) -> FinCreditState:
-        holdings = db.query(Holding).order_by(Holding.weight.desc()).all()
+        holdings = (
+            db.query(Holding)
+            .filter(Holding.user_id == user_id)
+            .order_by(Holding.weight.desc())
+            .all()
+        )
 
         portfolio_context = [holding_to_context(holding) for holding in holdings]
         state["portfolio_context"] = portfolio_context
@@ -359,11 +364,13 @@ def create_portfolio_agent(db: Session):
     return portfolio_agent
 
 
-def create_transaction_agent(db: Session):
+def create_transaction_agent(db: Session, user_id: int):
     def transaction_agent(state: FinCreditState) -> FinCreditState:
         ticker = state.get("ticker")
 
-        query = db.query(PortfolioTransaction)
+        query = db.query(PortfolioTransaction).filter(
+            PortfolioTransaction.user_id == user_id
+        )
 
         if ticker:
             query = query.filter(func.upper(PortfolioTransaction.ticker) == ticker)
@@ -383,10 +390,11 @@ def create_transaction_agent(db: Session):
     return transaction_agent
 
 
-def create_watchlist_agent(db: Session):
+def create_watchlist_agent(db: Session, user_id: int):
     def watchlist_agent(state: FinCreditState) -> FinCreditState:
         watchlist_companies = (
             db.query(WatchlistCompany)
+            .filter(WatchlistCompany.user_id == user_id)
             .order_by(WatchlistCompany.id.asc())
             .all()
         )
@@ -1354,12 +1362,12 @@ def answer_agent(state: FinCreditState) -> FinCreditState:
     return state
 
 
-def build_fincredit_graph(db: Session):
+def build_fincredit_graph(db: Session, user_id: int):
     graph = StateGraph(FinCreditState)
 
-    graph.add_node("portfolio_agent", create_portfolio_agent(db))
-    graph.add_node("watchlist_agent", create_watchlist_agent(db))
-    graph.add_node("transaction_agent", create_transaction_agent(db))
+    graph.add_node("portfolio_agent", create_portfolio_agent(db, user_id))
+    graph.add_node("watchlist_agent", create_watchlist_agent(db, user_id))
+    graph.add_node("transaction_agent", create_transaction_agent(db, user_id))
     graph.add_node("market_agent", create_market_agent(db))
     graph.add_node("sec_agent", create_sec_agent(db))
     graph.add_node("news_agent", news_agent)
@@ -1382,7 +1390,7 @@ def build_fincredit_graph(db: Session):
     return graph.compile()
 
 
-def run_fincredit_graph(question: str, db: Session):
+def run_fincredit_graph(question: str, db: Session, user_id: int):
     ticker = extract_ticker_from_question(question)
 
     initial_state: FinCreditState = {
@@ -1401,7 +1409,7 @@ def run_fincredit_graph(question: str, db: Session):
         "audit": {},
     }
 
-    graph = build_fincredit_graph(db)
+    graph = build_fincredit_graph(db, user_id)
     final_state = graph.invoke(initial_state)
 
     return final_state

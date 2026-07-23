@@ -9,6 +9,7 @@ class AgentRun(Base):
     __tablename__ = "agent_runs"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, nullable=True, index=True)
 
     question = Column(Text, nullable=False)
     ticker = Column(String, nullable=True)

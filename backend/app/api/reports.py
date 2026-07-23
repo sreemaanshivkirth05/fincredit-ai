@@ -2,7 +2,9 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
+from app.core.security import get_current_user
 from app.db.database import get_db
+from app.models.user import User
 from app.schemas.reports import (
     GeneratedReportResponse,
     ReportDocumentResponse,
@@ -27,7 +29,10 @@ router = APIRouter(prefix="/reports", tags=["Reports"])
 
 
 @router.get("", response_model=ReportsResponse)
-def get_reports(db: Session = Depends(get_db)):
+def get_reports(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     return get_reports_data(db)
 
 
@@ -35,7 +40,11 @@ def get_reports(db: Session = Depends(get_db)):
     "/by-ticker/{ticker}",
     response_model=ReportsByTickerResponse,
 )
-def get_reports_by_ticker_route(ticker: str, db: Session = Depends(get_db)):
+def get_reports_by_ticker_route(
+    ticker: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     return get_reports_by_ticker(ticker, db)
 
 
@@ -43,20 +52,32 @@ def get_reports_by_ticker_route(ticker: str, db: Session = Depends(get_db)):
     "/generate-from-agent-run/{agent_run_id}",
     response_model=GeneratedReportResponse,
 )
-def generate_from_agent_run(agent_run_id: int, db: Session = Depends(get_db)):
-    return generate_report_from_agent_run(agent_run_id, db)
+def generate_from_agent_run(
+    agent_run_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return generate_report_from_agent_run(agent_run_id, db, current_user)
 
 
 @router.post(
     "/generate-latest-for-ticker/{ticker}",
     response_model=GeneratedReportResponse,
 )
-def generate_latest_for_ticker(ticker: str, db: Session = Depends(get_db)):
-    return generate_latest_report_for_ticker(ticker, db)
+def generate_latest_for_ticker(
+    ticker: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return generate_latest_report_for_ticker(ticker, db, current_user)
 
 
 @router.get("/{report_id}/document", response_model=ReportDocumentResponse)
-def get_report_document_route(report_id: str, db: Session = Depends(get_db)):
+def get_report_document_route(
+    report_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     return get_report_document(report_id, db)
 
 
@@ -65,6 +86,7 @@ def update_report_status_route(
     report_id: str,
     request: UpdateReportStatusRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     return update_report_status(report_id, request.status, request.comment, db)
 
@@ -73,12 +95,20 @@ def update_report_status_route(
     "/{report_id}/status-history",
     response_model=ReportStatusHistoryResponse,
 )
-def get_report_status_history_route(report_id: str, db: Session = Depends(get_db)):
+def get_report_status_history_route(
+    report_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     return get_report_status_history(report_id, db)
 
 
 @router.get("/{report_id}/pdf")
-def get_report_pdf_route(report_id: str, db: Session = Depends(get_db)):
+def get_report_pdf_route(
+    report_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     pdf_buffer = get_report_pdf(report_id, db)
 
     filename = f"{report_id}_FinCredit_AI_Report.pdf"

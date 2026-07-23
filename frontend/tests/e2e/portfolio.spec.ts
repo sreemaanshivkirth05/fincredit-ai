@@ -1,9 +1,12 @@
 import { expect, test } from "@playwright/test";
 
+import { loginAsDemo } from "./helpers/auth";
+
 test.describe("portfolio page", () => {
   test("loads, refreshes prices, shows transactions, and opens sell form", async ({
     page,
   }) => {
+    await loginAsDemo(page);
     await page.goto("/portfolio");
 
     await expect(page.locator("body")).toContainText(/My Simulated Portfolio|Holdings/i);

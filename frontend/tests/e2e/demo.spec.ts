@@ -1,9 +1,12 @@
 import { expect, test } from "@playwright/test";
 
+import { loginAsDemo } from "./helpers/auth";
+
 test.describe("dashboard demo readiness", () => {
   test("shows product explanation, CTAs, and safe demo reset affordance", async ({
     page,
   }) => {
+    await loginAsDemo(page);
     await page.goto("/dashboard");
 
     await expect(page.locator("body")).toContainText(

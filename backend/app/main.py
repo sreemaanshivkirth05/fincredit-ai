@@ -4,6 +4,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.ask import router as ask_router
+from app.api.auth import router as auth_router
 from app.api.company import router as company_router
 from app.api.dashboard import router as dashboard_router
 from app.api.demo import router as demo_router
@@ -70,6 +71,7 @@ def database_check():
 
 
 app.include_router(dashboard_router, prefix=settings.API_PREFIX)
+app.include_router(auth_router, prefix=settings.API_PREFIX)
 app.include_router(demo_router, prefix=settings.API_PREFIX)
 app.include_router(portfolio_router, prefix=settings.API_PREFIX)
 app.include_router(watchlist_router, prefix=settings.API_PREFIX)

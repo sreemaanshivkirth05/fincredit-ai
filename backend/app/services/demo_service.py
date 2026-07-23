@@ -165,12 +165,18 @@ DEMO_WATCHLIST = [
 ]
 
 
-def reset_demo_data(db: Session):
+def reset_demo_data(db: Session, user_id: int):
     now = datetime.utcnow()
 
-    db.query(PortfolioTransaction).delete(synchronize_session=False)
-    db.query(Holding).delete(synchronize_session=False)
-    db.query(WatchlistCompany).delete(synchronize_session=False)
+    db.query(PortfolioTransaction).filter(
+        PortfolioTransaction.user_id == user_id
+    ).delete(synchronize_session=False)
+    db.query(Holding).filter(Holding.user_id == user_id).delete(
+        synchronize_session=False
+    )
+    db.query(WatchlistCompany).filter(WatchlistCompany.user_id == user_id).delete(
+        synchronize_session=False
+    )
 
     for index, item in enumerate(DEMO_HOLDINGS):
         total_cost = item["shares"] * item["avg_price"]
@@ -178,6 +184,7 @@ def reset_demo_data(db: Session):
 
         db.add(
             Holding(
+                user_id=user_id,
                 ticker=item["ticker"],
                 company=item["company"],
                 shares=item["shares"],
@@ -254,6 +261,7 @@ def reset_demo_data(db: Session):
 
         db.add(
             PortfolioTransaction(
+                user_id=user_id,
                 ticker=item["ticker"],
                 company=item["company"],
                 action=item["action"],
@@ -271,6 +279,7 @@ def reset_demo_data(db: Session):
     for index, item in enumerate(DEMO_WATCHLIST):
         db.add(
             WatchlistCompany(
+                user_id=user_id,
                 ticker=item["ticker"],
                 company=item["company"],
                 sector=item["sector"],
@@ -290,12 +299,18 @@ def reset_demo_data(db: Session):
         )
 
     db.flush()
-    recalculate_portfolio_weights(db)
+    recalculate_portfolio_weights(db, user_id)
     db.commit()
 
-    holdings_count = db.query(Holding).count()
-    transactions_count = db.query(PortfolioTransaction).count()
-    watchlist_count = db.query(WatchlistCompany).count()
+    holdings_count = db.query(Holding).filter(Holding.user_id == user_id).count()
+    transactions_count = (
+        db.query(PortfolioTransaction)
+        .filter(PortfolioTransaction.user_id == user_id)
+        .count()
+    )
+    watchlist_count = (
+        db.query(WatchlistCompany).filter(WatchlistCompany.user_id == user_id).count()
+    )
 
     return {
         "holdingsCount": holdings_count,

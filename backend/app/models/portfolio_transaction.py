@@ -9,6 +9,7 @@ class PortfolioTransaction(Base):
     __tablename__ = "portfolio_transactions"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, nullable=True, index=True)
 
     ticker = Column(String, nullable=False, index=True)
     company = Column(String, nullable=False)

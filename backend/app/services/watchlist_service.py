@@ -61,19 +61,20 @@ def watchlist_company_to_dict(company: WatchlistCompany):
     }
 
 
-def get_watchlist_item_by_ticker(db: Session, ticker: str):
+def get_watchlist_item_by_ticker(db: Session, ticker: str, user_id: int):
     cleaned_ticker = normalize_ticker(ticker)
 
     return (
         db.query(WatchlistCompany)
         .filter(func.upper(WatchlistCompany.ticker) == cleaned_ticker)
+        .filter(WatchlistCompany.user_id == user_id)
         .first()
     )
 
 
-def get_watchlist_status(db: Session, ticker: str):
+def get_watchlist_status(db: Session, ticker: str, user_id: int):
     cleaned_ticker = normalize_ticker(ticker)
-    company = get_watchlist_item_by_ticker(db, cleaned_ticker)
+    company = get_watchlist_item_by_ticker(db, cleaned_ticker, user_id)
 
     return {
         "ticker": cleaned_ticker,
@@ -82,9 +83,9 @@ def get_watchlist_status(db: Session, ticker: str):
     }
 
 
-def add_stock_to_watchlist(db: Session, request: WatchlistAddRequest):
+def add_stock_to_watchlist(db: Session, request: WatchlistAddRequest, user_id: int):
     cleaned_ticker = normalize_ticker(request.ticker)
-    existing_company = get_watchlist_item_by_ticker(db, cleaned_ticker)
+    existing_company = get_watchlist_item_by_ticker(db, cleaned_ticker, user_id)
 
     if existing_company:
         existing_company.company = request.company or existing_company.company
@@ -107,6 +108,7 @@ def add_stock_to_watchlist(db: Session, request: WatchlistAddRequest):
         }
 
     new_company = WatchlistCompany(
+        user_id=user_id,
         ticker=cleaned_ticker,
         company=request.company or cleaned_ticker,
         sector=request.sector or "Unknown",
@@ -136,9 +138,9 @@ def add_stock_to_watchlist(db: Session, request: WatchlistAddRequest):
     }
 
 
-def remove_stock_from_watchlist(db: Session, ticker: str):
+def remove_stock_from_watchlist(db: Session, ticker: str, user_id: int):
     cleaned_ticker = normalize_ticker(ticker)
-    company = get_watchlist_item_by_ticker(db, cleaned_ticker)
+    company = get_watchlist_item_by_ticker(db, cleaned_ticker, user_id)
 
     if not company:
         return {
@@ -159,8 +161,13 @@ def remove_stock_from_watchlist(db: Session, ticker: str):
     }
 
 
-def get_watchlist_data(db: Session):
-    companies = db.query(WatchlistCompany).order_by(WatchlistCompany.id.asc()).all()
+def get_watchlist_data(db: Session, user_id: int):
+    companies = (
+        db.query(WatchlistCompany)
+        .filter(WatchlistCompany.user_id == user_id)
+        .order_by(WatchlistCompany.id.asc())
+        .all()
+    )
 
     watchlist = [watchlist_company_to_dict(company) for company in companies]
 
@@ -213,8 +220,13 @@ def get_watchlist_data(db: Session):
     }
 
 
-def refresh_watchlist_prices(db: Session):
-    companies = db.query(WatchlistCompany).order_by(WatchlistCompany.id.asc()).all()
+def refresh_watchlist_prices(db: Session, user_id: int):
+    companies = (
+        db.query(WatchlistCompany)
+        .filter(WatchlistCompany.user_id == user_id)
+        .order_by(WatchlistCompany.id.asc())
+        .all()
+    )
     refreshed_count = 0
     failed_tickers = []
 
@@ -237,6 +249,6 @@ def refresh_watchlist_prices(db: Session):
         "refreshedCount": refreshed_count,
         "failedCount": len(failed_tickers),
         "failedTickers": failed_tickers,
-        "watchlist": get_watchlist_data(db),
+        "watchlist": get_watchlist_data(db, user_id),
         "message": f"Watchlist prices refreshed. {refreshed_count} stocks updated.",
     }
