@@ -456,7 +456,7 @@ export default function LandingPage() {
             <p className="text-sm leading-6 text-amber-950">
               FinCredit AI is a simulated paper-trading and education tool. It
               is not financial advice, does not place real trades, and should
-              not be used as a real-money investment recommendation system.
+              not be used for real-money investing decisions.
             </p>
           </div>
         </div>

@@ -45,9 +45,12 @@ import {
   getPortfolioHoldingStatus,
   getSecCompanyFacts,
   getSecFundamentalsHistory,
+  getStockIntelligence,
   getStockNews,
   getWatchlistStatus,
   removeStockFromWatchlist,
+  type IntelligenceScore,
+  type StockIntelligenceResponse,
 } from "@/lib/api";
 
 type TimeRange =
@@ -170,6 +173,14 @@ function formatPercent(value: any) {
   if (number === null) return "—";
 
   return `${number > 0 ? "+" : ""}${number.toFixed(2)}%`;
+}
+
+function formatRatioPercent(value: any) {
+  const number = toNumber(value);
+
+  if (number === null) return "—";
+
+  return `${(number * 100).toFixed(2)}%`;
 }
 
 function formatDate(value: any) {
@@ -493,6 +504,151 @@ function MetricCard({ label, value, helper }: MetricCardProps) {
   );
 }
 
+function scoreTone(status?: string) {
+  const normalized = (status ?? "").toLowerCase();
+
+  if (normalized.includes("strong")) {
+    return {
+      badge: "bg-emerald-500/15 text-emerald-200",
+      bar: "bg-emerald-400",
+      border: "hover:border-emerald-300/30",
+    };
+  }
+
+  if (normalized.includes("weak") || normalized.includes("elevated")) {
+    return {
+      badge: "bg-red-500/15 text-red-200",
+      bar: "bg-red-400",
+      border: "hover:border-red-300/30",
+    };
+  }
+
+  if (normalized.includes("unknown")) {
+    return {
+      badge: "bg-slate-500/20 text-slate-200",
+      bar: "bg-slate-400",
+      border: "hover:border-slate-300/30",
+    };
+  }
+
+  return {
+    badge: "bg-amber-500/15 text-amber-200",
+    bar: "bg-amber-300",
+    border: "hover:border-amber-300/30",
+  };
+}
+
+function ScoreBar({ score, status }: { score: number; status?: string }) {
+  const tone = scoreTone(status);
+  const safeScore = Math.max(0, Math.min(100, Number(score) || 0));
+
+  return (
+    <div className="mt-3">
+      <div className="mb-2 flex items-center justify-between text-xs text-slate-400">
+        <span>Score</span>
+        <span>{safeScore}/100</span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-white/10">
+        <div
+          className={`h-full rounded-full ${tone.bar}`}
+          style={{ width: `${safeScore}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function TextList({
+  items,
+  empty,
+  tone = "slate",
+}: {
+  items?: string[];
+  empty: string;
+  tone?: "slate" | "emerald" | "amber" | "red" | "blue";
+}) {
+  const colors = {
+    slate: "border-white/10 bg-white/[0.04] text-slate-300",
+    emerald: "border-emerald-400/20 bg-emerald-500/10 text-emerald-100",
+    amber: "border-amber-400/20 bg-amber-500/10 text-amber-100",
+    red: "border-red-400/20 bg-red-500/10 text-red-100",
+    blue: "border-blue-400/20 bg-blue-500/10 text-blue-100",
+  };
+
+  if (!items || items.length === 0) {
+    return <p className="text-sm text-slate-500">{empty}</p>;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {items.map((item) => (
+        <span
+          key={item}
+          className={`rounded-full border px-3 py-1 text-xs ${colors[tone]}`}
+        >
+          {item}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function IntelligenceScoreCard({ score }: { score: IntelligenceScore }) {
+  const tone = scoreTone(score.status);
+
+  return (
+    <div
+      className={`rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors ${tone.border}`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-medium text-white">{score.label}</p>
+          <p className="mt-2 text-sm leading-6 text-slate-400">
+            {score.explanation}
+          </p>
+        </div>
+        <Badge className={tone.badge}>{score.status}</Badge>
+      </div>
+
+      <ScoreBar score={score.score} status={score.status} />
+
+      {score.drivers.length > 0 ? (
+        <div className="mt-4">
+          <p className="mb-2 text-xs font-medium text-slate-500">Drivers</p>
+          <TextList items={score.drivers.slice(0, 3)} empty="" tone="blue" />
+        </div>
+      ) : null}
+
+      {score.missingData.length > 0 ? (
+        <div className="mt-4">
+          <p className="mb-2 text-xs font-medium text-slate-500">
+            Missing Data
+          </p>
+          <TextList items={score.missingData.slice(0, 3)} empty="" tone="amber" />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function MiniMetric({
+  label,
+  value,
+  helper,
+}: {
+  label: string;
+  value: string;
+  helper?: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+      <p className="text-xs text-slate-500">{label}</p>
+      <p className="mt-2 text-lg font-semibold text-white">{value}</p>
+      {helper ? <p className="mt-1 text-xs text-slate-500">{helper}</p> : null}
+    </div>
+  );
+}
+
 export default function StockDetailPage() {
   const params = useParams<{ ticker: string }>();
   const ticker = String(params?.ticker ?? "").toUpperCase();
@@ -502,11 +658,15 @@ export default function StockDetailPage() {
   const [companyFacts, setCompanyFacts] = useState<any>(null);
   const [fundamentalsHistory, setFundamentalsHistory] = useState<any>(null);
   const [newsData, setNewsData] = useState<any>(null);
+  const [stockIntelligence, setStockIntelligence] =
+    useState<StockIntelligenceResponse | null>(null);
 
   const [selectedRange, setSelectedRange] = useState<TimeRange>("1M");
   const [isLoading, setIsLoading] = useState(true);
   const [isChartLoading, setIsChartLoading] = useState(false);
   const [isNewsLoading, setIsNewsLoading] = useState(false);
+  const [isIntelligenceLoading, setIsIntelligenceLoading] = useState(false);
+  const [intelligenceError, setIntelligenceError] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [secWarnings, setSecWarnings] = useState<string[]>([]);
@@ -548,7 +708,7 @@ export default function StockDetailPage() {
       } else {
         setCompanyFacts(null);
         nextSecWarnings.push(
-          "SEC fundamentals are temporarily unavailable for this ticker."
+          "SEC fundamentals are unavailable for this ticker right now."
         );
       }
 
@@ -557,7 +717,7 @@ export default function StockDetailPage() {
       } else {
         setFundamentalsHistory(null);
         nextSecWarnings.push(
-          "SEC fundamentals history is temporarily unavailable for this ticker."
+          "SEC fundamentals are unavailable for this ticker right now."
         );
       }
 
@@ -620,6 +780,22 @@ export default function StockDetailPage() {
     }
   }, [ticker]);
 
+  const loadStockIntelligence = useCallback(async () => {
+    if (!ticker) return;
+
+    try {
+      setIsIntelligenceLoading(true);
+      const response = await getStockIntelligence(ticker);
+      setStockIntelligence(response);
+      setIntelligenceError("");
+    } catch (error) {
+      setStockIntelligence(null);
+      setIntelligenceError(getErrorMessage(error));
+    } finally {
+      setIsIntelligenceLoading(false);
+    }
+  }, [ticker]);
+
   const loadWatchlistStatus = useCallback(async () => {
     if (!ticker) return;
 
@@ -665,6 +841,10 @@ export default function StockDetailPage() {
   }, [loadNewsData]);
 
   useEffect(() => {
+    loadStockIntelligence();
+  }, [loadStockIntelligence]);
+
+  useEffect(() => {
     loadWatchlistStatus();
   }, [loadWatchlistStatus]);
 
@@ -674,6 +854,7 @@ export default function StockDetailPage() {
       loadCoreStockData(),
       loadChartData(),
       loadNewsData(),
+      loadStockIntelligence(),
       loadWatchlistStatus(),
       loadPortfolioStatus(),
     ]);
@@ -903,6 +1084,19 @@ export default function StockDetailPage() {
   );
 
   const askAiHref = `/ask?question=${askAiQuestion}`;
+  const intelligenceAskQuestion = encodeURIComponent(
+    `Explain the investment case, risks, valuation, and portfolio fit for ${ticker}.`
+  );
+  const intelligenceAskHref = `/ask?ticker=${encodeURIComponent(
+    ticker
+  )}&question=${intelligenceAskQuestion}`;
+  const intelligence = stockIntelligence;
+  const valuation = intelligence?.valuationCheck;
+  const financialHealth = intelligence?.financialHealthCheck;
+  const bullBearBase = intelligence?.bullBearBaseCase;
+  const portfolioFit = intelligence?.portfolioFitCheck;
+  const decisionReadiness = intelligence?.decisionReadiness;
+  const evidenceStrength = intelligence?.evidenceStrength;
 
   const changeClass =
     computedDailyChange === null
@@ -1175,6 +1369,532 @@ export default function StockDetailPage() {
           </CardContent>
         </Card>
 
+        <section
+          data-testid="stock-intelligence-section"
+          className="space-y-5 rounded-3xl border border-cyan-300/20 bg-cyan-500/[0.04] p-5 shadow-2xl shadow-cyan-950/20"
+        >
+          <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
+            <div>
+              <Badge className="mb-3 bg-cyan-500/15 text-cyan-100">
+                FinCredit Intelligence Layer
+              </Badge>
+              <h2 className="text-3xl font-semibold tracking-tight text-white">
+                Stock Intelligence
+              </h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
+                A deterministic research layer that turns market, SEC, news,
+                valuation, and portfolio context into decision-readiness
+                signals for paper-trading education.
+              </p>
+            </div>
+
+            <Link href={intelligenceAskHref}>
+              <Button className="bg-cyan-500 text-white hover:bg-cyan-600">
+                <Sparkles className="mr-2 h-4 w-4" />
+                Ask AI About This Intelligence
+              </Button>
+            </Link>
+          </div>
+
+          {isIntelligenceLoading ? (
+            <Card className="border-white/10 bg-black/20 text-white">
+              <CardContent className="flex min-h-[180px] items-center justify-center p-6">
+                <div className="text-center">
+                  <Loader2 className="mx-auto h-7 w-7 animate-spin text-cyan-300" />
+                  <p className="mt-3 text-sm text-slate-400">
+                    Building stock intelligence signals...
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : intelligenceError ? (
+            <Card className="border-amber-400/20 bg-amber-500/10 text-amber-100">
+              <CardContent className="p-5">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
+                  <div>
+                    <p className="font-medium">
+                      Stock intelligence is temporarily unavailable.
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-amber-100/80">
+                      The rest of the page remains available. Missing data
+                      should be researched further before any simulated
+                      decision.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : intelligence ? (
+            <>
+              <Card className="border-white/10 bg-[#0d1424]/90 text-white">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-2xl">
+                    <Sparkles className="h-5 w-5 text-cyan-300" />
+                    Beginner Summary
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm leading-7 text-slate-300">
+                    {intelligence.beginnerSummary}
+                  </p>
+                  <p className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm leading-6 text-amber-100">
+                    {intelligence.disclaimer}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <div
+                data-testid="intelligence-scorecard"
+                className="space-y-4"
+              >
+                <div>
+                  <h3 className="text-xl font-semibold text-white">
+                    Investment Case Scorecard
+                  </h3>
+                  <p className="mt-1 text-sm text-slate-400">
+                    Scores are screening signals for research readiness, not a
+                    recommendation.
+                  </p>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {intelligence.investmentCaseScorecard.map((score) => (
+                    <IntelligenceScoreCard key={score.label} score={score} />
+                  ))}
+                </div>
+              </div>
+
+              {financialHealth ? (
+                <Card
+                  data-testid="financial-health-scanner"
+                  className="border-white/10 bg-white/[0.04] text-white"
+                >
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-2xl">
+                      <Activity className="h-5 w-5 text-emerald-300" />
+                      Financial Health Scanner
+                    </CardTitle>
+                    <p className="text-sm text-slate-400">
+                      Approximate ratios from latest available SEC fundamentals.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-5">
+                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                      <MiniMetric
+                        label="Revenue"
+                        value={formatCompactNumber(financialHealth.revenue)}
+                      />
+                      <MiniMetric
+                        label="Net Income"
+                        value={formatCompactNumber(financialHealth.netIncome)}
+                      />
+                      <MiniMetric
+                        label="Approx Profit Margin"
+                        value={formatRatioPercent(
+                          financialHealth.profitMarginApprox
+                        )}
+                      />
+                      <MiniMetric
+                        label="Assets"
+                        value={formatCompactNumber(financialHealth.assets)}
+                      />
+                      <MiniMetric
+                        label="Liabilities"
+                        value={formatCompactNumber(financialHealth.liabilities)}
+                      />
+                      <MiniMetric
+                        label="Approx Debt/Assets"
+                        value={formatRatioPercent(
+                          financialHealth.debtToAssetsApprox
+                        )}
+                      />
+                      <MiniMetric
+                        label="Approx ROA"
+                        value={formatRatioPercent(
+                          financialHealth.returnOnAssetsApprox
+                        )}
+                      />
+                      <MiniMetric
+                        label="Status"
+                        value={financialHealth.status}
+                        helper="Screening status"
+                      />
+                    </div>
+
+                    <p className="text-sm leading-6 text-slate-400">
+                      {financialHealth.explanation}
+                    </p>
+
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <div>
+                        <p className="mb-2 text-sm font-medium text-white">
+                          Strengths
+                        </p>
+                        <TextList
+                          items={financialHealth.strengths}
+                          empty="No deterministic strengths found yet."
+                          tone="emerald"
+                        />
+                      </div>
+                      <div>
+                        <p className="mb-2 text-sm font-medium text-white">
+                          Red Flags
+                        </p>
+                        <TextList
+                          items={financialHealth.redFlags}
+                          empty="No financial red flags found from available data."
+                          tone="red"
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : null}
+
+              {valuation ? (
+                <Card
+                  data-testid="valuation-reality-check"
+                  className="border-white/10 bg-white/[0.04] text-white"
+                >
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-2xl">
+                      <BarChart3 className="h-5 w-5 text-blue-300" />
+                      Valuation Reality Check
+                    </CardTitle>
+                    <p className="text-sm text-slate-400">
+                      Available yfinance valuation metrics converted into a
+                      plain-language risk screen.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-5">
+                    {valuation.missingData.length > 0 ? (
+                      <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
+                        Some valuation metrics are missing. Evidence is limited,
+                        so valuation should be researched further.
+                      </div>
+                    ) : null}
+
+                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                      <MiniMetric label="P/E" value={formatNumber(valuation.peRatio)} />
+                      <MiniMetric
+                        label="Forward P/E"
+                        value={formatNumber(valuation.forwardPe)}
+                      />
+                      <MiniMetric
+                        label="Price/Sales"
+                        value={formatNumber(valuation.priceToSales)}
+                      />
+                      <MiniMetric
+                        label="Price/Book"
+                        value={formatNumber(valuation.priceToBook)}
+                      />
+                      <MiniMetric
+                        label="Enterprise/Revenue"
+                        value={formatNumber(valuation.enterpriseToRevenue)}
+                      />
+                      <MiniMetric
+                        label="Enterprise/EBITDA"
+                        value={formatNumber(valuation.enterpriseToEbitda)}
+                      />
+                      <MiniMetric
+                        label="Market Cap"
+                        value={formatCompactNumber(valuation.marketCap)}
+                      />
+                      <MiniMetric label="Beta" value={formatNumber(valuation.beta)} />
+                      <MiniMetric
+                        label="52-Week High"
+                        value={formatCurrency(valuation.fiftyTwoWeekHigh)}
+                      />
+                      <MiniMetric
+                        label="52-Week Low"
+                        value={formatCurrency(valuation.fiftyTwoWeekLow)}
+                      />
+                      <MiniMetric
+                        label="Valuation Risk"
+                        value={valuation.valuationRisk}
+                        helper="Demanding metrics raise risk"
+                      />
+                    </div>
+
+                    <p className="text-sm leading-6 text-slate-400">
+                      {valuation.explanation}
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : null}
+
+              {bullBearBase ? (
+                <Card
+                  data-testid="bull-bear-base-case"
+                  className="border-white/10 bg-white/[0.04] text-white"
+                >
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-2xl">
+                      <TrendingUp className="h-5 w-5 text-cyan-300" />
+                      Bull / Bear / Base Case
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-5">
+                    <div className="grid gap-4 lg:grid-cols-3">
+                      <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4">
+                        <p className="font-medium text-emerald-100">
+                          Bull Case
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-emerald-100/80">
+                          {bullBearBase.bullCase}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-red-400/20 bg-red-500/10 p-4">
+                        <p className="font-medium text-red-100">Bear Case</p>
+                        <p className="mt-2 text-sm leading-6 text-red-100/80">
+                          {bullBearBase.bearCase}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-blue-400/20 bg-blue-500/10 p-4">
+                        <p className="font-medium text-blue-100">Base Case</p>
+                        <p className="mt-2 text-sm leading-6 text-blue-100/80">
+                          {bullBearBase.baseCase}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4 lg:grid-cols-3">
+                      <div>
+                        <p className="mb-2 text-sm font-medium text-white">
+                          What Could Go Right
+                        </p>
+                        <TextList
+                          items={bullBearBase.whatCouldGoRight}
+                          empty="No upside drivers available."
+                          tone="emerald"
+                        />
+                      </div>
+                      <div>
+                        <p className="mb-2 text-sm font-medium text-white">
+                          What Could Go Wrong
+                        </p>
+                        <TextList
+                          items={bullBearBase.whatCouldGoWrong}
+                          empty="No downside drivers available."
+                          tone="red"
+                        />
+                      </div>
+                      <div>
+                        <p className="mb-2 text-sm font-medium text-white">
+                          What To Monitor
+                        </p>
+                        <TextList
+                          items={bullBearBase.whatToMonitor}
+                          empty="No monitor list available."
+                          tone="blue"
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : null}
+
+              {portfolioFit ? (
+                <Card className="border-white/10 bg-white/[0.04] text-white">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-2xl">
+                      <Wallet className="h-5 w-5 text-violet-300" />
+                      Portfolio Fit
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-5">
+                    {portfolioFit.missingData.length > 0 ? (
+                      <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
+                        Login and build a paper portfolio to see personalized
+                        portfolio fit.
+                      </div>
+                    ) : null}
+
+                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                      <MiniMetric
+                        label="Current Simulated Holding"
+                        value={portfolioFit.isInPortfolio ? "Yes" : "No"}
+                      />
+                      <MiniMetric
+                        label="Current Weight"
+                        value={formatPercent(portfolioFit.currentWeight)}
+                      />
+                      <MiniMetric
+                        label="Sector"
+                        value={portfolioFit.sector ?? "Unavailable"}
+                      />
+                      <MiniMetric
+                        label="Fit Status"
+                        value={
+                          portfolioFit.isInPortfolio
+                            ? "Portfolio-aware"
+                            : "Research-only"
+                        }
+                      />
+                    </div>
+
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                        <p className="text-sm font-medium text-white">
+                          Concentration
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-slate-400">
+                          {portfolioFit.concentrationMessage}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                        <p className="text-sm font-medium text-white">
+                          Diversification Impact
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-slate-400">
+                          {portfolioFit.diversificationImpact}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="mb-2 text-sm font-medium text-white">
+                        Portfolio Risk Drivers
+                      </p>
+                      <TextList
+                        items={portfolioFit.riskDrivers}
+                        empty="No portfolio-specific risk drivers found."
+                        tone="amber"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : null}
+
+              <div className="grid gap-5 lg:grid-cols-2">
+                {decisionReadiness ? (
+                  <Card
+                    data-testid="decision-readiness-score"
+                    className="border-white/10 bg-white/[0.04] text-white"
+                  >
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-2xl">
+                        <CheckCircle2 className="h-5 w-5 text-emerald-300" />
+                        Decision Readiness Score
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Badge className={scoreTone(decisionReadiness.status).badge}>
+                        {decisionReadiness.status}
+                      </Badge>
+                      <ScoreBar
+                        score={decisionReadiness.score}
+                        status={decisionReadiness.status}
+                      />
+                      <p className="mt-4 text-sm leading-6 text-slate-400">
+                        {decisionReadiness.explanation}
+                      </p>
+
+                      <div className="mt-5 grid gap-4 md:grid-cols-2">
+                        <div>
+                          <p className="mb-2 text-sm font-medium text-white">
+                            Completed Checks
+                          </p>
+                          <TextList
+                            items={decisionReadiness.completedChecks}
+                            empty="No checks completed yet."
+                            tone="emerald"
+                          />
+                        </div>
+                        <div>
+                          <p className="mb-2 text-sm font-medium text-white">
+                            Missing Checks
+                          </p>
+                          <TextList
+                            items={decisionReadiness.missingChecks}
+                            empty="No missing checks."
+                            tone="amber"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="mt-5">
+                        <p className="mb-2 text-sm font-medium text-white">
+                          Warnings
+                        </p>
+                        <TextList
+                          items={decisionReadiness.warnings}
+                          empty="No readiness warnings from available data."
+                          tone="red"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : null}
+
+                {evidenceStrength ? (
+                  <Card
+                    data-testid="evidence-strength-meter"
+                    className="border-white/10 bg-white/[0.04] text-white"
+                  >
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-2xl">
+                        <Database className="h-5 w-5 text-cyan-300" />
+                        Evidence Strength Meter
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Badge className={scoreTone(evidenceStrength.status).badge}>
+                        {evidenceStrength.status}
+                      </Badge>
+                      <ScoreBar
+                        score={evidenceStrength.score}
+                        status={evidenceStrength.status}
+                      />
+                      <p className="mt-4 text-sm leading-6 text-slate-400">
+                        {evidenceStrength.explanation}
+                      </p>
+
+                      <div className="mt-5 grid gap-4 md:grid-cols-2">
+                        <div>
+                          <p className="mb-2 text-sm font-medium text-white">
+                            Sources Available
+                          </p>
+                          <TextList
+                            items={evidenceStrength.sourcesAvailable}
+                            empty="No sources available."
+                            tone="emerald"
+                          />
+                        </div>
+                        <div>
+                          <p className="mb-2 text-sm font-medium text-white">
+                            Sources Missing
+                          </p>
+                          <TextList
+                            items={evidenceStrength.sourcesMissing}
+                            empty="No source gaps detected."
+                            tone="amber"
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : null}
+              </div>
+
+              {intelligence.redFlags.length > 0 ? (
+                <Card className="border-red-400/20 bg-red-500/10 text-red-100">
+                  <CardContent className="p-5">
+                    <p className="font-medium">Research Red Flags</p>
+                    <div className="mt-3">
+                      <TextList
+                        items={intelligence.redFlags}
+                        empty="No red flags found from available data."
+                        tone="red"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : null}
+            </>
+          ) : null}
+        </section>
+
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <Card className="border-white/10 bg-[#0d1424]/80 text-white shadow-lg shadow-black/10 md:col-span-2">
             <CardContent className="p-5">
@@ -1364,11 +2084,16 @@ export default function StockDetailPage() {
                     <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
                     <div>
                       <p className="font-medium text-amber-100">
-                        SEC fundamentals are temporarily unavailable for this ticker.
+                        SEC fundamentals are unavailable for this ticker right now.
                       </p>
                       <p className="mt-1 text-amber-100/80">
-                        The rest of the stock page is still available, including
-                        price, chart, news, watchlist, portfolio actions, and Ask AI.
+                        SEC Company Facts are mainly available for SEC-reporting
+                        public companies. Market data may still be available.
+                      </p>
+                      <p className="mt-1 text-amber-100/80">
+                        The rest of the stock page stays available, including
+                        price, chart, news, watchlist, portfolio actions, and Ask
+                        AI.
                       </p>
                     </div>
                   </div>

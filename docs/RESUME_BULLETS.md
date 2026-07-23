@@ -17,3 +17,13 @@
 - Built a portfolio-aware AI assistant using LangGraph, LangChain, local Ollama fallback, SEC fundamentals, market data, news, transactions, and watchlist context.
 - Designed an evidence-backed response workflow with risk drivers, audit status, timeout fallback handling, and report-generation support for financial research use cases.
 - Implemented user-specific AI history and admin visibility while preserving account-level data isolation through JWT authentication and PostgreSQL relationships.
+
+## Full-Stack Engineer Version
+
+- Built a full-stack stock research and paper-trading MVP with Next.js, TypeScript, FastAPI, PostgreSQL, SQLAlchemy, JWT auth, role-based admin access, and Docker-ready local deployment.
+- Implemented end-to-end product workflows for dynamic stock search, market/SEC/news research, paper portfolio buys/sells, watchlists, transaction history, P/L tracking, Ask AI, reports, and governance.
+- Added Playwright E2E tests, screenshot automation, demo reset workflows, launch documentation, and graceful fallbacks for unavailable SEC data or local LLM timeouts.
+
+## Short Resume Project Entry
+
+**FinCredit AI** - Full-stack AI-powered stock research and paper-trading platform using Next.js, FastAPI, PostgreSQL, yfinance, SEC Company Facts, LangGraph, Docker, and Playwright. Built user-specific portfolios, watchlists, transactions, AI history, evidence-backed AI answers, admin analytics, dynamic ticker search, and graceful external-data fallback behavior.

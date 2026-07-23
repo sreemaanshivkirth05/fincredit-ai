@@ -63,6 +63,8 @@ Local demo only:
 - Playwright E2E tests cover the recruiter demo paths so the walkthrough is repeatable.
 - Docker and env examples make the project easier to run outside the original development machine.
 
+For a deeper interview narrative, use [docs/INTERVIEW_STORY.md](docs/INTERVIEW_STORY.md). For a portfolio case-study version, use [docs/PORTFOLIO_WRITEUP.md](docs/PORTFOLIO_WRITEUP.md).
+
 ## Common Questions And Answers
 
 ### Why did you build this?
@@ -126,3 +128,11 @@ No. It is a simulated paper-trading and education tool. It does not place real o
 - Portfolio allocation recommendations
 - Real-time or scheduled price refresh worker
 - OAuth/social login and production session hardening
+
+## Launch Package Links
+
+- [Portfolio Project Writeup](docs/PORTFOLIO_WRITEUP.md)
+- [Architecture Explanation](docs/ARCHITECTURE.md)
+- [Resume Bullets](docs/RESUME_BULLETS.md)
+- [Job Search Copy](docs/JOB_SEARCH_COPY.md)
+- [Interview Story](docs/INTERVIEW_STORY.md)

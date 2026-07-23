@@ -15,6 +15,8 @@ from app.api.news import router as news_router
 from app.api.portfolio import router as portfolio_router
 from app.api.reports import router as reports_router
 from app.api.sec import router as sec_router
+from app.api.stock_intelligence import router as stock_intelligence_router
+from app.api.stocks import router as stocks_router
 from app.api.watchlist import router as watchlist_router
 from app.core.config import settings
 from app.db.database import engine
@@ -84,5 +86,7 @@ app.include_router(ask_router, prefix=settings.API_PREFIX)
 app.include_router(market_router, prefix=settings.API_PREFIX)
 app.include_router(sec_router, prefix=settings.API_PREFIX)
 app.include_router(news_router, prefix=settings.API_PREFIX)
+app.include_router(stocks_router, prefix=settings.API_PREFIX)
+app.include_router(stock_intelligence_router, prefix=settings.API_PREFIX)
 
 app.include_router(market_chart_router)

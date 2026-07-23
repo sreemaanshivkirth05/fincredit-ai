@@ -33,13 +33,22 @@ npm run screenshots
 
 FinCredit AI is not just a chatbot bolted onto a stock page. It combines:
 
-- Stock research with market data, charts, SEC fundamentals, and news
+- Stock research with market data, charts, dynamic ticker search, SEC fundamentals, and news
 - Paper trading with portfolio positions, cost basis, P/L, weights, and transactions
 - Portfolio intelligence that grounds AI answers in the signed-in user's holdings and history
 - User isolation across portfolios, watchlists, transactions, reports, and AI runs
 - Admin analytics for read-only user and product activity inspection
 - Evidence-backed AI workflow with risk drivers, audit status, and deterministic fallback behavior
 - E2E testing and Docker/deployment preparation for repeatable demos
+
+## Portfolio Launch Docs
+
+- [Portfolio Project Writeup](docs/PORTFOLIO_WRITEUP.md)
+- [Architecture Explanation](docs/ARCHITECTURE.md)
+- [Resume Bullets](docs/RESUME_BULLETS.md)
+- [Job Search Copy](docs/JOB_SEARCH_COPY.md)
+- [Interview Story](docs/INTERVIEW_STORY.md)
+- [GitHub Launch Checklist](GITHUB_LAUNCH_CHECKLIST.md)
 
 ## 60-Second Demo Flow
 
@@ -60,6 +69,8 @@ FinCredit AI is not just a chatbot bolted onto a stock page. It combines:
 - JWT login/register/profile flows with `user` and `admin` roles
 - User-isolated paper portfolios, watchlists, transactions, and AI history
 - Stock research pages with market data, price chart, SEC fundamentals, recent news, watchlist actions, paper buy actions, and Ask AI handoff
+- Stock Intelligence section with investment case scorecard, financial health scanner, valuation reality check, evidence strength meter, decision readiness score, and bull/bear/base case
+- Dynamic stock search across SEC-listed company tickers with popular-stock fallback when SEC search data is unavailable
 - Portfolio buy/sell simulation with cost basis, current value, unrealized P/L, realized P/L, weights, and transaction history
 - Watchlist refresh workflow for tracked companies
 - Portfolio-aware AI questions using portfolio, transactions, watchlist, market, SEC, news, risk, and evidence context
@@ -77,6 +88,26 @@ FinCredit AI is not just a chatbot bolted onto a stock page. It combines:
 - `postgres`: Stores users, holdings, transactions, watchlists, market snapshots, SEC fundamentals, reports, and agent runs
 - Data sources: yfinance for market/news data and SEC Company Facts for fundamentals
 - AI: local Ollama via LangChain when available, with timeout fallback for stable demos
+
+## Supported Ticker Behavior
+
+- US-listed stocks are generally supported for market data through yfinance when the ticker is valid.
+- Company search uses SEC's public ticker mapping when reachable, plus a local popular-stock fallback for stable demos.
+- SEC fundamentals are available when the ticker maps to an SEC-reporting public company with Company Facts data.
+- ETFs, funds, foreign ADRs, and unsupported tickers may show market data without SEC fundamentals.
+- Missing SEC fundamentals are shown as a section-level warning; they do not break charts, news, watchlist actions, portfolio actions, or Ask AI.
+
+## Stock Intelligence Layer
+
+Each stock page includes a deeper research layer that converts raw data into paper-trading education signals:
+
+- Investment case scorecard across business quality, growth, profitability, balance sheet, valuation, risk, news momentum, portfolio fit, and evidence strength
+- Financial health scanner using approximate SEC-derived profitability, debt/assets, and return-on-assets ratios
+- Valuation reality check using yfinance multiples and risk language such as "valuation appears demanding" or "evidence is limited"
+- Bull / bear / base case generated from available evidence without telling users what to do with real money
+- Portfolio fit screen that highlights concentration risk when user context is available
+- Decision readiness score with visible missing checks, including "Investment thesis not written yet"
+- Evidence strength meter that lowers confidence when SEC, valuation, news, or portfolio data is missing
 
 ## Tech Stack
 
@@ -224,7 +255,7 @@ Production reminders:
 - Paper trading only; no brokerage integration and no real orders.
 - Not financial advice.
 - yfinance availability and data quality can affect market/news refreshes.
-- SEC Company Facts coverage varies by ticker and fact availability.
+- SEC Company Facts coverage varies by ticker, issuer type, and fact availability; unsupported funds/ETFs may show market data only.
 - Local Ollama can be slow or unavailable; deterministic fallback is expected.
 - localStorage JWT storage is intentionally simple for the local MVP.
 - Docker Compose does not run Ollama by default.
@@ -238,7 +269,8 @@ Final Phase 40 review found 10 frontend advisories: 5 moderate and 5 high. Affec
 
 ## Roadmap
 
-- Phase 41: GitHub portfolio launch, screenshots, demo video, and portfolio case study
+- Phase 41: expanded stock universe, GitHub portfolio launch, screenshots, demo video, and portfolio case study
+- Phase 42: FinCredit Intelligence Layer for deeper stock research, decision readiness, valuation, evidence strength, and thesis workflows
 - Cloud deployment for backend, frontend, and PostgreSQL
 - Hosted LLM option for production environments
 - Real-time or scheduled price refresh worker
@@ -248,6 +280,8 @@ Final Phase 40 review found 10 frontend advisories: 5 moderate and 5 high. Affec
 ## Resume Bullets
 
 See [docs/RESUME_BULLETS.md](docs/RESUME_BULLETS.md) for role-specific resume bullets.
+
+See [docs/JOB_SEARCH_COPY.md](docs/JOB_SEARCH_COPY.md) for LinkedIn, GitHub, portfolio website, recruiter pitch, and cover-letter copy.
 
 ## Disclaimer
 

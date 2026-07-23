@@ -1100,6 +1100,8 @@ def build_context_summary(state: FinCreditState):
             f"assets {format_money(sec_context.get('assets'))}, "
             f"liabilities {format_money(sec_context.get('liabilities'))}."
         )
+    elif ticker:
+        lines.append("SEC fundamentals were unavailable for this ticker.")
 
     if news_context:
         lines.append(f"Recent news items loaded: {len(news_context)}")
@@ -1204,7 +1206,7 @@ def build_deterministic_answer(state: FinCreditState, error_message: str):
             f"{sec_context.get('fiscalYear') or 'not available'}."
         )
     else:
-        sections.append("- SEC fundamentals were not available.")
+        sections.append("- SEC fundamentals were unavailable for this ticker.")
 
     if risk_drivers:
         sections.append("## Main Risk Drivers")

@@ -117,6 +117,114 @@ export type PortfolioSellPayload = {
   price: number;
 };
 
+export type StockSearchResult = {
+  ticker: string;
+  name: string;
+  cik?: string | null;
+  source: string;
+};
+
+export type StockSearchResponse = {
+  query: string;
+  results: StockSearchResult[];
+};
+
+export type IntelligenceScore = {
+  label: string;
+  score: number;
+  status: string;
+  explanation: string;
+  drivers: string[];
+  missingData: string[];
+};
+
+export type ValuationCheck = {
+  peRatio?: number | null;
+  forwardPe?: number | null;
+  priceToSales?: number | null;
+  priceToBook?: number | null;
+  enterpriseToRevenue?: number | null;
+  enterpriseToEbitda?: number | null;
+  marketCap?: number | null;
+  beta?: number | null;
+  fiftyTwoWeekHigh?: number | null;
+  fiftyTwoWeekLow?: number | null;
+  valuationRisk: string;
+  explanation: string;
+  missingData: string[];
+};
+
+export type FinancialHealthCheck = {
+  revenue?: number | null;
+  netIncome?: number | null;
+  assets?: number | null;
+  liabilities?: number | null;
+  equity?: number | null;
+  profitMarginApprox?: number | null;
+  debtToAssetsApprox?: number | null;
+  returnOnAssetsApprox?: number | null;
+  status: string;
+  explanation: string;
+  redFlags: string[];
+  strengths: string[];
+  missingData: string[];
+};
+
+export type BullBearBaseCase = {
+  bullCase: string;
+  bearCase: string;
+  baseCase: string;
+  whatCouldGoRight: string[];
+  whatCouldGoWrong: string[];
+  whatToMonitor: string[];
+  evidenceUsed: string[];
+  disclaimer: string;
+};
+
+export type PortfolioFitCheck = {
+  isInPortfolio: boolean;
+  currentWeight?: number | null;
+  sector?: string | null;
+  concentrationMessage: string;
+  diversificationImpact: string;
+  riskDrivers: string[];
+  explanation: string;
+  missingData: string[];
+};
+
+export type DecisionReadinessCheck = {
+  score: number;
+  status: string;
+  completedChecks: string[];
+  missingChecks: string[];
+  warnings: string[];
+  explanation: string;
+};
+
+export type EvidenceStrengthCheck = {
+  score: number;
+  status: string;
+  sourcesAvailable: string[];
+  sourcesMissing: string[];
+  explanation: string;
+};
+
+export type StockIntelligenceResponse = {
+  ticker: string;
+  company: string;
+  generatedAt: string;
+  investmentCaseScorecard: IntelligenceScore[];
+  valuationCheck: ValuationCheck;
+  financialHealthCheck: FinancialHealthCheck;
+  bullBearBaseCase: BullBearBaseCase;
+  portfolioFitCheck: PortfolioFitCheck;
+  decisionReadiness: DecisionReadinessCheck;
+  evidenceStrength: EvidenceStrengthCheck;
+  redFlags: string[];
+  beginnerSummary: string;
+  disclaimer: string;
+};
+
 export async function getDashboardData() {
   return fetchJson(`${API_BASE_URL}/api/dashboard`);
 }
@@ -352,12 +460,26 @@ export async function getStockNews(ticker: string, limit = 8) {
   );
 }
 
+export async function searchStocks(query: string, limit = 8) {
+  return fetchJson(
+    `${API_BASE_URL}/api/stocks/search?q=${encodeURIComponent(
+      query
+    )}&limit=${encodeURIComponent(limit)}`
+  ) as Promise<StockSearchResponse>;
+}
+
 export async function getSecCompanyFacts(ticker: string) {
   return fetchJson(`${API_BASE_URL}/api/sec/company-facts/${ticker}`);
 }
 
 export async function getSecFundamentalsHistory(ticker: string) {
   return fetchJson(`${API_BASE_URL}/api/sec/company-facts/${ticker}/history`);
+}
+
+export async function getStockIntelligence(ticker: string) {
+  return fetchJson(
+    `${API_BASE_URL}/api/intelligence/stocks/${encodeURIComponent(ticker)}`
+  ) as Promise<StockIntelligenceResponse>;
 }
 
 export async function askFinCredit(question: string) {
