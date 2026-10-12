@@ -292,3 +292,7 @@ FinCredit AI is a simulated paper-trading and education tool. It is not financia
 ## Research Agent Workbench
 
 Ask AI now includes a research planner, portfolio stress scenarios, skeptical evidence checks, and a bounded percentage reviewer. Findings persist with each run. See [setup, examples, and limitations](docs/RESEARCH_AGENTS.md).
+
+## Optional free cloud inference
+
+Run the model in your Hugging Face ZeroGPU Space while retaining the app locally. See [deployment and configuration](docs/HUGGINGFACE_INFERENCE.md). Cloud access is opt-in; no paid provider is configured.

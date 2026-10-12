@@ -1,6 +1,4 @@
-from concurrent.futures import ThreadPoolExecutor, TimeoutError
-
-from app.core.config import settings
+from app.services.model_provider import generate_model_answer
 
 MAX_CONTEXT_ITEMS = 6
 
@@ -119,32 +117,4 @@ def generate_llm_answer(
         research_details=research_details,
     )
 
-    def invoke_llm():
-        # Model/client initialization failures must reach deterministic fallback.
-        from langchain_ollama import ChatOllama
-
-        llm = ChatOllama(
-            model=settings.OLLAMA_MODEL,
-            temperature=0.2,
-        )
-
-        return llm.invoke(prompt)
-
-    executor = ThreadPoolExecutor(max_workers=1)
-    future = executor.submit(invoke_llm)
-
-    try:
-        response = future.result(timeout=settings.LLM_TIMEOUT_SECONDS)
-    except TimeoutError as error:
-        future.cancel()
-        executor.shutdown(wait=False, cancel_futures=True)
-        raise RuntimeError(
-            f"Local LLM timed out after {settings.LLM_TIMEOUT_SECONDS} seconds"
-        ) from error
-    except Exception:
-        executor.shutdown(wait=False, cancel_futures=True)
-        raise
-    else:
-        executor.shutdown(wait=False)
-
-    return response.content
+    return generate_model_answer(prompt)

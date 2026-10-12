@@ -1,3 +1,5 @@
+from typing import Literal
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,7 +19,14 @@ class Settings(BaseSettings):
     ADMIN_USER_EMAIL: str = "admin@fincredit.ai"
     ADMIN_USER_PASSWORD: str = "AdminPass123!"
     OLLAMA_MODEL: str = "llama3.1:8b"
-    LLM_TIMEOUT_SECONDS: int = 20
+    LLM_TIMEOUT_SECONDS: int = Field(default=20, ge=1, le=180)
+    LLM_PROVIDER: Literal["ollama", "huggingface"] = "ollama"
+    HF_SPACE_ID: str = "Sreemaan05/fincredit-ai-inference"
+    HF_TOKEN: SecretStr = SecretStr("")
+    FINCREDIT_SPACE_KEY: SecretStr = SecretStr("")
+    HF_TIMEOUT_SECONDS: int = Field(default=90, ge=1, le=180)
+    HF_ALLOW_OLLAMA_FALLBACK: bool = False
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
 
     @property
     def cors_allowed_origins(self) -> list[str]:
