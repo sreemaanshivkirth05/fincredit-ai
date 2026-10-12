@@ -193,13 +193,9 @@ cd C:\Users\shivk\fincredit-ai
 docker compose up --build
 ```
 
-If the database is new, run the auth/demo setup inside the backend container:
+The development Compose stack automatically creates database tables and local demo/admin accounts, then seeds sample holdings and a watchlist when the demo account has no holdings, trade history, or watchlist. Existing portfolio activity is preserved. Open http://localhost:3000 and sign in with the demo credentials below. Docker Desktop must be installed and running. The first build downloads dependencies and can take several minutes.
 
-```powershell
-docker compose exec backend python -m app.db.phase_40l_auth_migration
-```
-
-Docker uses local demo secrets only. Ollama is not included in the compose stack, so Ask AI may use the deterministic fallback unless the backend can reach a local/model service.
+Docker uses local demo secrets only. Ollama is not included in the compose stack, so Ask AI uses the deterministic fallback unless the backend can reach a local/model service. Market, news, and SEC features require working access to their external providers. This is the full application running locally, not a public deployment.
 
 ## Demo Credentials
 
