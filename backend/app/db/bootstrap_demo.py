@@ -3,6 +3,7 @@ from app.core.config import settings
 from app.db.database import SessionLocal
 from app.db.init_db import init_db
 from app.db.phase_40l_auth_migration import run_migration
+from app.db.phase_43_research_migration import run_migration as migrate_research
 from app.models.holding import Holding
 from app.models.portfolio_transaction import PortfolioTransaction  # Register table before create_all.
 from app.models.user import User
@@ -15,6 +16,7 @@ def bootstrap_demo():
         raise RuntimeError("Demo bootstrap is only supported in development.")
     init_db()
     run_migration()
+    migrate_research()
     with SessionLocal() as db:
         demo = db.query(User).filter(User.email == settings.DEMO_USER_EMAIL).one()
         # Seed only a new demo account with no portfolio/trading activity.

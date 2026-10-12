@@ -341,15 +341,15 @@ export default function GovernancePage() {
             icon={<Workflow className="h-5 w-5 text-violet-300" />}
           />
           <MetricCard
-            title="Avg Grounding"
+            title="Avg Stored Score"
             value={`${avgStoredGrounding}%`}
-            change="Evidence quality"
+            change="Availability / legacy scores; not accuracy"
             icon={<ShieldCheck className="h-5 w-5 text-emerald-300" />}
           />
           <MetricCard
-            title="Unsupported Claims"
+            title="Review Flags"
             value={String(totalUnsupportedClaims)}
-            change="LLM audit"
+            change="Percentage flags / legacy counts"
             icon={<FileSearch className="h-5 w-5 text-amber-300" />}
           />
           <MetricCard
@@ -375,7 +375,7 @@ export default function GovernancePage() {
                   <TableHead className="text-slate-400">Time</TableHead>
                   <TableHead className="text-slate-400">Ticker</TableHead>
                   <TableHead className="text-slate-400">Question</TableHead>
-                  <TableHead className="text-slate-400">Grounding</TableHead>
+                  <TableHead className="text-slate-400">Stored score</TableHead>
                   <TableHead className="text-slate-400">Unsupported</TableHead>
                   <TableHead className="text-slate-400">Status</TableHead>
                   <TableHead className="text-slate-400">Action</TableHead>
@@ -414,7 +414,7 @@ export default function GovernancePage() {
 
                     <TableCell>
                       <Badge className="bg-emerald-500/15 text-emerald-200">
-                        LLM Generated
+                        {run.status.toLowerCase().includes("fallback") ? "Calculated fallback" : "LLM Generated"}
                       </Badge>
                     </TableCell>
 
