@@ -63,6 +63,12 @@ FinCredit AI is not just a chatbot bolted onto a stock page. It combines:
 9. Login as admin.
 10. View user analytics in the admin dashboard.
 
+## Portfolio Scenario Intelligence
+
+The portfolio page now includes a read-only scenario lab with market and sector price shocks, position-level impact, concentration metrics, and currency-separated results. A deterministic analytics node supplies the same metrics to the AI research workflow and its fallback. Authenticated API regression tests cover user isolation and input validation.
+
+See [Portfolio Intelligence](docs/PORTFOLIO_INTELLIGENCE.md) for the demo, API, calculation methods, tests, and remaining limitations.
+
 ## Features
 
 - Public SaaS-style landing page and protected internal dashboard

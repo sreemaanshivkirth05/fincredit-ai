@@ -1,6 +1,10 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.schemas.portfolio_analytics import PortfolioAnalyticsResponse, PortfolioScenarioRequest
+from app.services.portfolio_analytics import analyze_portfolio
+from app.models.holding import Holding
+from app.services.portfolio_service import holding_to_dict
 from app.core.security import get_current_user
 from app.db.database import get_db
 from app.models.user import User
@@ -48,6 +52,30 @@ def refresh_prices(
     current_user: User = Depends(get_current_user),
 ):
     return refresh_portfolio_prices(db, current_user.id)
+
+
+@router.get("/analytics", response_model=PortfolioAnalyticsResponse)
+def get_analytics(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return portfolio_analytics(db, current_user.id, PortfolioScenarioRequest())
+
+
+@router.post("/scenario", response_model=PortfolioAnalyticsResponse)
+def run_scenario(
+    request: PortfolioScenarioRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return portfolio_analytics(db, current_user.id, request)
+
+
+def portfolio_analytics(db: Session, user_id: int, request: PortfolioScenarioRequest):
+    holdings = db.query(Holding).filter(Holding.user_id == user_id).order_by(Holding.id).all()
+    # Use the actual price field so analytics can report cost-basis fallback explicitly.
+    context = [{**holding_to_dict(item), "currentPrice": item.current_price} for item in holdings]
+    return analyze_portfolio(context, request.marketShockPercent, request.sectorShocks)
 
 
 @router.get("/{ticker}/status", response_model=PortfolioStatusResponse)

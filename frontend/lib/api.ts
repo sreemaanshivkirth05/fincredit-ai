@@ -515,3 +515,30 @@ export async function getAdminUsers() {
 export async function getAdminUserDetail(userId: number) {
   return fetchJson(`${API_BASE_URL}/api/admin/users/${userId}`);
 }
+
+export type PortfolioAnalytics = {
+  groups: {
+    currency: string;
+    totalValue: number;
+    holdingsCount: number;
+    largestPositionPercent: number;
+    topThreePercent: number;
+    concentrationIndex: number;
+    effectiveHoldings: number;
+    sectorAllocation: { name: string; weight: number }[];
+    scenarioValue: number;
+    scenarioChange: number;
+    scenarioChangePercent: number;
+    positions: { ticker: string; sector: string; value: number; weight: number; shockPercent: number; change: number; scenarioValue: number }[];
+  }[];
+  warnings: string[];
+  assumptions: string[];
+};
+
+export async function runPortfolioScenario(marketShockPercent: number, sectorShocks: Record<string, number> = {}): Promise<PortfolioAnalytics> {
+  return fetchJson(`${API_BASE_URL}/api/portfolio/scenario`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ marketShockPercent, sectorShocks }),
+  });
+}
