@@ -36,10 +36,10 @@ test("runs a sector override, displays impact, and clears stale results", async 
 test("shows validation and recovers from API failure", async ({ page }) => {
   await page.getByLabel("Market shock (%)").fill("-101");
   await page.getByRole("button", { name: "Run scenario" }).click();
-  await expect(page.getByRole("alert")).toContainText("between -100 and 100");
+  await expect(page.getByRole("alert").filter({ hasText: "between -100 and 100" })).toBeVisible();
   await page.getByLabel("Market shock (%)").fill("-10");
   await page.route("**/api/portfolio/scenario", (route) => route.fulfill({ status: 503, json: { detail: "Unavailable" } }));
   await page.getByRole("button", { name: "Run scenario" }).click();
-  await expect(page.getByRole("alert")).toContainText("Unable to calculate");
+  await expect(page.getByRole("alert").filter({ hasText: "Unable to calculate" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Run scenario" })).toBeEnabled();
 });

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { runPortfolioScenario, type PortfolioAnalytics } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 function money(value: number, currency: string) {
   return `${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
@@ -42,7 +42,7 @@ export function PortfolioScenario({ sectors }: { sectors: string[] }) {
 
   return (
     <Card className="border-white/10 bg-white/[0.04] text-white">
-      <CardHeader><CardTitle>Portfolio scenario lab</CardTitle></CardHeader>
+      <CardHeader><h2 className="font-heading text-sm font-medium">Portfolio scenario lab</h2></CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-slate-400">Explore a hypothetical price move using stored holdings. A sector override replaces the market shock for that sector. Your holdings stay unchanged.</p>
         <div className="flex flex-wrap items-end gap-4">
