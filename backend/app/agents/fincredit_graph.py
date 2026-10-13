@@ -1319,7 +1319,10 @@ def answer_agent(state: FinCreditState) -> FinCreditState:
         )
 
         state["answer"] = llm_answer
-        llm_status = "Generated with LangChain ChatOllama local LLM in under timeout"
+        provider = getattr(llm_answer, "provider", "ollama")
+        model = getattr(llm_answer, "model", "configured model")
+        notice = getattr(llm_answer, "notice", "")
+        llm_status = f"Generated with {provider}: {model}" + (f". {notice}" if notice else "")
 
     except Exception as error:
         error_message = str(error)
@@ -1331,7 +1334,7 @@ def answer_agent(state: FinCreditState) -> FinCreditState:
         if "timed out after 20 seconds" in error_message:
             llm_status = "Fallback used because local LLM timed out after 20 seconds"
         else:
-            llm_status = f"Fallback used because local LLM failed: {error_message}"
+            llm_status = f"Fallback used because model generation failed: {error_message}"
 
     ticker = state.get("ticker")
     portfolio_context = state.get("portfolio_context", [])

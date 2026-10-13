@@ -38,7 +38,14 @@ services:
       DEMO_USER_PASSWORD: DemoPass123!
       ADMIN_USER_EMAIL: admin@fincredit.ai
       ADMIN_USER_PASSWORD: AdminPass123!
-      OLLAMA_MODEL: llama3.1:8b
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      HF_SPACE_ID: ${HF_SPACE_ID:-Sreemaan05/fincredit-ai-inference}
+      HF_TOKEN: ${HF_TOKEN:-}
+      FINCREDIT_SPACE_KEY: ${FINCREDIT_SPACE_KEY:-}
+      HF_TIMEOUT_SECONDS: ${HF_TIMEOUT_SECONDS:-90}
+      HF_ALLOW_OLLAMA_FALLBACK: ${HF_ALLOW_OLLAMA_FALLBACK:-false}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3:1.7b}
       LLM_TIMEOUT_SECONDS: "20"
 
   frontend:
