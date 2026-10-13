@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class HoldingResponse(BaseModel):
@@ -31,22 +31,30 @@ class HoldingResponse(BaseModel):
     updatedAt: Optional[datetime] = None
 
 
-class PortfolioBuyRequest(BaseModel):
-    ticker: str
+class TradeRequest(BaseModel):
+    ticker: str = Field(min_length=1, max_length=20)
+    shares: float = Field(gt=0, allow_inf_nan=False)
+    price: float = Field(gt=0, allow_inf_nan=False)
+
+    @field_validator("ticker")
+    @classmethod
+    def clean_ticker(cls, value: str) -> str:
+        value = value.strip().upper()
+        if not value:
+            raise ValueError("Ticker cannot be blank.")
+        return value
+
+
+class PortfolioBuyRequest(TradeRequest):
     company: Optional[str] = None
     sector: Optional[str] = None
-
-    shares: float
-    price: float
 
     currency: Optional[str] = "USD"
     exchange: Optional[str] = None
 
 
-class PortfolioSellRequest(BaseModel):
-    ticker: str
-    shares: float
-    price: float
+class PortfolioSellRequest(TradeRequest):
+    pass
 
 
 class PortfolioTransactionResponse(BaseModel):

@@ -11,6 +11,7 @@ from app.models.market_snapshot import MarketSnapshot
 from app.models.portfolio_transaction import PortfolioTransaction
 from app.models.sec_fundamental import SecFundamental
 from app.models.watchlist_company import WatchlistCompany
+from app.services.portfolio_analytics import analyze_portfolio
 from app.services.llm_service import generate_llm_answer
 from app.services.news_service import get_stock_news_data
 
@@ -31,6 +32,7 @@ class FinCreditState(TypedDict):
     suggested_actions: list[str]
     answer: str
     audit: dict
+    portfolio_analytics: dict
 
 
 POPULAR_TICKERS = [
@@ -201,6 +203,7 @@ def holding_to_context(holding: Holding):
         "shares": shares,
         "avgPrice": avg_price,
         "currentPrice": current_price,
+        "analyticsPrice": holding.current_price,
         "totalCost": total_cost,
         "value": value,
         "weight": safe_float(getattr(holding, "weight", None)) or 0,
@@ -1242,6 +1245,18 @@ def build_deterministic_answer(state: FinCreditState, error_message: str):
             )
         )
 
+    analytics = state.get("portfolio_analytics", {})
+    if analytics.get("groups"):
+        sections.append("## Portfolio Concentration and Scenario")
+        for group in analytics["groups"]:
+            sections.append(
+                f"- **{group['currency']}:** largest position {group['largestPositionPercent']}%, "
+                f"top three {group['topThreePercent']}%, effective holdings {group['effectiveHoldings']}. "
+                f"A hypothetical -10% price shock changes value by {group['scenarioChange']} "
+                f"{group['currency']}. This is a scenario, not a forecast."
+            )
+        sections.append("\n".join(analytics["assumptions"] + analytics["warnings"]))
+
     sections.append("## Suggested Beginner Action")
 
     if ticker:
@@ -1258,6 +1273,25 @@ def build_deterministic_answer(state: FinCreditState, error_message: str):
     )
 
     return "\n\n".join(sections)
+
+
+def portfolio_analytics_agent(state: FinCreditState) -> FinCreditState:
+    context = [{**item, "currentPrice": item.get("analyticsPrice", item.get("currentPrice"))}
+               for item in state.get("portfolio_context", [])]
+    analytics = analyze_portfolio(context)
+    state["portfolio_analytics"] = analytics
+    for group in analytics["groups"]:
+        state["evidence"].append({
+            "source": "Deterministic Portfolio Analytics",
+            "claim": (
+                f"{group['currency']} holdings: largest position {group['largestPositionPercent']}%; "
+                f"effective holdings {group['effectiveHoldings']}; hypothetical -10% price shock "
+                f"changes stored position value by {group['scenarioChange']} {group['currency']}. "
+                "Allocation metrics and scenarios are not forecasts."
+            ),
+            "confidence": 100,
+        })
+    return state
 
 
 def answer_agent(state: FinCreditState) -> FinCreditState:
@@ -1278,6 +1312,7 @@ def answer_agent(state: FinCreditState) -> FinCreditState:
             sec_context=sec_context,
             risk_drivers=risk_drivers,
             evidence=evidence,
+            portfolio_analytics=state.get("portfolio_analytics"),
         )
 
         state["answer"] = llm_answer
@@ -1354,6 +1389,7 @@ def answer_agent(state: FinCreditState) -> FinCreditState:
             "News Agent",
             "Risk Analysis Agent",
             "Evidence Agent",
+            "Portfolio Analytics Agent",
             "LLM Answer Agent",
         ],
         "groundingScore": 94 if evidence else 65,
@@ -1375,6 +1411,7 @@ def build_fincredit_graph(db: Session, user_id: int):
     graph.add_node("news_agent", news_agent)
     graph.add_node("risk_analysis_agent", risk_analysis_agent)
     graph.add_node("evidence_agent", evidence_agent)
+    graph.add_node("portfolio_analytics_agent", portfolio_analytics_agent)
     graph.add_node("answer_agent", answer_agent)
 
     graph.set_entry_point("portfolio_agent")
@@ -1386,7 +1423,8 @@ def build_fincredit_graph(db: Session, user_id: int):
     graph.add_edge("sec_agent", "news_agent")
     graph.add_edge("news_agent", "risk_analysis_agent")
     graph.add_edge("risk_analysis_agent", "evidence_agent")
-    graph.add_edge("evidence_agent", "answer_agent")
+    graph.add_edge("evidence_agent", "portfolio_analytics_agent")
+    graph.add_edge("portfolio_analytics_agent", "answer_agent")
     graph.add_edge("answer_agent", END)
 
     return graph.compile()
@@ -1409,6 +1447,7 @@ def run_fincredit_graph(question: str, db: Session, user_id: int):
         "suggested_actions": [],
         "answer": "",
         "audit": {},
+        "portfolio_analytics": {},
     }
 
     graph = build_fincredit_graph(db, user_id)

@@ -402,6 +402,7 @@ def get_portfolio_data(db: Session, user_id: int):
 
     transactions = (
         db.query(PortfolioTransaction)
+        .filter(PortfolioTransaction.user_id == user_id)
         .order_by(PortfolioTransaction.created_at.desc())
         .limit(10)
         .all()

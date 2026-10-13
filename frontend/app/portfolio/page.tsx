@@ -39,6 +39,7 @@ import {
 } from "recharts";
 
 import { AppShell } from "@/components/app-shell";
+import { PortfolioScenario } from "@/components/portfolio-scenario";
 import { StockSearch } from "@/components/stock-search";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -495,6 +496,8 @@ export default function PortfolioPage() {
             icon={<AlertTriangle className="h-5 w-5 text-red-300" />}
           />
         </div>
+
+        {portfolioData && <PortfolioScenario key={JSON.stringify(activeHoldings)} sectors={[...new Set(activeHoldings.map((holding) => holding.sector || "Unknown"))].sort()} />}
 
         {activeHoldings.length > 0 ? (
           <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">

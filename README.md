@@ -63,6 +63,12 @@ FinCredit AI is not just a chatbot bolted onto a stock page. It combines:
 9. Login as admin.
 10. View user analytics in the admin dashboard.
 
+## Portfolio Scenario Intelligence
+
+The portfolio page now includes a read-only scenario lab with market and sector price shocks, position-level impact, concentration metrics, and currency-separated results. A deterministic analytics node supplies the same metrics to the AI research workflow and its fallback. Authenticated API regression tests cover user isolation and input validation.
+
+See [Portfolio Intelligence](docs/PORTFOLIO_INTELLIGENCE.md) for the demo, API, calculation methods, tests, and remaining limitations.
+
 ## Features
 
 - Public SaaS-style landing page and protected internal dashboard
@@ -187,13 +193,9 @@ cd C:\Users\shivk\fincredit-ai
 docker compose up --build
 ```
 
-If the database is new, run the auth/demo setup inside the backend container:
+The development Compose stack automatically creates database tables and local demo/admin accounts, then seeds sample holdings and a watchlist when the demo account has no holdings, trade history, or watchlist. Existing portfolio activity is preserved. Open http://localhost:3000 and sign in with the demo credentials below. Docker Desktop must be installed and running. The first build downloads dependencies and can take several minutes.
 
-```powershell
-docker compose exec backend python -m app.db.phase_40l_auth_migration
-```
-
-Docker uses local demo secrets only. Ollama is not included in the compose stack, so Ask AI may use the deterministic fallback unless the backend can reach a local/model service.
+Docker uses local demo secrets only. Ollama is not included in the compose stack, so Ask AI uses the deterministic fallback unless the backend can reach a local/model service. Market, news, and SEC features require working access to their external providers. This is the full application running locally, not a public deployment.
 
 ## Demo Credentials
 
