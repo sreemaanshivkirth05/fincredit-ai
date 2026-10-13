@@ -23,6 +23,7 @@ def agent_run_to_dict(run: AgentRun):
         "evidence": run.evidence,
         "suggestedActions": run.suggested_actions,
         "createdAt": run.created_at,
+        "researchDetails": run.research_details,
     }
 
 
@@ -50,6 +51,7 @@ def ask_fincredit_service(question: str, db: Session, user_id: int):
         risk_drivers=graph_result["risk_drivers"],
         evidence=graph_result["evidence"],
         suggested_actions=graph_result["suggested_actions"],
+        research_details=graph_result.get("research_details"),
     )
 
     db.add(agent_run)
@@ -64,6 +66,7 @@ def ask_fincredit_service(question: str, db: Session, user_id: int):
         "evidence": graph_result["evidence"],
         "suggestedActions": graph_result["suggested_actions"],
         "audit": audit,
+        "researchDetails": graph_result.get("research_details"),
         "message": (
             f"Ask FinCredit response generated in {runtime_seconds:.1f}s "
             "with portfolio, transactions, watchlist, market, SEC, news, and LangGraph context"

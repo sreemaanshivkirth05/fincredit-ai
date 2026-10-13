@@ -11,6 +11,7 @@ from app.models.market_snapshot import MarketSnapshot
 from app.models.portfolio_transaction import PortfolioTransaction
 from app.models.sec_fundamental import SecFundamental
 from app.models.watchlist_company import WatchlistCompany
+from app.agents.research_agents import (research_planner_agent, stress_test_agent, skeptical_reviewer_agent, review_numeric_claims, append_research_summary)
 from app.services.portfolio_analytics import analyze_portfolio
 from app.services.llm_service import generate_llm_answer
 from app.services.news_service import get_stock_news_data
@@ -33,6 +34,7 @@ class FinCreditState(TypedDict):
     answer: str
     audit: dict
     portfolio_analytics: dict
+    research_details: dict
 
 
 POPULAR_TICKERS = [
@@ -1313,6 +1315,7 @@ def answer_agent(state: FinCreditState) -> FinCreditState:
             risk_drivers=risk_drivers,
             evidence=evidence,
             portfolio_analytics=state.get("portfolio_analytics"),
+            research_details=state.get("research_details"),
         )
 
         state["answer"] = llm_answer
@@ -1378,6 +1381,16 @@ def answer_agent(state: FinCreditState) -> FinCreditState:
 
     state["suggested_actions"] = suggested_actions[:5]
 
+    details = state.get("research_details")
+    if details:
+        review = review_numeric_claims(state["answer"], state)
+        if review["findings"] and not llm_status.startswith("Fallback"):
+            state["answer"] = build_deterministic_answer(state, "Generated percentages did not match supplied evidence")
+            review["answerReplaced"] = True
+            llm_status = "Deterministic fallback after percentage review flags"
+        details["review"] = review
+        state["answer"] = append_research_summary(state["answer"], details)
+
     state["audit"] = {
         "workflow": "LangGraph Portfolio-Aware FinCredit Agent Workflow",
         "agentsUsed": [
@@ -1392,11 +1405,13 @@ def answer_agent(state: FinCreditState) -> FinCreditState:
             "Portfolio Analytics Agent",
             "LLM Answer Agent",
         ],
-        "groundingScore": 94 if evidence else 65,
-        "unsupportedClaims": 0,
+        "groundingScore": details["coveragePercent"] if details else (94 if evidence else 65),
+        "unsupportedClaims": len(details["review"]["findings"]) if details else 0,
         "status": llm_status,
     }
 
+    if details:
+        state["audit"]["agentsUsed"][-1:] = ["Research Planner Agent", "Stress Test Agent", "Skeptical Reviewer Agent", "LLM Answer Agent", "Percentage Review Agent"]
     return state
 
 
@@ -1412,6 +1427,9 @@ def build_fincredit_graph(db: Session, user_id: int):
     graph.add_node("risk_analysis_agent", risk_analysis_agent)
     graph.add_node("evidence_agent", evidence_agent)
     graph.add_node("portfolio_analytics_agent", portfolio_analytics_agent)
+    graph.add_node("research_planner_agent", research_planner_agent)
+    graph.add_node("stress_test_agent", stress_test_agent)
+    graph.add_node("skeptical_reviewer_agent", skeptical_reviewer_agent)
     graph.add_node("answer_agent", answer_agent)
 
     graph.set_entry_point("portfolio_agent")
@@ -1424,7 +1442,10 @@ def build_fincredit_graph(db: Session, user_id: int):
     graph.add_edge("news_agent", "risk_analysis_agent")
     graph.add_edge("risk_analysis_agent", "evidence_agent")
     graph.add_edge("evidence_agent", "portfolio_analytics_agent")
-    graph.add_edge("portfolio_analytics_agent", "answer_agent")
+    graph.add_edge("portfolio_analytics_agent", "research_planner_agent")
+    graph.add_edge("research_planner_agent", "stress_test_agent")
+    graph.add_edge("stress_test_agent", "skeptical_reviewer_agent")
+    graph.add_edge("skeptical_reviewer_agent", "answer_agent")
     graph.add_edge("answer_agent", END)
 
     return graph.compile()
@@ -1448,6 +1469,7 @@ def run_fincredit_graph(question: str, db: Session, user_id: int):
         "answer": "",
         "audit": {},
         "portfolio_analytics": {},
+        "research_details": {},
     }
 
     graph = build_fincredit_graph(db, user_id)

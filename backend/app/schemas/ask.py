@@ -1,10 +1,10 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class AskRequest(BaseModel):
-    question: str
+    question: str = Field(min_length=1, max_length=4000)
 
 
 class RiskDriverResponse(BaseModel):
@@ -28,6 +28,7 @@ class AskAuditResponse(BaseModel):
 
 
 class AskResponse(BaseModel):
+    researchDetails: dict | None = None
     agentRunId: int
     question: str
     answer: str
@@ -39,6 +40,7 @@ class AskResponse(BaseModel):
 
 
 class AgentRunItemResponse(BaseModel):
+    researchDetails: dict | None = None
     id: int
     question: str
     ticker: str | None

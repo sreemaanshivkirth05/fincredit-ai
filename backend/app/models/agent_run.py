@@ -26,4 +26,6 @@ class AgentRun(Base):
     evidence = Column(JSON, nullable=False)
     suggested_actions = Column(JSON, nullable=False)
 
+    research_details = Column(JSON, nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

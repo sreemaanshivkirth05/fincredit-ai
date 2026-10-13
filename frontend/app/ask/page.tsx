@@ -22,6 +22,7 @@ import {
   Wallet,
 } from "lucide-react";
 
+import { ResearchWorkbench, type ResearchDetails } from "@/components/research-workbench";
 import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,7 @@ type AskAudit = {
 };
 
 type AskResponse = {
+  researchDetails?: ResearchDetails | null;
   agentRunId: number;
   question: string;
   answer: string;
@@ -62,6 +64,8 @@ type AskResponse = {
 };
 
 const EXAMPLE_QUESTIONS = [
+  { label: "Stress-test my portfolio", question: "Stress-test my simulated portfolio for a broad decline, a severe downturn, and a dominant-sector shock. Explain the assumptions and challenge my diversification thesis." },
+  { label: "Challenge my AAPL thesis", question: "Challenge my AAPL research thesis. What evidence is missing, what could invalidate it, and how does concentration in my portfolio affect the research?" },
   {
     label: "Should I add more AAPL?",
     question:
@@ -455,18 +459,20 @@ function AskPageContent() {
               </CardContent>
             </Card>
 
+            {answer.researchDetails && <ResearchWorkbench details={answer.researchDetails} />}
+
             <div className="grid gap-4 md:grid-cols-4">
               <MetricCard
-                title="Grounding Score"
+                title={answer.researchDetails ? "Evidence Availability" : "Legacy Grounding Score"}
                 value={`${answer.audit.groundingScore}%`}
-                change="Evidence quality"
+                change="Planned source checks"
                 icon={<ShieldCheck className="h-5 w-5 text-emerald-300" />}
               />
 
               <MetricCard
-                title="Unsupported Claims"
+                title={answer.researchDetails ? "Percentage Flags" : "Legacy Claim Count"}
                 value={String(answer.audit.unsupportedClaims)}
-                change="Governance"
+                change="Limited numeric review"
                 icon={<FileSearch className="h-5 w-5 text-amber-300" />}
               />
 
@@ -664,11 +670,11 @@ function AskPageContent() {
                   <MiniMetric label="Workflow" value={answer.audit.workflow} />
                   <MiniMetric label="Status" value={answer.audit.status} />
                   <MiniMetric
-                    label="Grounding Score"
+                    label={answer.researchDetails ? "Evidence Availability" : "Legacy Grounding Score"}
                     value={`${answer.audit.groundingScore}%`}
                   />
                   <MiniMetric
-                    label="Unsupported Claims"
+                    label={answer.researchDetails ? "Percentage Flags" : "Legacy Claim Count"}
                     value={String(answer.audit.unsupportedClaims)}
                   />
                 </div>

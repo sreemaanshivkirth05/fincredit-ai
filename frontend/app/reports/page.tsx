@@ -267,9 +267,9 @@ export default function ReportsPage() {
             icon={<Gauge className="h-5 w-5 text-amber-300" />}
           />
           <MetricCard
-            title="Avg Grounding"
+            title="Avg Stored Score"
             value={`${reports.avgGrounding}%`}
-            change="Evidence quality"
+            change="Availability / legacy scores; not accuracy"
             icon={<ShieldCheck className="h-5 w-5 text-emerald-300" />}
           />
         </div>
@@ -442,7 +442,7 @@ export default function ReportsPage() {
                   <TableHead className="text-slate-400">Report Name</TableHead>
                   <TableHead className="text-slate-400">Type</TableHead>
                   <TableHead className="text-slate-400">Status</TableHead>
-                  <TableHead className="text-slate-400">Grounding</TableHead>
+                  <TableHead className="text-slate-400">Stored score</TableHead>
                   <TableHead className="text-slate-400">Unsupported</TableHead>
                   <TableHead className="text-slate-400">Created</TableHead>
                   <TableHead className="text-slate-400">Action</TableHead>
@@ -521,7 +521,7 @@ export default function ReportsPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="h-5 w-5 text-emerald-300" />
-                Filtered Grounding Quality
+                Filtered Stored Scores
               </CardTitle>
             </CardHeader>
 

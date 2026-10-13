@@ -288,3 +288,7 @@ See [docs/JOB_SEARCH_COPY.md](docs/JOB_SEARCH_COPY.md) for LinkedIn, GitHub, por
 ## Disclaimer
 
 FinCredit AI is a simulated paper-trading and education tool. It is not financial advice, does not recommend real-money trades, and does not place real orders.
+
+## Research Agent Workbench
+
+Ask AI now includes a research planner, portfolio stress scenarios, skeptical evidence checks, and a bounded percentage reviewer. Findings persist with each run. See [setup, examples, and limitations](docs/RESEARCH_AGENTS.md).

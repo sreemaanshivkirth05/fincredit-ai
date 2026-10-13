@@ -33,5 +33,5 @@ jobs:
         working-directory: frontend
       - run: npx playwright install --with-deps chromium
         working-directory: frontend
-      - run: npx playwright test tests/e2e/portfolio-scenario.spec.ts
+      - run: npx playwright test tests/e2e/portfolio-scenario.spec.ts tests/e2e/research-workbench.spec.ts
         working-directory: frontend
