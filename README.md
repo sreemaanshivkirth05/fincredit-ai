@@ -1,298 +1,126 @@
 # FinCredit AI
 
-AI-powered stock research and paper-trading platform with user-specific portfolios, evidence-backed AI answers, and admin analytics.
+**A financial research workspace that connects stock analysis, a simulated portfolio, and an evidence-based AI review.**
 
-![Next.js](https://img.shields.io/badge/Next.js-16-black)
-![FastAPI](https://img.shields.io/badge/FastAPI-backend-009688)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-database-336791)
-![LangGraph](https://img.shields.io/badge/LangGraph-AI-1f6feb)
-![Playwright](https://img.shields.io/badge/Playwright-E2E-45ba4b)
-![Docker](https://img.shields.io/badge/Docker-ready-2496ed)
-![JWT Auth](https://img.shields.io/badge/JWT-auth-6f42c1)
+FinCredit AI helps a user research a company, understand how it fits their holdings, and challenge an investment thesis before making a simulated trade. It combines a Next.js interface, FastAPI services, PostgreSQL records, deterministic portfolio calculations, and Ollama or Hugging Face model interpretations.
 
-FinCredit AI is a full-stack, beginner-focused stock research and paper-trading MVP. It combines market data, SEC fundamentals, news, simulated portfolios, watchlists, transaction history, and portfolio-aware AI answers so users can practice research workflows without risking real money.
+**You can explore the project on GitHub without installing or deploying anything.** Start with the walkthrough below, then follow the architecture and source links. Local setup is optional.
 
-The public landing page lives at `/`; the protected app workspace starts at `/dashboard`.
+> Release status: the latest Investment Committee implementation is on [`feat/committee-release`](https://github.com/sreemaanshivkirth05/fincredit-ai/tree/feat/committee-release), proposed in [PR #5](https://github.com/sreemaanshivkirth05/fincredit-ai/pull/5). Build checks passed; full acceptance testing for this release is pending. This project is for research and paper trading, not real order execution.
 
-## Product Screenshots
+## Explore the product
 
-Run the screenshot script after starting the app locally:
-
-```powershell
-cd C:\Users\shivk\fincredit-ai\frontend
-npm run screenshots
-```
-
-![Landing Page](docs/screenshots/landing.png)
-![Stock Research](docs/screenshots/stock-research.png)
-![Portfolio](docs/screenshots/portfolio.png)
-![Ask AI](docs/screenshots/ask-ai.png)
-![Admin Dashboard](docs/screenshots/admin.png)
-
-## Why This Project Matters
-
-FinCredit AI is not just a chatbot bolted onto a stock page. It combines:
-
-- Stock research with market data, charts, dynamic ticker search, SEC fundamentals, and news
-- Paper trading with portfolio positions, cost basis, P/L, weights, and transactions
-- Portfolio intelligence that grounds AI answers in the signed-in user's holdings and history
-- User isolation across portfolios, watchlists, transactions, reports, and AI runs
-- Admin analytics for read-only user and product activity inspection
-- Evidence-backed AI workflow with risk drivers, audit status, and deterministic fallback behavior
-- E2E testing and Docker/deployment preparation for repeatable demos
-
-## Portfolio Launch Docs
-
-- [Portfolio Project Writeup](docs/PORTFOLIO_WRITEUP.md)
-- [Architecture Explanation](docs/ARCHITECTURE.md)
-- [Resume Bullets](docs/RESUME_BULLETS.md)
-- [Job Search Copy](docs/JOB_SEARCH_COPY.md)
-- [Interview Story](docs/INTERVIEW_STORY.md)
-- [GitHub Launch Checklist](GITHUB_LAUNCH_CHECKLIST.md)
-
-## 60-Second Demo Flow
-
-1. Open the landing page.
-2. Login as the local demo user.
-3. Reset demo data from the dashboard.
-4. Research `AAPL`.
-5. Add `AAPL` to the paper portfolio and watchlist.
-6. Refresh portfolio prices.
-7. Ask AI about `AAPL` using portfolio-aware context.
-8. Review evidence, risk drivers, and fallback/audit status.
-9. Login as admin.
-10. View user analytics in the admin dashboard.
-
-## Portfolio Scenario Intelligence
-
-The portfolio page now includes a read-only scenario lab with market and sector price shocks, position-level impact, concentration metrics, and currency-separated results. A deterministic analytics node supplies the same metrics to the AI research workflow and its fallback. Authenticated API regression tests cover user isolation and input validation.
-
-See [Portfolio Intelligence](docs/PORTFOLIO_INTELLIGENCE.md) for the demo, API, calculation methods, tests, and remaining limitations.
-
-## Features
-
-- Public SaaS-style landing page and protected internal dashboard
-- JWT login/register/profile flows with `user` and `admin` roles
-- User-isolated paper portfolios, watchlists, transactions, and AI history
-- Stock research pages with market data, price chart, SEC fundamentals, recent news, watchlist actions, paper buy actions, and Ask AI handoff
-- Stock Intelligence section with investment case scorecard, financial health scanner, valuation reality check, evidence strength meter, decision readiness score, and bull/bear/base case
-- Dynamic stock search across SEC-listed company tickers with popular-stock fallback when SEC search data is unavailable
-- Portfolio buy/sell simulation with cost basis, current value, unrealized P/L, realized P/L, weights, and transaction history
-- Watchlist refresh workflow for tracked companies
-- Portfolio-aware AI questions using portfolio, transactions, watchlist, market, SEC, news, risk, and evidence context
-- LangGraph/LangChain/Ollama workflow with deterministic fallback when the local LLM is unavailable or slow
-- Generated reports and governance/audit pages
-- Read-only admin console for account and usage inspection
-- Playwright E2E coverage for the core demo routes
-- Screenshot capture workflow for GitHub and portfolio presentation
-- Docker Compose support for local full-stack running
-
-## Architecture
-
-- `frontend/`: Next.js, TypeScript, Tailwind, shadcn/ui, Recharts, Playwright
-- `backend/`: FastAPI, SQLAlchemy, PostgreSQL, JWT auth, LangGraph/LangChain services
-- `postgres`: Stores users, holdings, transactions, watchlists, market snapshots, SEC fundamentals, reports, and agent runs
-- Data sources: yfinance for market/news data and SEC Company Facts for fundamentals
-- AI: local Ollama via LangChain when available, with timeout fallback for stable demos
-
-## Supported Ticker Behavior
-
-- US-listed stocks are generally supported for market data through yfinance when the ticker is valid.
-- Company search uses SEC's public ticker mapping when reachable, plus a local popular-stock fallback for stable demos.
-- SEC fundamentals are available when the ticker maps to an SEC-reporting public company with Company Facts data.
-- ETFs, funds, foreign ADRs, and unsupported tickers may show market data without SEC fundamentals.
-- Missing SEC fundamentals are shown as a section-level warning; they do not break charts, news, watchlist actions, portfolio actions, or Ask AI.
-
-## Stock Intelligence Layer
-
-Each stock page includes a deeper research layer that converts raw data into paper-trading education signals:
-
-- Investment case scorecard across business quality, growth, profitability, balance sheet, valuation, risk, news momentum, portfolio fit, and evidence strength
-- Financial health scanner using approximate SEC-derived profitability, debt/assets, and return-on-assets ratios
-- Valuation reality check using yfinance multiples and risk language such as "valuation appears demanding" or "evidence is limited"
-- Bull / bear / base case generated from available evidence without telling users what to do with real money
-- Portfolio fit screen that highlights concentration risk when user context is available
-- Decision readiness score with visible missing checks, including "Investment thesis not written yet"
-- Evidence strength meter that lowers confidence when SEC, valuation, news, or portfolio data is missing
-
-## Tech Stack
-
-| Layer | Tools |
+| Start here | What you will learn |
 | --- | --- |
-| Frontend | Next.js, TypeScript, Tailwind CSS, shadcn/ui, Recharts |
-| Backend | FastAPI, SQLAlchemy, Pydantic Settings |
-| Database | PostgreSQL |
-| Auth | JWT, passlib[bcrypt], python-jose, bcrypt==4.1.3 |
-| AI | LangGraph, LangChain, langchain-ollama, Ollama |
-| Data | yfinance, SEC Company Facts API |
-| Testing | Playwright, TypeScript, Python compile checks |
-| Deployment Prep | Docker, docker-compose, env examples |
+| [Complete product tour](docs/PROJECT_TOUR.md) | What each screen does and how the workflows connect |
+| [Architecture and source map](#how-it-works) | Where the UI, API, calculations, agents and persistence live |
+| [Investment Committee](#investment-committee) | How opposing perspectives use the same saved evidence |
+| [Release scope and limitations](docs/RELEASE-0.2.md) | What is implemented, what remains unverified, and what is future work |
+| [Optional local setup](docs/DEPLOYMENT.md#local-docker-windows--docker-desktop) | How to run the project yourself |
 
-## Environment Variables
+## The problem
 
-Copy the examples and edit local values:
+Stock research often separates company information from the investor's actual portfolio. A company thesis can sound persuasive while ignoring concentration, stale source data, missing fundamentals or the effect of a market decline.
 
-```powershell
-cd C:\Users\shivk\fincredit-ai\backend
-Copy-Item .env.example .env
+FinCredit brings those records into one workflow. Calculations provide exposure and scenario results; model interpretations help articulate a thesis and its counterargument. The user can inspect the supporting evidence and retains control of all simulated portfolio changes.
 
-cd C:\Users\shivk\fincredit-ai\frontend
-Copy-Item .env.example .env.local
+## A walkthrough in five steps
+
+### 1. Research a company
+
+Search a ticker to inspect its market snapshot, historical chart, SEC fundamentals and available news. Source availability depends on upstream data services.
+
+![Stock research screen from the earlier application version](docs/screenshots/stock-research.png)
+
+### 2. Build a simulated portfolio
+
+Record paper positions and buy/sell transactions. Review cost basis, unrealized and realized P/L, allocation and concentration. The scenario tools keep currencies separate rather than adding unlike amounts together.
+
+![Portfolio screen from the earlier application version](docs/screenshots/portfolio.png)
+
+### 3. Ask a question using your own context
+
+The Ask workflow combines the signed-in user's holdings, recent transactions and watchlist with available company records. Answers include evidence, risk drivers and research diagnostics. When a model is unavailable, the existing workflow can provide explicitly labelled deterministic output.
+
+![Ask AI screen from the earlier application version](docs/screenshots/ask-ai.png)
+
+### 4. Challenge the thesis with the committee
+
+The new committee saves an evidence snapshot, calculates hypothetical shocks, requests a bull perspective and then a bear response, and performs limited mechanical citation/percentage checks. Review the resulting brief, debate, evidence, scenarios and execution timeline.
+
+The committee UI is implemented in this release branch. Its updated screenshots and full browser acceptance results are not yet included; the images above document the earlier application and do not represent the new design.
+
+### 5. Return to the evidence
+
+Saved committee packets retain the original evidence, model provenance and workflow version. Users can reopen or export a review and compare its assumptions with later research. The committee cannot execute trades.
+
+## Investment Committee
+
+Eight responsibilities make the workflow explicit. They do **not** represent eight independent language models.
+
+| Responsibility | Implementation |
+| --- | --- |
+| Supervisor | Starts a bounded job and records execution events |
+| Fundamental analyst | Collects stored market and SEC context; does not reconcile fact periods |
+| Quant analyst | Calculates three deterministic price-shock scenarios by currency |
+| Portfolio risk officer | Records concentration concerns and missing source checks |
+| Bull analyst | Requests a supportable upside interpretation from the configured model |
+| Bear analyst | Challenges the bull perspective using the same supplied evidence |
+| Evidence auditor | Checks evidence-ID existence and explicit percentage literals |
+| Synthesizer | Assembles the research packet for human review |
+
+The queue is persisted in PostgreSQL and processed by a separate worker. One active review per user, bounded model calls, cancellation and explicit partial results keep execution visible. Evidence audit results do not establish semantic correctness or investment accuracy.
+
+## How it works
+
+```mermaid
+flowchart TD
+    UI["Next.js research workspace"] --> API["FastAPI · authenticated workflows"]
+    API --> DB[("PostgreSQL · user records and research")]
+    API --> DATA["Market and SEC data services"]
+    DB --> WORKER["Committee queue worker"]
+    WORKER --> CALC["Exposure and scenario calculations"]
+    WORKER --> MODEL["Ollama or Hugging Face Space"]
+    CALC --> PACKET["Evidence, perspectives and audit packet"]
+    MODEL --> PACKET
+    PACKET --> DB
 ```
 
-Important backend variables:
+Ask AI uses the existing LangGraph workflow. The new committee uses a separate bounded orchestration service and durable worker, reusing the existing context collectors and analytics.
 
-- `DATABASE_URL`
-- `FRONTEND_URL`
-- `CORS_ALLOWED_ORIGINS`
-- `JWT_SECRET_KEY`
-- `ACCESS_TOKEN_EXPIRE_MINUTES`
-- `DEMO_USER_EMAIL`
-- `DEMO_USER_PASSWORD`
-- `ADMIN_USER_EMAIL`
-- `ADMIN_USER_PASSWORD`
-- `OLLAMA_MODEL`
-- `LLM_TIMEOUT_SECONDS`
+| Code area | What to inspect |
+| --- | --- |
+| [Frontend routes](frontend/app) | Dashboard, stock research, portfolio, watchlist, Ask, committee, reports and settings |
+| [Committee workspace](frontend/app/committee/page.tsx) | Saved research, brief/debate/evidence/scenario/timeline views |
+| [API routes](backend/app/api) | Authentication, financial records and research endpoints |
+| [Committee service](backend/app/services/committee_service.py) | Bounded review, source snapshots and limited audit |
+| [Queue worker](backend/app/committee_worker.py) | Job claims, cancellation handling and interrupted-run recovery |
+| [LangGraph research](backend/app/agents/fincredit_graph.py) | Existing portfolio-aware Ask workflow |
+| [Portfolio analytics](backend/app/services/portfolio_analytics.py) | Deterministic concentration and currency-separated scenarios |
+| [Model provider](backend/app/services/model_provider.py) | Ollama/Hugging Face routing and failure handling |
+| [Database models](backend/app/models) | Holdings, transactions, source records and research persistence |
+| [Hugging Face Space](deployment/huggingface-space) | Cloud model application and configuration instructions |
 
-Important frontend variable:
+## Technology
 
-- `NEXT_PUBLIC_API_BASE_URL`
+Next.js 16, React, TypeScript and Tailwind provide the interface. FastAPI, SQLAlchemy and PostgreSQL provide the API and persistence. LangGraph coordinates the existing Ask workflow. Ollama and Hugging Face provide model inference; Docker Compose packages the services. Playwright covers existing browser workflows.
 
-## Local Setup
+No paid inference provider is required. Local inference consumes the user's hardware resources; free Hugging Face availability depends on account access and quota.
 
-Backend:
+## Current scope
 
-```powershell
-cd C:\Users\shivk\fincredit-ai\backend
-.\venv\Scripts\Activate.ps1
-.\venv\Scripts\python.exe -m pip install -r requirements.txt
-.\venv\Scripts\python.exe -m app.db.phase_40l_auth_migration
-.\venv\Scripts\python.exe -m uvicorn app.main:app --reload
-```
+Implemented: company research, paper portfolios and transaction history, watchlists, portfolio-aware Ask AI, scenario calculations, the committee workflow, saved research, configuration display and existing report/governance/admin screens.
 
-Frontend:
+Important boundaries:
 
-```powershell
-cd C:\Users\shivk\fincredit-ai\frontend
-npm install
-npm run dev
-```
+- Committee research uses stored records; snapshot capture time is not source freshness.
+- Two model viewpoints may share errors. Mechanical evidence checks are not fact verification.
+- Personal portfolios, transactions, watchlists and committee history are user-scoped. Legacy report/governance records form a shared workspace library.
+- The wider roadmap—including Monte Carlo, the portfolio digital twin, scheduling and knowledge graphs—is future work, not a claim about this release.
+- The latest frontend build, backend imports and schema compilation passed. Full updated browser, database, Docker and live-model checks remain pending. See the [release checklist](docs/RELEASE-0.2.md).
 
-Open:
+## Run it locally, if you want to
 
-```text
-http://localhost:3000/
-```
+Use the [step-by-step local setup](docs/DEPLOYMENT.md#local-docker-windows--docker-desktop). Docker starts the frontend, API, PostgreSQL and committee worker. Configure Ollama or your own Hugging Face Space credentials server-side. Do not commit tokens.
 
-## Docker
-
-Start the full local stack:
-
-```powershell
-cd C:\Users\shivk\fincredit-ai
-docker compose up --build
-```
-
-The development Compose stack automatically creates database tables and local demo/admin accounts, then seeds sample holdings and a watchlist when the demo account has no holdings, trade history, or watchlist. Existing portfolio activity is preserved. Open http://localhost:3000 and sign in with the demo credentials below. Docker Desktop must be installed and running. The first build downloads dependencies and can take several minutes.
-
-Docker uses local demo secrets only. Ollama is not included in the compose stack, so Ask AI uses the deterministic fallback unless the backend can reach a local/model service. Market, news, and SEC features require working access to their external providers. This is the full application running locally, not a public deployment.
-
-## Demo Credentials
-
-Local demo only:
-
-- Demo user: `demo@fincredit.ai` / `DemoPass123!`
-- Admin user: `admin@fincredit.ai` / `AdminPass123!`
-
-## Demo Script
-
-Use [DEMO_SCRIPT.md](DEMO_SCRIPT.md) for recruiter and interviewer walkthroughs.
-
-Short flow:
-
-1. Open `/`.
-2. Login as the demo user.
-3. Reset demo data from `/dashboard`.
-4. Research `AAPL`.
-5. Add to watchlist and portfolio.
-6. Open `/portfolio`, refresh prices, sell a small amount, and review transaction history.
-7. Ask AI about AAPL and show evidence/risk/fallback status.
-8. Generate or review a report.
-9. Login as admin and show `/admin`.
-
-## Testing
-
-```powershell
-cd C:\Users\shivk\fincredit-ai\backend
-.\venv\Scripts\python.exe -m compileall app
-
-cd C:\Users\shivk\fincredit-ai\frontend
-npx tsc --noEmit
-npm run build
-npm run test:e2e
-npm run screenshots
-npm audit
-npm outdated
-```
-
-See [frontend/TESTING.md](frontend/TESTING.md) for smoke commands and troubleshooting.
-
-## Deployment
-
-See [DEPLOYMENT.md](DEPLOYMENT.md) for Docker, non-Docker, CORS, PostgreSQL, JWT, migration, and pre-deployment checklists.
-
-Production reminders:
-
-- Set `APP_ENV=production`.
-- Replace `JWT_SECRET_KEY` with a long random value.
-- Do not commit `.env` or `.env.local`.
-- Use HTTPS end to end.
-- Set `CORS_ALLOWED_ORIGINS` to exact production frontend origins.
-- Set `NEXT_PUBLIC_API_BASE_URL` before building the frontend.
-- Decide whether `/api/demo/reset` should be disabled or further protected.
-- Treat localStorage JWT storage as an MVP/demo approach, not final production auth hardening.
-
-## Security And Product Limitations
-
-- Paper trading only; no brokerage integration and no real orders.
-- Not financial advice.
-- yfinance availability and data quality can affect market/news refreshes.
-- SEC Company Facts coverage varies by ticker, issuer type, and fact availability; unsupported funds/ETFs may show market data only.
-- Local Ollama can be slow or unavailable; deterministic fallback is expected.
-- localStorage JWT storage is intentionally simple for the local MVP.
-- Docker Compose does not run Ollama by default.
-- Demo credentials are for local/demo use only and should not be reused for production.
-
-## Dependency Audit Note
-
-Final Phase 40 review found 10 frontend advisories: 5 moderate and 5 high. Affected packages include `next`, `postcss`, `sharp`, `brace-expansion`, `fast-uri`, `hono`, `@hono/node-server`, `@modelcontextprotocol/sdk`, `js-yaml`, and `shadcn`.
-
-`npm audit fix --dry-run` showed that the non-force fix would still change `shadcn` and remove several transitive packages. Forced fixes would move framework/tooling dependencies such as Next.js and shadcn. Fixes are deferred to keep the final MVP stable until those dependency changes can be regression tested intentionally.
-
-## Roadmap
-
-- Phase 41: expanded stock universe, GitHub portfolio launch, screenshots, demo video, and portfolio case study
-- Phase 42: FinCredit Intelligence Layer for deeper stock research, decision readiness, valuation, evidence strength, and thesis workflows
-- Cloud deployment for backend, frontend, and PostgreSQL
-- Hosted LLM option for production environments
-- Real-time or scheduled price refresh worker
-- Richer allocation analytics and risk explanations
-- OAuth/social login and production-grade session strategy
-
-## Resume Bullets
-
-See [docs/RESUME_BULLETS.md](docs/RESUME_BULLETS.md) for role-specific resume bullets.
-
-See [docs/JOB_SEARCH_COPY.md](docs/JOB_SEARCH_COPY.md) for LinkedIn, GitHub, portfolio website, recruiter pitch, and cover-letter copy.
-
-## Disclaimer
-
-FinCredit AI is a simulated paper-trading and education tool. It is not financial advice, does not recommend real-money trades, and does not place real orders.
-
-## Research Agent Workbench
-
-Ask AI now includes a research planner, portfolio stress scenarios, skeptical evidence checks, and a bounded percentage reviewer. Findings persist with each run. See [setup, examples, and limitations](docs/RESEARCH_AGENTS.md).
-
-## Optional free cloud inference
-
-Run the model in your Hugging Face ZeroGPU Space while retaining the app locally. See [deployment and configuration](docs/HUGGINGFACE_INFERENCE.md). Cloud access is opt-in; no paid provider is configured.
+For a quick code review, no setup is necessary: follow the source map above or read the [complete product tour](docs/PROJECT_TOUR.md).

@@ -1,3 +1,5 @@
+from app.models.committee_run import CommitteeRun
+from app.models.portfolio_transaction import PortfolioTransaction
 from app.db.database import Base, engine
 from app.models.agent_run import AgentRun
 from app.models.audit_log import AuditLog

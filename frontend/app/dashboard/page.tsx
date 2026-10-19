@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import {
@@ -40,7 +40,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { resetDemoData } from "@/lib/api";
+import { getDashboardData, resetDemoData } from "@/lib/api";
 
 import {
   Table,
@@ -114,46 +114,15 @@ type DashboardData = {
   message: string;
 };
 
-const dashboard: DashboardData = {
-  portfolioValue: 0,
-  portfolioCount: 0,
-  averageRiskScore: 0,
-  totalReports: 0,
-  approvedReports: 0,
-  needsReviewReports: 0,
-  rejectedReports: 0,
-  avgGrounding: 0,
-  unsupportedClaims: 0,
-  metrics: [
-    {
-      label: "Portfolio Value",
-      value: "$0",
-      detail: "Simulated paper-trading holdings and unrealized P/L",
-    },
-    {
-      label: "Watchlist",
-      value: "Live",
-      detail: "Track stocks before simulating a buy",
-    },
-    {
-      label: "Stock Research",
-      value: "Live",
-      detail: "Search tickers and open the new stock detail page",
-    },
-    {
-      label: "AI Assistant",
-      value: "Ready",
-      detail: "Ask evidence-backed portfolio and stock questions",
-    },
-  ],
-  latestReports: [],
-  latestAgentRuns: [],
-  latestMarketSnapshots: [],
-  latestSecFundamentals: [],
-  message: "Phase 40A static dashboard loaded",
-};
-
 export default function DashboardPage() {
+  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+  const [loadError, setLoadError] = useState("");
+  useEffect(() => { getDashboardData().then(setDashboard).catch(() => setLoadError("Unable to load your workspace. Check your connection and sign in again.")); }, []);
+  return <AppShell>{loadError ? <div role="alert" className="text-red-200">{loadError} <button onClick={() => window.location.reload()}>Retry</button></div> : dashboard ? <DashboardContent dashboard={dashboard}/> : <p role="status" className="text-slate-400">Loading your research workspace…</p>}</AppShell>;
+}
+
+function DashboardContent({dashboard: initial}: {dashboard: DashboardData}) {
+  const [dashboard, setDashboard] = useState(initial);
   const reportStatusChart = [
     {
       status: "Approved",
@@ -198,6 +167,7 @@ export default function DashboardPage() {
       setResetError("");
 
       const response = await resetDemoData();
+      setDashboard(await getDashboardData());
       setResetMessage(
         `${response.message} Holdings: ${response.holdingsCount}, transactions: ${response.transactionsCount}, watchlist: ${response.watchlistCount}.`
       );
@@ -210,8 +180,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <AppShell>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
             <Badge className="mb-3 bg-blue-500/15 text-blue-200">
@@ -260,10 +229,10 @@ export default function DashboardPage() {
               </Button>
             </Link>
 
-            <Link href="/ask">
+            <Link href="/committee">
               <Button className="bg-violet-500 text-white hover:bg-violet-600">
                 <Sparkles className="mr-2 h-4 w-4" />
-                Ask FinCredit AI
+                Investment Committee
               </Button>
             </Link>
 
@@ -782,7 +751,6 @@ export default function DashboardPage() {
           </Card>
         </div>
       </div>
-    </AppShell>
   );
 }
 

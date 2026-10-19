@@ -542,3 +542,24 @@ export async function runPortfolioScenario(marketShockPercent: number, sectorSho
     body: JSON.stringify({ marketShockPercent, sectorShocks }),
   });
 }
+
+export type CommitteeRun = {
+  id: string; question: string; ticker: string | null; status: string; version: string;
+  createdAt: string; updatedAt: string;
+  events: { role: string; detail: string; at: string }[];
+  snapshot: { capturedAt?: string; freshness?: string; evidence?: { id: string; source: string; claim: string }[];
+    research?: { scenarios: { name: string; groups: { currency: string; currentValue: number; scenarioValue: number; scenarioChange: number; scenarioChangePercent: number }[] }[] } };
+  result: { error?: string; summary?: string; decision?: string; missingSources?: string[]; nextSteps?: string[]; limitations?: string[];
+    perspectives?: { role: string; text: string; status: string; provider?: string; model?: string; notice?: string;
+      audit: { citedEvidence: string[]; unknownReferences: string[]; missingCitations: boolean;
+        percentageReview: { findings: string[]; limitations: string }; limitation: string } }[] };
+};
+export function getCommitteeRuns(): Promise<CommitteeRun[]> { return fetchJson(`${API_BASE_URL}/api/committee/runs`); }
+export function getCommitteeRun(id: string): Promise<CommitteeRun> { return fetchJson(`${API_BASE_URL}/api/committee/runs/${encodeURIComponent(id)}`); }
+export function createCommitteeRun(question: string, ticker: string): Promise<CommitteeRun> {
+  return fetchJson(`${API_BASE_URL}/api/committee/runs`, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({question, ticker}) });
+}
+export function cancelCommitteeRun(id: string): Promise<CommitteeRun> { return fetchJson(`${API_BASE_URL}/api/committee/runs/${encodeURIComponent(id)}/cancel`, {method: "POST"}); }
+export function getModelConfiguration(): Promise<{provider: string; model: string; cloudCredentialsConfigured: boolean; fallbackEnabled: boolean; execution: string; version: string}> {
+  return fetchJson(`${API_BASE_URL}/api/committee/configuration`);
+}

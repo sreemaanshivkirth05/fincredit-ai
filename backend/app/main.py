@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from app.api.committee import router as committee_router
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
@@ -24,7 +25,7 @@ from app.routers.market_chart import router as market_chart_router
 
 app = FastAPI(
     title=settings.APP_NAME,
-    version="0.1.0",
+    version="0.2.0",
     description="Backend API for FinCredit AI financial intelligence platform.",
 )
 
@@ -63,14 +64,11 @@ def database_check():
 
         return {
             "status": "connected",
-            "database": database_name,
+
         }
 
     except SQLAlchemyError as error:
-        return {
-            "status": "error",
-            "message": str(error),
-        }
+        raise HTTPException(503, "Database unavailable") from None
 
 
 app.include_router(dashboard_router, prefix=settings.API_PREFIX)
@@ -90,3 +88,5 @@ app.include_router(stocks_router, prefix=settings.API_PREFIX)
 app.include_router(stock_intelligence_router, prefix=settings.API_PREFIX)
 
 app.include_router(market_chart_router)
+
+app.include_router(committee_router, prefix=settings.API_PREFIX)

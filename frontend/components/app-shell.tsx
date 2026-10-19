@@ -11,7 +11,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           <section className="min-w-0 flex-1">
             <TopBar />
-            <div className="mx-auto max-w-7xl px-4 pb-24 pt-5 sm:px-6 sm:py-6 lg:pb-6">
+            <div className="mx-auto max-w-[1600px] px-4 pb-24 pt-5 sm:px-6 sm:py-6 lg:pb-6">
               {children}
             </div>
           </section>
