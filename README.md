@@ -296,3 +296,13 @@ Ask AI now includes a research planner, portfolio stress scenarios, skeptical ev
 ## Optional free cloud inference
 
 Run the model in your Hugging Face ZeroGPU Space while retaining the app locally. See [deployment and configuration](docs/HUGGINGFACE_INFERENCE.md). Cloud access is opt-in; no paid provider is configured.
+
+## 0.2 Investment Committee release
+
+Open **Committee** in the workspace for saved, bounded bull/bear research, evidence inspection, deterministic scenarios and an execution timeline. Start the separate `committee-worker` service (included in Docker Compose). Model routing remains Ollama or your Hugging Face Space only; research never places real trades.
+
+- [Release scope and tomorrow's acceptance checklist](docs/RELEASE-0.2.md)
+- [Local and HTTPS deployment runbook](docs/DEPLOYMENT.md)
+- [Workstation design](DESIGN.md)
+
+This is a release candidate pending end-to-end acceptance and live provider verification, not an already-deployed service.

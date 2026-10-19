@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends
+from app.core.config import settings
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.security import get_current_user
@@ -15,4 +16,6 @@ def reset_demo(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    if settings.APP_ENV != "development":
+        raise HTTPException(403, "Demo reset is disabled outside development")
     return reset_demo_data(db, current_user.id)

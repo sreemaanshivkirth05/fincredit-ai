@@ -71,12 +71,12 @@ def _get_holding_risk_score(holding):
     return 0
 
 
-def get_dashboard_data(db: Session):
-    holdings = db.query(Holding).all()
+def get_dashboard_data(db: Session, user_id: int):
+    holdings = db.query(Holding).filter(Holding.user_id == user_id).all()
     reports = db.query(Report).order_by(Report.id.desc()).all()
 
     latest_agent_runs = (
-        db.query(AgentRun)
+        db.query(AgentRun).filter(AgentRun.user_id == user_id)
         .order_by(AgentRun.created_at.desc())
         .limit(5)
         .all()
@@ -118,9 +118,9 @@ def get_dashboard_data(db: Session):
 
     metrics = [
         {
-            "label": "Portfolio Value",
-            "value": _format_currency(portfolio_value),
-            "detail": f"{portfolio_count} active holdings tracked",
+            "label": "Your Holdings",
+            "value": str(portfolio_count),
+            "detail": "Open Portfolio for valuations separated by currency",
         },
         {
             "label": "Average Risk Score",
@@ -128,14 +128,14 @@ def get_dashboard_data(db: Session):
             "detail": "Calculated from available portfolio risk fields",
         },
         {
-            "label": "AI Reports",
+            "label": "Workspace Reports",
             "value": str(total_reports),
             "detail": f"{approved_reports} approved, {needs_review_reports} needs review, {rejected_reports} rejected",
         },
         {
-            "label": "Grounding Score",
+            "label": "Legacy Report Score",
             "value": f"{avg_grounding}%",
-            "detail": f"{unsupported_claims} unsupported claims across reports",
+            "detail": "Legacy heuristic; not a measured accuracy score",
         },
     ]
 

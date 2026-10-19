@@ -24,7 +24,7 @@ services:
         condition: service_healthy
     ports:
       - "8000:8000"
-    environment:
+    environment: &backend_environment
       APP_NAME: FinCredit AI
       APP_ENV: development
       API_PREFIX: /api
@@ -47,6 +47,14 @@ services:
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3:1.7b}
       LLM_TIMEOUT_SECONDS: "20"
+
+  committee-worker:
+    build: ./backend
+    command: ["python", "-m", "app.committee_worker"]
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment: *backend_environment
 
   frontend:
     build:

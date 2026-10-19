@@ -1,5 +1,5 @@
 from typing import Literal
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -27,6 +27,17 @@ class Settings(BaseSettings):
     HF_TIMEOUT_SECONDS: int = Field(default=90, ge=1, le=180)
     HF_ALLOW_OLLAMA_FALLBACK: bool = False
     OLLAMA_BASE_URL: str = "http://localhost:11434"
+
+    @model_validator(mode="after")
+    def production_guard(self):
+        if self.APP_ENV == "production":
+            if len(self.JWT_SECRET_KEY) < 40 or any(word in self.JWT_SECRET_KEY.lower() for word in ("demo", "change-before", "local-dev")):
+                raise ValueError("Production requires a unique JWT_SECRET_KEY of at least 40 characters")
+            if not self.FRONTEND_URL.startswith("https://"):
+                raise ValueError("Production requires an HTTPS FRONTEND_URL")
+            if any(not origin.startswith("https://") for origin in self.cors_allowed_origins):
+                raise ValueError("Production CORS origins must use HTTPS")
+        return self
 
     @property
     def cors_allowed_origins(self) -> list[str]:

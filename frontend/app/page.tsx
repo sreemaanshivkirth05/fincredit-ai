@@ -24,8 +24,8 @@ const capabilityTags = [
   "Stock News",
   "Portfolio AI",
   "Evidence Reports",
-  "Playwright Tested",
-  "Local Ollama",
+  "Investment Committee",
+  "Ollama + Hugging Face",
 ];
 
 const features = [

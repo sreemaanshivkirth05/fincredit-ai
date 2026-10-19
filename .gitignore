@@ -53,3 +53,6 @@ playwright-report/
 test-results/
 frontend/playwright-report/
 frontend/test-results/
+
+# Deployment secrets
+.env.production
