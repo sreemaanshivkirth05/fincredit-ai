@@ -285,7 +285,7 @@ export default function GovernancePage() {
       <div className="space-y-6">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
-            <Badge className="mb-3 bg-violet-500/15 text-violet-200">
+            <Badge className="mb-3 bg-[#e8eee8] text-[#285b4b]">
               AI Governance
             </Badge>
 
@@ -293,42 +293,42 @@ export default function GovernancePage() {
               Governance & Agent Audit
             </h1>
 
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
               Monitor model usage, data sources, grounding quality, audit logs,
               saved LangGraph/LLM agent runs, and report generation workflows
               from PostgreSQL.
             </p>
 
             {loading && (
-              <p className="mt-2 text-xs text-blue-300">
+              <p className="mt-2 text-xs text-[#285b4b]">
                 Loading governance metrics and stored agent runs...
               </p>
             )}
 
             {!loading && governanceData && (
-              <p className="mt-2 text-xs text-emerald-300">
+              <p className="mt-2 text-xs text-emerald-800">
                 Governance connected: {governanceData.message}
               </p>
             )}
 
             {!loading && agentRunsData && (
-              <p className="mt-1 text-xs text-violet-300">
+              <p className="mt-1 text-xs text-[#285b4b]">
                 Agent runs connected: {agentRunsData.message}
               </p>
             )}
 
             {generatedReport && (
-              <p className="mt-1 text-xs text-emerald-300">
+              <p className="mt-1 text-xs text-emerald-800">
                 Report generated: {generatedReport.message}
               </p>
             )}
 
             {apiError && (
-              <p className="mt-2 text-xs text-red-300">{apiError}</p>
+              <p className="mt-2 text-xs text-red-800">{apiError}</p>
             )}
           </div>
 
-          <Badge className="w-fit bg-white/10 text-slate-300">
+          <Badge className="w-fit bg-[#eeefe9] text-slate-700">
             Audit-Ready AI
           </Badge>
         </div>
@@ -338,32 +338,32 @@ export default function GovernancePage() {
             title="Stored Agent Runs"
             value={String(totalStoredRuns)}
             change="PostgreSQL"
-            icon={<Workflow className="h-5 w-5 text-violet-300" />}
+            icon={<Workflow className="h-5 w-5 text-[#285b4b]" />}
           />
           <MetricCard
             title="Avg Stored Score"
             value={`${avgStoredGrounding}%`}
             change="Availability / legacy scores; not accuracy"
-            icon={<ShieldCheck className="h-5 w-5 text-emerald-300" />}
+            icon={<ShieldCheck className="h-5 w-5 text-emerald-800" />}
           />
           <MetricCard
             title="Review Flags"
             value={String(totalUnsupportedClaims)}
             change="Percentage flags / legacy counts"
-            icon={<FileSearch className="h-5 w-5 text-amber-300" />}
+            icon={<FileSearch className="h-5 w-5 text-amber-800" />}
           />
           <MetricCard
             title="Estimated Cost"
             value={`$${governance.estimatedCost.toFixed(2)}`}
             change="Local LLM"
-            icon={<Activity className="h-5 w-5 text-blue-300" />}
+            icon={<Activity className="h-5 w-5 text-[#285b4b]" />}
           />
         </div>
 
-        <Card className="border-white/10 bg-white/[0.04] text-white">
+        <Card className="border-[#dedfd6] bg-white text-[#202c29]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Bot className="h-5 w-5 text-violet-300" />
+              <Bot className="h-5 w-5 text-[#285b4b]" />
               Stored LangGraph / LLM Agent Runs
             </CardTitle>
           </CardHeader>
@@ -371,49 +371,49 @@ export default function GovernancePage() {
           <CardContent>
             <Table>
               <TableHeader>
-                <TableRow className="border-white/10">
-                  <TableHead className="text-slate-400">Time</TableHead>
-                  <TableHead className="text-slate-400">Ticker</TableHead>
-                  <TableHead className="text-slate-400">Question</TableHead>
-                  <TableHead className="text-slate-400">Stored score</TableHead>
-                  <TableHead className="text-slate-400">Unsupported</TableHead>
-                  <TableHead className="text-slate-400">Status</TableHead>
-                  <TableHead className="text-slate-400">Action</TableHead>
+                <TableRow className="border-[#dedfd6]">
+                  <TableHead className="text-slate-600">Time</TableHead>
+                  <TableHead className="text-slate-600">Ticker</TableHead>
+                  <TableHead className="text-slate-600">Question</TableHead>
+                  <TableHead className="text-slate-600">Stored score</TableHead>
+                  <TableHead className="text-slate-600">Unsupported</TableHead>
+                  <TableHead className="text-slate-600">Status</TableHead>
+                  <TableHead className="text-slate-600">Action</TableHead>
                 </TableRow>
               </TableHeader>
 
               <TableBody>
                 {storedAgentRuns.slice(0, 10).map((run) => (
-                  <TableRow key={run.id} className="border-white/10">
-                    <TableCell className="text-slate-300">
+                  <TableRow key={run.id} className="border-[#dedfd6]">
+                    <TableCell className="text-slate-700">
                       {new Date(run.createdAt).toLocaleString()}
                     </TableCell>
 
                     <TableCell>
-                      <Badge className="bg-blue-500/15 text-blue-200">
+                      <Badge className="bg-[#e8eee8] text-[#285b4b]">
                         {run.ticker ?? "Portfolio"}
                       </Badge>
                     </TableCell>
 
-                    <TableCell className="max-w-[360px] text-slate-300">
+                    <TableCell className="max-w-[360px] text-slate-700">
                       {run.question}
                     </TableCell>
 
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Progress value={run.groundingScore} className="w-20" />
-                        <span className="text-sm text-slate-300">
+                        <span className="text-sm text-slate-700">
                           {run.groundingScore}%
                         </span>
                       </div>
                     </TableCell>
 
-                    <TableCell className="text-slate-300">
+                    <TableCell className="text-slate-700">
                       {run.unsupportedClaims}
                     </TableCell>
 
                     <TableCell>
-                      <Badge className="bg-emerald-500/15 text-emerald-200">
+                      <Badge className="bg-emerald-500/15 text-emerald-800">
                         {run.status.toLowerCase().includes("fallback") ? "Calculated fallback" : "LLM Generated"}
                       </Badge>
                     </TableCell>
@@ -423,7 +423,7 @@ export default function GovernancePage() {
                         type="button"
                         size="sm"
                         disabled={generatingReportId === run.id}
-                        className="bg-violet-500 text-white hover:bg-violet-600"
+                        className="bg-[#245544] text-[#202c29] hover:bg-[#245544]"
                         onClick={() => handleGenerateReport(run.id)}
                       >
                         {generatingReportId === run.id ? (
@@ -442,7 +442,7 @@ export default function GovernancePage() {
             </Table>
 
             {storedAgentRuns.length === 0 && (
-              <p className="mt-4 text-sm text-slate-400">
+              <p className="mt-4 text-sm text-slate-600">
                 No stored agent runs yet. Ask a question on the Ask FinCredit
                 page to create an audit record.
               </p>
@@ -451,10 +451,10 @@ export default function GovernancePage() {
         </Card>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-          <Card className="border-white/10 bg-white/[0.04] text-white">
+          <Card className="border-[#dedfd6] bg-white text-[#202c29]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BrainCircuit className="h-5 w-5 text-violet-300" />
+                <BrainCircuit className="h-5 w-5 text-[#285b4b]" />
                 Model Usage
               </CardTitle>
             </CardHeader>
@@ -463,17 +463,17 @@ export default function GovernancePage() {
               {governance.modelUsage.map((item) => (
                 <div
                   key={item.model}
-                  className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                  className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4"
                 >
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <p className="font-medium text-white">{item.model}</p>
-                      <p className="mt-2 text-sm leading-6 text-slate-400">
+                      <p className="font-medium text-[#202c29]">{item.model}</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
                         {item.task}
                       </p>
                     </div>
 
-                    <Badge className="bg-emerald-500/15 text-emerald-200">
+                    <Badge className="bg-emerald-500/15 text-emerald-800">
                       {item.status}
                     </Badge>
                   </div>
@@ -490,10 +490,10 @@ export default function GovernancePage() {
             </CardContent>
           </Card>
 
-          <Card className="border-white/10 bg-white/[0.04] text-white">
+          <Card className="border-[#dedfd6] bg-white text-[#202c29]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-emerald-300" />
+                <ShieldCheck className="h-5 w-5 text-emerald-800" />
                 Quality Metrics
               </CardTitle>
             </CardHeader>
@@ -502,11 +502,11 @@ export default function GovernancePage() {
               {governance.qualityMetrics.map((metric) => (
                 <div
                   key={metric.metric}
-                  className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                  className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4"
                 >
                   <div className="flex items-center justify-between">
-                    <p className="text-sm text-slate-300">{metric.metric}</p>
-                    <p className="font-medium text-white">{metric.value}%</p>
+                    <p className="text-sm text-slate-700">{metric.metric}</p>
+                    <p className="font-medium text-[#202c29]">{metric.value}%</p>
                   </div>
                   <Progress value={metric.value} className="mt-3" />
                 </div>
@@ -516,10 +516,10 @@ export default function GovernancePage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-          <Card className="border-white/10 bg-white/[0.04] text-white">
+          <Card className="border-[#dedfd6] bg-white text-[#202c29]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Database className="h-5 w-5 text-blue-300" />
+                <Database className="h-5 w-5 text-[#285b4b]" />
                 Data Sources
               </CardTitle>
             </CardHeader>
@@ -528,10 +528,10 @@ export default function GovernancePage() {
               {governance.dataSources.map((source) => (
                 <div
                   key={source.source}
-                  className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                  className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4"
                 >
                   <div className="flex items-center justify-between">
-                    <p className="font-medium text-white">{source.source}</p>
+                    <p className="font-medium text-[#202c29]">{source.source}</p>
                     <StatusBadge status={source.status} />
                   </div>
 
@@ -544,10 +544,10 @@ export default function GovernancePage() {
             </CardContent>
           </Card>
 
-          <Card className="border-white/10 bg-white/[0.04] text-white">
+          <Card className="border-[#dedfd6] bg-white text-[#202c29]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-amber-300" />
+                <Clock className="h-5 w-5 text-amber-800" />
                 Audit Logs
               </CardTitle>
             </CardHeader>
@@ -556,14 +556,14 @@ export default function GovernancePage() {
               {governance.auditLogs.map((log) => (
                 <div
                   key={`${log.time}-${log.event}`}
-                  className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                  className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4"
                 >
                   <div className="flex items-center justify-between">
-                    <p className="font-medium text-white">{log.event}</p>
+                    <p className="font-medium text-[#202c29]">{log.event}</p>
                     <RiskBadge risk={log.severity} />
                   </div>
 
-                  <p className="mt-2 text-sm leading-6 text-slate-400">
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
                     {log.detail}
                   </p>
 
@@ -574,10 +574,10 @@ export default function GovernancePage() {
           </Card>
         </div>
 
-        <Card className="border-white/10 bg-white/[0.04] text-white">
+        <Card className="border-[#dedfd6] bg-white text-[#202c29]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-violet-300" />
+              <Sparkles className="h-5 w-5 text-[#285b4b]" />
               Agents Used in Latest Runs
             </CardTitle>
           </CardHeader>
@@ -596,10 +596,10 @@ export default function GovernancePage() {
               ).map((agent) => (
                 <div
                   key={agent}
-                  className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 p-4"
+                  className="flex items-center gap-3 rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4"
                 >
-                  <CheckCircle2 className="h-5 w-5 text-emerald-300" />
-                  <p className="text-sm font-medium text-white">{agent}</p>
+                  <CheckCircle2 className="h-5 w-5 text-emerald-800" />
+                  <p className="text-sm font-medium text-[#202c29]">{agent}</p>
                 </div>
               ))}
             </div>
@@ -622,13 +622,13 @@ function MetricCard({
   icon: React.ReactNode;
 }) {
   return (
-    <Card className="border-white/10 bg-white/[0.04] text-white">
+    <Card className="border-[#dedfd6] bg-white text-[#202c29]">
       <CardContent className="p-5">
         <div className="flex items-center justify-between">
           {icon}
-          <Badge className="bg-white/10 text-slate-300">{change}</Badge>
+          <Badge className="bg-[#eeefe9] text-slate-700">{change}</Badge>
         </div>
-        <p className="mt-5 text-sm text-slate-400">{title}</p>
+        <p className="mt-5 text-sm text-slate-600">{title}</p>
         <p className="mt-1 text-2xl font-semibold">{value}</p>
       </CardContent>
     </Card>
@@ -637,9 +637,9 @@ function MetricCard({
 
 function MiniMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+    <div className="rounded-xl border border-[#dedfd6] bg-white p-3">
       <p className="text-xs text-slate-500">{label}</p>
-      <p className="mt-1 text-sm font-medium text-white">{value}</p>
+      <p className="mt-1 text-sm font-medium text-[#202c29]">{value}</p>
     </div>
   );
 }
@@ -647,10 +647,10 @@ function MiniMetric({ label, value }: { label: string; value: string }) {
 function StatusBadge({ status }: { status: string }) {
   const styles =
     status === "Healthy" || status === "Active"
-      ? "bg-emerald-500/15 text-emerald-200"
+      ? "bg-emerald-500/15 text-emerald-800"
       : status === "Delayed" || status === "In Review"
-        ? "bg-amber-500/15 text-amber-200"
-        : "bg-red-500/15 text-red-200";
+        ? "bg-amber-500/15 text-amber-800"
+        : "bg-red-500/15 text-red-800";
 
   return <Badge className={styles}>{status}</Badge>;
 }
@@ -658,10 +658,10 @@ function StatusBadge({ status }: { status: string }) {
 function RiskBadge({ risk }: { risk: string }) {
   const styles =
     risk === "High"
-      ? "bg-red-500/15 text-red-200"
+      ? "bg-red-500/15 text-red-800"
       : risk === "Medium"
-        ? "bg-amber-500/15 text-amber-200"
-        : "bg-emerald-500/15 text-emerald-200";
+        ? "bg-amber-500/15 text-amber-800"
+        : "bg-emerald-500/15 text-emerald-800";
 
   return <Badge className={styles}>{risk}</Badge>;
 }

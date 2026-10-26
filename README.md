@@ -8,6 +8,10 @@ FinCredit AI helps a user research a company, understand how it fits their holdi
 
 > Release status: the latest Investment Committee implementation is on [`feat/committee-release`](https://github.com/sreemaanshivkirth05/fincredit-ai/tree/feat/committee-release), proposed in [PR #5](https://github.com/sreemaanshivkirth05/fincredit-ai/pull/5). Build checks passed; full acceptance testing for this release is pending. This project is for research and paper trading, not real order execution.
 
+## New visual direction
+
+The complete light editorial redesign is on [`feat/editorial-ui-redesign`](https://github.com/sreemaanshivkirth05/fincredit-ai/tree/feat/editorial-ui-redesign). It builds on the committee release with a new home page, research overview, navigation and shared visual system across the application. See [design notes](DESIGN.md). Existing screenshots below predate this redesign; updated browser captures are pending.
+
 ## Explore the product
 
 | Start here | What you will learn |

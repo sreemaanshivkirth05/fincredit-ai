@@ -39,11 +39,11 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7faf7] px-5 py-8 text-slate-950">
+    <main className="min-h-screen bg-[#f4f3ee] px-5 py-8 text-slate-950">
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-xl items-center">
-        <section className="w-full rounded-2xl border border-slate-200 bg-white p-8 shadow-xl md:p-10">
+        <section className="w-full rounded-xl border border-slate-200 bg-white p-8 shadow-sm md:p-10">
           <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-950 text-white">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#245544] text-white">
               <Sparkles className="h-4 w-4" />
             </div>
             <span className="font-semibold">FinCredit AI</span>
@@ -61,14 +61,14 @@ export default function RegisterPage() {
             <input
               value={fullName}
               onChange={(event) => setFullName(event.target.value)}
-              data-testid="register-full-name"
+              data-testid="register-full-name" aria-label="Full name" autoComplete="name" required
               placeholder="Full name"
               className="h-11 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none focus:border-emerald-500"
             />
             <input
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              data-testid="register-email"
+              data-testid="register-email" aria-label="Email" autoComplete="email" required
               type="email"
               placeholder="Email"
               className="h-11 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none focus:border-emerald-500"
@@ -76,7 +76,7 @@ export default function RegisterPage() {
             <input
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              data-testid="register-password"
+              data-testid="register-password" aria-label="Password" autoComplete="new-password" required
               type="password"
               placeholder="Password"
               className="h-11 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none focus:border-emerald-500"
@@ -84,19 +84,19 @@ export default function RegisterPage() {
             <input
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
-              data-testid="register-confirm-password"
+              data-testid="register-confirm-password" aria-label="Confirm password" autoComplete="new-password" required
               type="password"
               placeholder="Confirm password"
               className="h-11 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none focus:border-emerald-500"
             />
 
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
 
             <Button
               type="submit"
               disabled={loading}
               data-testid="register-submit"
-              className="w-full bg-slate-950 text-white hover:bg-slate-800"
+              className="w-full bg-[#245544] text-white hover:bg-slate-800"
             >
               {loading ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

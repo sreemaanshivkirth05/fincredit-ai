@@ -124,7 +124,7 @@ type PortfolioApiData = {
   message: string;
 };
 
-const chartColors = ["#60a5fa", "#34d399", "#f59e0b", "#a78bfa", "#f472b6"];
+const chartColors = ["#437c5b", "#6b9162", "#f59e0b", "#a78bfa", "#f472b6"];
 
 function formatCurrency(value?: number | null, currency = "USD") {
   if (value === null || value === undefined || Number.isNaN(value)) return "—";
@@ -353,37 +353,37 @@ export default function PortfolioPage() {
       <div className="space-y-6">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
-            <Badge className="mb-3 bg-blue-500/15 text-blue-200">
+            <Badge className="mb-3 bg-[#e8eee8] text-[#285b4b]">
               Paper Portfolio
             </Badge>
 
-            <h1 className="text-3xl font-semibold tracking-tight text-white">
+            <h1 className="text-3xl font-semibold tracking-tight text-[#202c29]">
               My Simulated Portfolio
             </h1>
 
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
               Track virtual holdings, cost basis, current value, unrealized
               profit/loss, sector exposure, and portfolio risk.
             </p>
 
             {loading && (
-              <p className="mt-2 text-xs text-blue-300">
+              <p className="mt-2 text-xs text-[#285b4b]">
                 Loading backend portfolio data...
               </p>
             )}
 
             {!loading && portfolioData && (
-              <p className="mt-2 text-xs text-emerald-300">
+              <p className="mt-2 text-xs text-emerald-800">
                 Backend connected: {portfolioData.message}
               </p>
             )}
 
             {apiError && (
-              <p className="mt-2 text-xs text-red-300">{apiError}</p>
+              <p className="mt-2 text-xs text-red-800">{apiError}</p>
             )}
 
             {successMessage && (
-              <p className="mt-2 text-xs text-emerald-300">
+              <p className="mt-2 text-xs text-emerald-800">
                 {successMessage}
               </p>
             )}
@@ -392,7 +392,7 @@ export default function PortfolioPage() {
           <div className="flex flex-wrap gap-3">
             <Button
               onClick={loadPortfolioData}
-              className="bg-white/10 text-white hover:bg-white/20"
+              className="bg-[#eeefe9] text-[#202c29] hover:bg-[#eeefe9]"
             >
               <RefreshCcw className="mr-2 h-4 w-4" />
               Refresh
@@ -402,7 +402,7 @@ export default function PortfolioPage() {
               onClick={handleRefreshPrices}
               disabled={refreshingPrices}
               data-testid="portfolio-refresh-prices"
-              className="bg-emerald-500 text-white hover:bg-emerald-600"
+              className="bg-emerald-500 text-[#202c29] hover:bg-emerald-600"
             >
               {refreshingPrices ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -413,7 +413,7 @@ export default function PortfolioPage() {
             </Button>
 
             <Link href="/dashboard">
-              <Button className="bg-blue-500 text-white hover:bg-blue-600">
+              <Button className="bg-[#245544] text-[#202c29] hover:bg-[#245544]">
                 <Plus className="mr-2 h-4 w-4" />
                 Find Stocks
               </Button>
@@ -421,22 +421,22 @@ export default function PortfolioPage() {
           </div>
         </div>
 
-        <p className="max-w-3xl text-sm leading-6 text-slate-400">
+        <p className="max-w-3xl text-sm leading-6 text-slate-600">
           Use Refresh Prices to fetch the latest available market prices and
           recalculate each holding's current value, portfolio weight, and
           unrealized P/L. This is still simulated paper trading only.
         </p>
 
-        <Card className="border-white/10 bg-white/[0.04] text-white">
+        <Card className="border-[#dedfd6] bg-white text-[#202c29]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Search className="h-5 w-5 text-blue-300" />
+              <Search className="h-5 w-5 text-[#285b4b]" />
               Add a Stock
             </CardTitle>
           </CardHeader>
 
           <CardContent>
-            <p className="mb-3 text-sm text-slate-400">
+            <p className="mb-3 text-sm text-slate-600">
               Search a ticker, open the stock research page, and use Add to
               Portfolio to simulate a buy.
             </p>
@@ -450,14 +450,14 @@ export default function PortfolioPage() {
             title="Portfolio Value"
             value={formatCompactCurrency(totalValue)}
             change="Current value"
-            icon={<DollarSign className="h-5 w-5 text-emerald-300" />}
+            icon={<DollarSign className="h-5 w-5 text-emerald-800" />}
           />
 
           <MetricCard
             title="Total Cost"
             value={formatCompactCurrency(totalCost)}
             change="Cost basis"
-            icon={<Wallet className="h-5 w-5 text-blue-300" />}
+            icon={<Wallet className="h-5 w-5 text-[#285b4b]" />}
           />
 
           <MetricCard
@@ -466,9 +466,9 @@ export default function PortfolioPage() {
             change={formatPercent(unrealizedPLPercent)}
             icon={
               isProfitPositive ? (
-                <TrendingUp className="h-5 w-5 text-emerald-300" />
+                <TrendingUp className="h-5 w-5 text-emerald-800" />
               ) : (
-                <TrendingDown className="h-5 w-5 text-red-300" />
+                <TrendingDown className="h-5 w-5 text-red-800" />
               )
             }
           />
@@ -477,7 +477,7 @@ export default function PortfolioPage() {
             title="Holdings"
             value={String(holdingsCount)}
             change="Active"
-            icon={<BriefcaseBusiness className="h-5 w-5 text-violet-300" />}
+            icon={<BriefcaseBusiness className="h-5 w-5 text-[#285b4b]" />}
           />
         </div>
 
@@ -486,14 +486,14 @@ export default function PortfolioPage() {
             title="Overall Risk"
             value={`${overallRisk} / 100`}
             change="Learning score"
-            icon={<Gauge className="h-5 w-5 text-amber-300" />}
+            icon={<Gauge className="h-5 w-5 text-amber-800" />}
           />
 
           <MetricCard
             title="High-Risk Exposure"
             value={`${highRiskExposure.toFixed(2)}%`}
             change="Portfolio weight"
-            icon={<AlertTriangle className="h-5 w-5 text-red-300" />}
+            icon={<AlertTriangle className="h-5 w-5 text-red-800" />}
           />
         </div>
 
@@ -501,10 +501,10 @@ export default function PortfolioPage() {
 
         {activeHoldings.length > 0 ? (
           <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-            <Card className="border-white/10 bg-white/[0.04] text-white">
+            <Card className="border-[#dedfd6] bg-white text-[#202c29]">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <PieChart className="h-5 w-5 text-blue-300" />
+                  <PieChart className="h-5 w-5 text-[#285b4b]" />
                   Sector Allocation
                 </CardTitle>
               </CardHeader>
@@ -531,10 +531,10 @@ export default function PortfolioPage() {
 
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: "#0f172a",
-                          border: "1px solid rgba(255,255,255,0.1)",
+                          backgroundColor: "#ffffff",
+                          border: "1px solid #d5ddcc",
                           borderRadius: "12px",
-                          color: "white",
+                          color: "#283b2d",
                         }}
                         formatter={(value) => [`${Number(value).toFixed(2)}%`, "Weight"]}
                       />
@@ -546,9 +546,9 @@ export default function PortfolioPage() {
                   {sectorAllocation.map((sector) => (
                     <div
                       key={sector.name}
-                      className="rounded-xl border border-white/10 bg-black/20 p-3"
+                      className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-3"
                     >
-                      <p className="text-sm text-slate-400">{sector.name}</p>
+                      <p className="text-sm text-slate-600">{sector.name}</p>
                       <p className="mt-1 text-lg font-semibold">
                         {sector.value.toFixed(2)}%
                       </p>
@@ -558,10 +558,10 @@ export default function PortfolioPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-white/10 bg-white/[0.04] text-white">
+            <Card className="border-[#dedfd6] bg-white text-[#202c29]">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-emerald-300" />
+                  <BarChart3 className="h-5 w-5 text-emerald-800" />
                   Risk by Holding
                 </CardTitle>
               </CardHeader>
@@ -570,31 +570,31 @@ export default function PortfolioPage() {
                 <div className="h-[320px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={riskByHolding}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                      <XAxis dataKey="ticker" stroke="#94a3b8" />
-                      <YAxis stroke="#94a3b8" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e0e6d8" />
+                      <XAxis dataKey="ticker" stroke="#7b8870" />
+                      <YAxis stroke="#7b8870" />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: "#0f172a",
-                          border: "1px solid rgba(255,255,255,0.1)",
+                          backgroundColor: "#ffffff",
+                          border: "1px solid #d5ddcc",
                           borderRadius: "12px",
-                          color: "white",
+                          color: "#283b2d",
                         }}
                       />
                       <Bar
                         dataKey="score"
-                        fill="#60a5fa"
+                        fill="#437c5b"
                         radius={[8, 8, 0, 0]}
                       />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
 
-                <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4">
-                  <p className="text-sm font-medium text-amber-100">
+                <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-4">
+                  <p className="text-sm font-medium text-amber-800">
                     Portfolio Insight
                   </p>
-                  <p className="mt-2 text-sm leading-6 text-slate-300">
+                  <p className="mt-2 text-sm leading-6 text-slate-700">
                     This view helps beginners understand how each stock affects
                     portfolio risk, concentration, and simulated profit/loss.
                   </p>
@@ -604,7 +604,7 @@ export default function PortfolioPage() {
           </div>
         ) : null}
 
-        <Card className="border-white/10 bg-white/[0.04] text-white">
+        <Card className="border-[#dedfd6] bg-white text-[#202c29]">
           <CardHeader>
             <CardTitle>Holdings</CardTitle>
           </CardHeader>
@@ -613,8 +613,8 @@ export default function PortfolioPage() {
             {loading ? (
               <div className="flex min-h-[220px] items-center justify-center">
                 <div className="text-center">
-                  <Loader2 className="mx-auto h-7 w-7 animate-spin text-blue-300" />
-                  <p className="mt-3 text-sm text-slate-400">
+                  <Loader2 className="mx-auto h-7 w-7 animate-spin text-[#285b4b]" />
+                  <p className="mt-3 text-sm text-slate-600">
                     Loading portfolio...
                   </p>
                 </div>
@@ -622,16 +622,16 @@ export default function PortfolioPage() {
             ) : activeHoldings.length > 0 ? (
               <Table>
                 <TableHeader>
-                  <TableRow className="border-white/10">
-                    <TableHead className="text-slate-400">Stock</TableHead>
-                    <TableHead className="text-slate-400">Shares</TableHead>
-                    <TableHead className="text-slate-400">Avg Price</TableHead>
-                    <TableHead className="text-slate-400">Current</TableHead>
-                    <TableHead className="text-slate-400">Cost</TableHead>
-                    <TableHead className="text-slate-400">Value</TableHead>
-                    <TableHead className="text-slate-400">P/L</TableHead>
-                    <TableHead className="text-slate-400">Weight</TableHead>
-                    <TableHead className="text-right text-slate-400">
+                  <TableRow className="border-[#dedfd6]">
+                    <TableHead className="text-slate-600">Stock</TableHead>
+                    <TableHead className="text-slate-600">Shares</TableHead>
+                    <TableHead className="text-slate-600">Avg Price</TableHead>
+                    <TableHead className="text-slate-600">Current</TableHead>
+                    <TableHead className="text-slate-600">Cost</TableHead>
+                    <TableHead className="text-slate-600">Value</TableHead>
+                    <TableHead className="text-slate-600">P/L</TableHead>
+                    <TableHead className="text-slate-600">Weight</TableHead>
+                    <TableHead className="text-right text-slate-600">
                       Actions
                     </TableHead>
                   </TableRow>
@@ -667,16 +667,16 @@ export default function PortfolioPage() {
 
                     return (
                       <Fragment key={holding.ticker}>
-                        <TableRow className="border-white/10">
+                        <TableRow className="border-[#dedfd6]">
                         <TableCell>
                           <div>
                             <Link href={`/stock/${holding.ticker}`}>
-                              <p className="font-medium text-white hover:text-blue-300">
+                              <p className="font-medium text-[#202c29] hover:text-[#285b4b]">
                                 {holding.ticker}
                               </p>
                             </Link>
 
-                            <p className="mt-1 max-w-[240px] truncate text-xs text-slate-400">
+                            <p className="mt-1 max-w-[240px] truncate text-xs text-slate-600">
                               {holding.company}
                             </p>
 
@@ -686,23 +686,23 @@ export default function PortfolioPage() {
                           </div>
                         </TableCell>
 
-                        <TableCell className="text-slate-300">
+                        <TableCell className="text-slate-700">
                           {formatNumber(holding.shares)}
                         </TableCell>
 
-                        <TableCell className="text-slate-300">
+                        <TableCell className="text-slate-700">
                           {formatCurrency(holding.avgPrice, currency)}
                         </TableCell>
 
-                        <TableCell className="text-slate-300">
+                        <TableCell className="text-slate-700">
                           {formatCurrency(holding.currentPrice, currency)}
                         </TableCell>
 
-                        <TableCell className="text-slate-300">
+                        <TableCell className="text-slate-700">
                           {formatCurrency(holding.totalCost, currency)}
                         </TableCell>
 
-                        <TableCell className="text-slate-300">
+                        <TableCell className="text-slate-700">
                           {formatCurrency(holding.value, currency)}
                         </TableCell>
 
@@ -710,15 +710,15 @@ export default function PortfolioPage() {
                           <Badge
                             className={
                               isPositive
-                                ? "bg-emerald-500/15 text-emerald-200"
-                                : "bg-red-500/15 text-red-200"
+                                ? "bg-emerald-500/15 text-emerald-800"
+                                : "bg-red-500/15 text-red-800"
                             }
                           >
                             {formatCurrency(pl, currency)} ({formatPercent(plPercent)})
                           </Badge>
                         </TableCell>
 
-                        <TableCell className="text-slate-300">
+                        <TableCell className="text-slate-700">
                           {holding.weight.toFixed(2)}%
                         </TableCell>
 
@@ -727,7 +727,7 @@ export default function PortfolioPage() {
                             <Link href={`/stock/${holding.ticker}`}>
                               <Button
                                 size="sm"
-                                className="bg-blue-500 text-white hover:bg-blue-600"
+                                className="bg-[#245544] text-[#202c29] hover:bg-[#245544]"
                               >
                                 Open
                                 <ArrowUpRight className="ml-2 h-3.5 w-3.5" />
@@ -738,7 +738,7 @@ export default function PortfolioPage() {
                                 size="sm"
                                 onClick={() => openSellForm(holding)}
                                 data-testid="portfolio-sell-button"
-                                className="bg-amber-500 text-white hover:bg-amber-600"
+                                className="bg-amber-500 text-[#202c29] hover:bg-amber-600"
                               >
                               <ReceiptText className="mr-2 h-4 w-4" />
                               Sell
@@ -748,7 +748,7 @@ export default function PortfolioPage() {
                               size="sm"
                               disabled={removingTicker === holding.ticker}
                               onClick={() => handleRemoveHolding(holding.ticker)}
-                              className="bg-red-500/80 text-white hover:bg-red-600"
+                              className="bg-red-500/80 text-[#202c29] hover:bg-red-600"
                             >
                               {removingTicker === holding.ticker ? (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -762,15 +762,15 @@ export default function PortfolioPage() {
                         </TableRow>
 
                         {activeSellForm ? (
-                          <TableRow className="border-white/10">
+                          <TableRow className="border-[#dedfd6]">
                             <TableCell colSpan={9}>
                               <div
                                 data-testid="portfolio-sell-form"
-                                className="rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4"
+                                className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-4"
                               >
                                 <div className="grid gap-4 lg:grid-cols-[1fr_1fr_1fr_auto] lg:items-end">
                                   <div>
-                                    <label className="text-xs text-slate-400">
+                                    <label className="text-xs text-slate-600">
                                       Shares to Sell
                                     </label>
                                     <input
@@ -782,12 +782,12 @@ export default function PortfolioPage() {
                                       onChange={(event) =>
                                         setSellShares(event.target.value)
                                       }
-                                      className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-amber-400"
+                                      className="mt-1 w-full rounded-xl border border-[#dedfd6] bg-slate-950 px-3 py-2 text-sm text-[#202c29] outline-none focus:border-amber-400"
                                     />
                                   </div>
 
                                   <div>
-                                    <label className="text-xs text-slate-400">
+                                    <label className="text-xs text-slate-600">
                                       Sell Price
                                     </label>
                                     <input
@@ -798,16 +798,16 @@ export default function PortfolioPage() {
                                       onChange={(event) =>
                                         setSellPrice(event.target.value)
                                       }
-                                      className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-amber-400"
+                                      className="mt-1 w-full rounded-xl border border-[#dedfd6] bg-slate-950 px-3 py-2 text-sm text-[#202c29] outline-none focus:border-amber-400"
                                     />
                                   </div>
 
                                   <div className="grid grid-cols-2 gap-3 text-sm">
-                                    <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+                                    <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-3">
                                       <p className="text-xs text-slate-500">
                                         Proceeds
                                       </p>
-                                      <p className="mt-1 font-semibold text-white">
+                                      <p className="mt-1 font-semibold text-[#202c29]">
                                         {formatCurrency(
                                           estimatedProceeds,
                                           currency
@@ -815,15 +815,15 @@ export default function PortfolioPage() {
                                       </p>
                                     </div>
 
-                                    <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+                                    <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-3">
                                       <p className="text-xs text-slate-500">
                                         Realized P/L
                                       </p>
                                       <p
                                         className={
                                           (estimatedRealizedPL ?? 0) >= 0
-                                            ? "mt-1 font-semibold text-emerald-200"
-                                            : "mt-1 font-semibold text-red-200"
+                                            ? "mt-1 font-semibold text-emerald-800"
+                                            : "mt-1 font-semibold text-red-800"
                                         }
                                       >
                                         {formatCurrency(
@@ -842,7 +842,7 @@ export default function PortfolioPage() {
                                   <Button
                                     onClick={() => handleSellHolding(holding)}
                                     disabled={submittingSell}
-                                    className="bg-amber-500 text-white hover:bg-amber-600"
+                                    className="bg-amber-500 text-[#202c29] hover:bg-amber-600"
                                   >
                                     {submittingSell ? (
                                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -862,14 +862,14 @@ export default function PortfolioPage() {
                 </TableBody>
               </Table>
             ) : (
-              <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 p-8 text-center">
+              <div className="rounded-xl border border-dashed border-[#dedfd6] bg-[#f4f5f0] p-8 text-center">
                 <BriefcaseBusiness className="mx-auto h-8 w-8 text-slate-500" />
 
-                <h2 className="mt-4 text-lg font-semibold text-white">
+                <h2 className="mt-4 text-lg font-semibold text-[#202c29]">
                   Your simulated portfolio is empty
                 </h2>
 
-                <p className="mt-2 text-sm text-slate-400">
+                <p className="mt-2 text-sm text-slate-600">
                   Search a stock, open its stock research page, and simulate a
                   buy from there. Start with AAPL for the quickest demo path, or
                   open the watchlist to research names before buying.
@@ -877,13 +877,13 @@ export default function PortfolioPage() {
 
                 <div className="mt-5 flex flex-wrap justify-center gap-3">
                   <Link href="/stock/AAPL">
-                    <Button className="bg-blue-500 text-white hover:bg-blue-600">
+                    <Button className="bg-[#245544] text-[#202c29] hover:bg-[#245544]">
                       Research AAPL
                     </Button>
                   </Link>
 
                   <Link href="/watchlist">
-                    <Button className="bg-white/10 text-white hover:bg-white/20">
+                    <Button className="bg-[#eeefe9] text-[#202c29] hover:bg-[#eeefe9]">
                       Open Watchlist
                     </Button>
                   </Link>
@@ -895,14 +895,14 @@ export default function PortfolioPage() {
 
         <Card
           data-testid="portfolio-transaction-history"
-          className="border-white/10 bg-white/[0.04] text-white"
+          className="border-[#dedfd6] bg-white text-[#202c29]"
         >
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <History className="h-5 w-5 text-blue-300" />
+              <History className="h-5 w-5 text-[#285b4b]" />
               Transaction History
             </CardTitle>
-            <p className="text-sm leading-6 text-slate-400">
+            <p className="text-sm leading-6 text-slate-600">
               BUY rows show simulated entries into the paper portfolio. SELL
               rows show simulated exits and realized P/L based on the sell
               price versus the average cost.
@@ -913,14 +913,14 @@ export default function PortfolioPage() {
             {transactionHistory.length > 0 ? (
               <Table>
                 <TableHeader>
-                  <TableRow className="border-white/10">
-                    <TableHead className="text-slate-400">Action</TableHead>
-                    <TableHead className="text-slate-400">Ticker</TableHead>
-                    <TableHead className="text-slate-400">Shares</TableHead>
-                    <TableHead className="text-slate-400">Price</TableHead>
-                    <TableHead className="text-slate-400">Total</TableHead>
-                    <TableHead className="text-slate-400">Realized P/L</TableHead>
-                    <TableHead className="text-slate-400">Date</TableHead>
+                  <TableRow className="border-[#dedfd6]">
+                    <TableHead className="text-slate-600">Action</TableHead>
+                    <TableHead className="text-slate-600">Ticker</TableHead>
+                    <TableHead className="text-slate-600">Shares</TableHead>
+                    <TableHead className="text-slate-600">Price</TableHead>
+                    <TableHead className="text-slate-600">Total</TableHead>
+                    <TableHead className="text-slate-600">Realized P/L</TableHead>
+                    <TableHead className="text-slate-600">Date</TableHead>
                   </TableRow>
                 </TableHeader>
 
@@ -934,14 +934,14 @@ export default function PortfolioPage() {
                     return (
                       <TableRow
                         key={transaction.id}
-                        className="border-white/10"
+                        className="border-[#dedfd6]"
                       >
                         <TableCell>
                           <Badge
                             className={
                               isSell
-                                ? "bg-amber-500/15 text-amber-200"
-                                : "bg-emerald-500/15 text-emerald-200"
+                                ? "bg-amber-500/15 text-amber-800"
+                                : "bg-emerald-500/15 text-emerald-800"
                             }
                           >
                             {transaction.action}
@@ -950,7 +950,7 @@ export default function PortfolioPage() {
 
                         <TableCell>
                           <Link href={`/stock/${transaction.ticker}`}>
-                            <span className="font-medium text-white hover:text-blue-300">
+                            <span className="font-medium text-[#202c29] hover:text-[#285b4b]">
                               {transaction.ticker}
                             </span>
                           </Link>
@@ -959,15 +959,15 @@ export default function PortfolioPage() {
                           </p>
                         </TableCell>
 
-                        <TableCell className="text-slate-300">
+                        <TableCell className="text-slate-700">
                           {formatNumber(transaction.shares)}
                         </TableCell>
 
-                        <TableCell className="text-slate-300">
+                        <TableCell className="text-slate-700">
                           {formatCurrency(transaction.price, currency)}
                         </TableCell>
 
-                        <TableCell className="text-slate-300">
+                        <TableCell className="text-slate-700">
                           {formatCurrency(transaction.totalAmount, currency)}
                         </TableCell>
 
@@ -976,8 +976,8 @@ export default function PortfolioPage() {
                             <Badge
                               className={
                                 isRealizedPositive
-                                  ? "bg-emerald-500/15 text-emerald-200"
-                                  : "bg-red-500/15 text-red-200"
+                                  ? "bg-emerald-500/15 text-emerald-800"
+                                  : "bg-red-500/15 text-red-800"
                               }
                             >
                               {formatCurrency(realizedPL, currency)} (
@@ -988,7 +988,7 @@ export default function PortfolioPage() {
                           )}
                         </TableCell>
 
-                        <TableCell className="text-slate-300">
+                        <TableCell className="text-slate-700">
                           {formatDate(transaction.createdAt)}
                         </TableCell>
                       </TableRow>
@@ -997,14 +997,14 @@ export default function PortfolioPage() {
                 </TableBody>
               </Table>
             ) : (
-              <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 p-8 text-center">
+              <div className="rounded-xl border border-dashed border-[#dedfd6] bg-[#f4f5f0] p-8 text-center">
                 <History className="mx-auto h-8 w-8 text-slate-500" />
 
-                <h2 className="mt-4 text-lg font-semibold text-white">
+                <h2 className="mt-4 text-lg font-semibold text-[#202c29]">
                   No transaction history yet
                 </h2>
 
-                <p className="mt-2 text-sm text-slate-400">
+                <p className="mt-2 text-sm text-slate-600">
                   Simulated buys and sells will appear here after you trade in
                   the paper portfolio.
                 </p>
@@ -1014,10 +1014,10 @@ export default function PortfolioPage() {
         </Card>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-          <Card className="border-white/10 bg-white/[0.04] text-white">
+          <Card className="border-[#dedfd6] bg-white text-[#202c29]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-red-300" />
+                <AlertTriangle className="h-5 w-5 text-red-800" />
                 Portfolio Alerts
               </CardTitle>
             </CardHeader>
@@ -1052,7 +1052,7 @@ export default function PortfolioPage() {
                   />
                 </>
               ) : (
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-slate-600">
                   No alerts yet. Add simulated holdings to generate portfolio
                   insights.
                 </p>
@@ -1060,10 +1060,10 @@ export default function PortfolioPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-white/10 bg-white/[0.04] text-white">
+          <Card className="border-[#dedfd6] bg-white text-[#202c29]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-emerald-300" />
+                <ShieldCheck className="h-5 w-5 text-emerald-800" />
                 Portfolio Risk Quality
               </CardTitle>
             </CardHeader>
@@ -1091,12 +1091,12 @@ function AlertCard({
   severity: string;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-amber-300/25">
+    <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4 transition-colors duration-200 hover:border-amber-300/25">
       <div className="flex items-center justify-between">
         <p className="font-medium">{title}</p>
         <RiskBadge risk={severity} />
       </div>
-      <p className="mt-2 text-sm leading-6 text-slate-400">{description}</p>
+      <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
     </div>
   );
 }
@@ -1105,8 +1105,8 @@ function QualityMetric({ label, value }: { label: string; value: number }) {
   return (
     <div>
       <div className="mb-2 flex items-center justify-between text-sm">
-        <span className="text-slate-300">{label}</span>
-        <span className="text-slate-400">{value}%</span>
+        <span className="text-slate-700">{label}</span>
+        <span className="text-slate-600">{value}%</span>
       </div>
       <Progress value={value} />
     </div>
@@ -1125,15 +1125,15 @@ function MetricCard({
   icon: React.ReactNode;
 }) {
   return (
-    <Card className="border-white/10 bg-[#0d1424]/80 text-white shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-300/25">
+    <Card className="border-[#dedfd6] bg-[#f4f3ee] text-[#202c29]  transition-all duration-200  hover:border-emerald-300/25">
       <CardContent className="p-5">
         <div className="flex items-center justify-between">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.05]">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#dedfd6] bg-white">
             {icon}
           </div>
-          <Badge className="bg-white/10 text-slate-300">{change}</Badge>
+          <Badge className="bg-[#eeefe9] text-slate-700">{change}</Badge>
         </div>
-        <p className="mt-5 text-sm text-slate-400">{title}</p>
+        <p className="mt-5 text-sm text-slate-600">{title}</p>
         <p className="mt-1 text-2xl font-semibold">{value}</p>
       </CardContent>
     </Card>
@@ -1143,10 +1143,10 @@ function MetricCard({
 function RiskBadge({ risk }: { risk: string }) {
   const styles =
     risk === "High"
-      ? "bg-red-500/15 text-red-200"
+      ? "bg-red-500/15 text-red-800"
       : risk === "Medium"
-        ? "bg-amber-500/15 text-amber-200"
-        : "bg-emerald-500/15 text-emerald-200";
+        ? "bg-amber-500/15 text-amber-800"
+        : "bg-emerald-500/15 text-emerald-800";
 
   return <Badge className={styles}>{risk}</Badge>;
 }
