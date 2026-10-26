@@ -1,68 +1,77 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { LogOut, Search, UserCircle } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { usePathname, useRouter } from "next/navigation";
+import { Search, LogOut, ChevronRight } from "lucide-react";
 import { AuthUser, getStoredUser, logoutUser } from "@/lib/api";
-
+const names: Record<string, string> = {
+  dashboard: "Overview",
+  stock: "Stock research",
+  portfolio: "Portfolio",
+  watchlist: "Watchlist",
+  committee: "Investment committee",
+  ask: "Ask FinCredit",
+  reports: "Reports",
+  governance: "Governance",
+  profile: "Profile",
+  settings: "Settings",
+  admin: "Administration",
+  company: "Company",
+};
 export function TopBar() {
   const router = useRouter();
+  const path = usePathname();
   const [query, setQuery] = useState("");
   const [user, setUser] = useState<AuthUser | null>(null);
-
-  useEffect(() => {
-    setUser(getStoredUser());
-  }, []);
-
-  async function handleLogout() {
-    await logoutUser();
-    router.replace("/login");
-  }
-
-  const displayName = user?.fullName || user?.email || "User";
-  const initial = displayName.charAt(0).toUpperCase();
-
+  const [error, setError] = useState("");
+  useEffect(() => setUser(getStoredUser()), []);
   return (
-    <header className="sticky top-0 z-20 border-b border-white/10 bg-[#070B14]/80 backdrop-blur">
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
-        <form onSubmit={e => { e.preventDefault(); const ticker = query.trim().toUpperCase(); if (/^[A-Z0-9.^=-]{1,20}$/.test(ticker)) router.push(`/stock/${encodeURIComponent(ticker)}`); }} className="relative hidden min-w-0 max-w-md flex-1 md:block">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
-          <Input
-            aria-label="Search stock ticker" value={query} onChange={e => setQuery(e.target.value)} placeholder="Enter a ticker and press Enter"
-            className="border-white/10 bg-white/[0.04] pl-9 text-white placeholder:text-slate-500"
-          />
-        </form>
-
-        <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3 md:ml-4">
-          <Link href="/profile">
-            <Button
-              variant="outline"
-              className="max-w-40 border-white/10 bg-white/[0.04] text-white hover:bg-white/10 sm:max-w-48"
-            >
-              <UserCircle className="mr-2 h-4 w-4" />
-              <span className="truncate">{displayName}</span>
-            </Button>
-          </Link>
-
-          <Button
-            type="button"
-            onClick={handleLogout}
-            variant="outline"
-            className="border-white/10 bg-white/[0.04] text-white hover:bg-white/10"
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            <span className="hidden sm:inline">Logout</span>
-          </Button>
-
-          <div className="hidden h-9 w-9 items-center justify-center rounded-full bg-blue-500/20 text-sm font-semibold text-blue-100 sm:flex">
-            {initial}
-          </div>
-        </div>
+    <header className="fc-topbar">
+      <div className="fc-breadcrumb">
+        Workspace <ChevronRight size={13} />
+        <strong>{names[path.split("/")[1]] ?? "Research"}</strong>
       </div>
+      <form
+        className="fc-search"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const t = query.trim().toUpperCase();
+          if (/^[A-Z0-9.^=-]{1,20}$/.test(t)) {
+            setError("");
+            router.push(`/stock/${encodeURIComponent(t)}`);
+          } else setError("Enter a valid stock ticker.");
+        }}
+      >
+        <Search size={16} />
+        <input
+          aria-label="Search stock ticker"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search a ticker…"
+          maxLength={20}
+        />
+        <button type="submit" aria-label="Search">
+          ↵
+        </button>
+        {error && (
+          <span role="alert" className="fc-search-error">
+            {error}
+          </span>
+        )}
+      </form>
+      <Link href="/profile" className="fc-avatar" aria-label="Open profile">
+        {(user?.fullName || user?.email || "U").charAt(0).toUpperCase()}
+      </Link>
+      <button
+        className="fc-signout"
+        aria-label="Sign out"
+        onClick={async () => {
+          await logoutUser();
+          router.replace("/login");
+        }}
+      >
+        <LogOut size={17} />
+      </button>
     </header>
   );
 }

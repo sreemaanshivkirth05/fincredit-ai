@@ -128,10 +128,10 @@ export function StockSearch() {
   }
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 text-white">
+    <div className="rounded-xl border border-[#dedfd6] bg-white p-5 text-[#202c29]">
       <div className="mb-4">
-        <p className="text-sm font-medium text-white">Search Stocks</p>
-        <p className="mt-1 text-sm leading-6 text-slate-400">
+        <p className="text-sm font-medium text-[#202c29]">Search Stocks</p>
+        <p className="mt-1 text-sm leading-6 text-slate-600">
           Search by ticker or company name to research a stock, view market
           data, and ask AI follow-up questions.
         </p>
@@ -154,7 +154,7 @@ export function StockSearch() {
             }}
             onFocus={() => setHasFocus(true)}
             placeholder="Search ticker or company, e.g. Apple, Amazon, Tesla..."
-            className="h-11 w-full rounded-xl border border-white/10 bg-black/30 pl-10 pr-10 text-sm text-white outline-none placeholder:text-slate-500 focus:border-blue-400/60"
+            className="h-11 w-full rounded-xl border border-[#dedfd6] bg-black/30 pl-10 pr-10 text-sm text-[#202c29] outline-none placeholder:text-slate-500 focus:border-blue-400/60"
           />
 
           {isSearching ? (
@@ -164,7 +164,7 @@ export function StockSearch() {
           {showResults ? (
             <div
               data-testid="stock-search-results"
-              className="absolute left-0 right-0 top-12 z-20 overflow-hidden rounded-2xl border border-white/10 bg-[#0b1220] shadow-2xl shadow-black/40"
+              className="absolute left-0 right-0 top-12 z-20 overflow-hidden rounded-xl border border-[#dedfd6] bg-white "
             >
               {results.map((result) => (
                 <button
@@ -172,17 +172,17 @@ export function StockSearch() {
                   type="button"
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => goToTicker(result.ticker)}
-                  className="flex w-full items-center justify-between gap-3 border-b border-white/5 px-4 py-3 text-left transition hover:bg-white/[0.06] last:border-b-0"
+                  className="flex w-full items-center justify-between gap-3 border-b border-[#dedfd6] px-4 py-3 text-left transition hover:bg-white last:border-b-0"
                 >
                   <span className="min-w-0">
-                    <span className="block text-sm font-semibold text-white">
+                    <span className="block text-sm font-semibold text-[#202c29]">
                       {result.ticker}
                     </span>
-                    <span className="block truncate text-xs text-slate-400">
+                    <span className="block truncate text-xs text-slate-600">
                       {result.name}
                     </span>
                   </span>
-                  <span className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] uppercase text-slate-400">
+                  <span className="shrink-0 rounded-full border border-[#dedfd6] bg-white px-2 py-1 text-[10px] uppercase text-slate-600">
                     {result.source}
                   </span>
                 </button>
@@ -193,16 +193,16 @@ export function StockSearch() {
 
         <Button
           type="submit"
-          className="h-11 bg-blue-500 text-white hover:bg-blue-600 md:w-auto"
+          className="h-11 bg-[#245544] text-[#202c29] hover:bg-[#245544] md:w-auto"
         >
           Search
         </Button>
       </form>
 
-      {error ? <p className="mt-3 text-xs text-red-300">{error}</p> : null}
+      {error ? <p className="mt-3 text-xs text-red-800">{error}</p> : null}
 
       {searchUnavailable && cleanedQuery.length >= 2 ? (
-        <p className="mt-3 text-xs leading-5 text-amber-200">
+        <p className="mt-3 text-xs leading-5 text-amber-800">
           Live search is unavailable right now. Enter a ticker directly to
           continue.
         </p>
@@ -214,7 +214,7 @@ export function StockSearch() {
             key={ticker}
             type="button"
             onClick={() => goToTicker(ticker)}
-            className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-slate-300 transition hover:bg-white/10 hover:text-white"
+            className="rounded-full border border-[#dedfd6] bg-white px-3 py-1 text-xs text-slate-700 transition hover:bg-[#eeefe9] hover:text-[#202c29]"
           >
             {ticker}
           </button>

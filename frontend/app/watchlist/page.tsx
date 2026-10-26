@@ -292,35 +292,35 @@ export default function WatchlistPage() {
       <div className="space-y-6">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
-            <Badge className="mb-3 bg-blue-500/15 text-blue-200">
+            <Badge className="mb-3 bg-[#e8eee8] text-[#285b4b]">
               Watchlist News Radar
             </Badge>
             <h1 className="text-3xl font-semibold tracking-tight">
               Company Watchlist
             </h1>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 text-sm text-slate-600">
               Monitor saved companies, new SEC filing activity, red flags,
               sentiment changes, and AI analysis status.
             </p>
 
             {loading && (
-              <p className="mt-2 text-xs text-blue-300">
+              <p className="mt-2 text-xs text-[#285b4b]">
                 Loading backend watchlist data...
               </p>
             )}
 
             {!loading && watchlistData && (
-              <p className="mt-2 text-xs text-emerald-300">
+              <p className="mt-2 text-xs text-emerald-800">
                 Backend connected: {watchlistData.message}
               </p>
             )}
 
             {apiError && (
-              <p className="mt-2 text-xs text-red-300">{apiError}</p>
+              <p className="mt-2 text-xs text-red-800">{apiError}</p>
             )}
 
             {successMessage && (
-              <p className="mt-2 text-xs text-emerald-300">
+              <p className="mt-2 text-xs text-emerald-800">
                 {successMessage}
               </p>
             )}
@@ -329,7 +329,7 @@ export default function WatchlistPage() {
           <div className="flex flex-wrap gap-3">
             <Button
               onClick={loadWatchlistData}
-              className="bg-white/10 text-white hover:bg-white/20"
+              className="bg-[#eeefe9] text-[#202c29] hover:bg-[#eeefe9]"
             >
               <RefreshCcw className="mr-2 h-4 w-4" />
               Refresh
@@ -339,7 +339,7 @@ export default function WatchlistPage() {
               onClick={handleRefreshPrices}
               disabled={refreshingPrices}
               data-testid="watchlist-refresh-prices"
-              className="bg-emerald-500 text-white hover:bg-emerald-600"
+              className="bg-emerald-500 text-[#202c29] hover:bg-emerald-600"
             >
               {refreshingPrices ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -350,7 +350,7 @@ export default function WatchlistPage() {
             </Button>
 
             <Link href="/dashboard">
-              <Button className="bg-blue-500 hover:bg-blue-600">
+              <Button className="bg-[#245544] hover:bg-[#245544]">
                 <Plus className="mr-2 h-4 w-4" />
                 Add Company
               </Button>
@@ -358,22 +358,22 @@ export default function WatchlistPage() {
           </div>
         </div>
 
-        <p className="max-w-3xl text-sm leading-6 text-slate-400">
+        <p className="max-w-3xl text-sm leading-6 text-slate-600">
           Use Refresh Prices to update watchlist prices from yfinance so you
           can monitor candidates before simulating a buy in the paper
           portfolio.
         </p>
 
-        <Card className="border-white/10 bg-white/[0.04] text-white">
+        <Card className="border-[#dedfd6] bg-white text-[#202c29]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Search className="h-5 w-5 text-blue-300" />
+              <Search className="h-5 w-5 text-[#285b4b]" />
               Add a Stock
             </CardTitle>
           </CardHeader>
 
           <CardContent>
-            <p className="mb-3 text-sm text-slate-400">
+            <p className="mb-3 text-sm text-slate-600">
               Search a ticker, open the stock research page, and use Add to
               Watchlist from there.
             </p>
@@ -387,33 +387,33 @@ export default function WatchlistPage() {
             title="Companies Tracked"
             value={String(companiesTracked)}
             change="Watchlist"
-            icon={<Building2 className="h-5 w-5 text-blue-300" />}
+            icon={<Building2 className="h-5 w-5 text-[#285b4b]" />}
           />
           <MetricCard
             title="Needs Review"
             value={String(needsReview)}
             change="TSLA"
-            icon={<AlertTriangle className="h-5 w-5 text-red-300" />}
+            icon={<AlertTriangle className="h-5 w-5 text-red-800" />}
           />
           <MetricCard
             title="New Filing Changes"
             value={String(newFilingChanges)}
             change="10-Q changed"
-            icon={<FileSearch className="h-5 w-5 text-violet-300" />}
+            icon={<FileSearch className="h-5 w-5 text-[#285b4b]" />}
           />
           <MetricCard
             title="Positive Sentiment"
             value={`${positiveSentiment}%`}
             change="Watchlist avg"
-            icon={<TrendingUp className="h-5 w-5 text-emerald-300" />}
+            icon={<TrendingUp className="h-5 w-5 text-emerald-800" />}
           />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-          <Card className="border-white/10 bg-white/[0.04] text-white">
+          <Card className="border-[#dedfd6] bg-white text-[#202c29]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Newspaper className="h-5 w-5 text-blue-300" />
+                <Newspaper className="h-5 w-5 text-[#285b4b]" />
                 News Sentiment by Company
               </CardTitle>
             </CardHeader>
@@ -421,25 +421,25 @@ export default function WatchlistPage() {
               <div className="h-[320px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={sentimentData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                    <XAxis dataKey="ticker" stroke="#94a3b8" />
-                    <YAxis stroke="#94a3b8" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e6d8" />
+                    <XAxis dataKey="ticker" stroke="#7b8870" />
+                    <YAxis stroke="#7b8870" />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: "#0f172a",
-                        border: "1px solid rgba(255,255,255,0.1)",
+                        backgroundColor: "#ffffff",
+                        border: "1px solid #d5ddcc",
                         borderRadius: "12px",
-                        color: "white",
+                        color: "#283b2d",
                       }}
                     />
                     <Bar
                       dataKey="positive"
-                      fill="#34d399"
+                      fill="#6b9162"
                       radius={[8, 8, 0, 0]}
                     />
                     <Bar
                       dataKey="negative"
-                      fill="#f87171"
+                      fill="#bd7566"
                       radius={[8, 8, 0, 0]}
                     />
                   </BarChart>
@@ -448,10 +448,10 @@ export default function WatchlistPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-white/10 bg-white/[0.04] text-white">
+          <Card className="border-[#dedfd6] bg-white text-[#202c29]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-amber-300" />
+                <AlertTriangle className="h-5 w-5 text-amber-800" />
                 News Radar Highlights
               </CardTitle>
             </CardHeader>
@@ -459,7 +459,7 @@ export default function WatchlistPage() {
               {newsRadar.map((item) => (
                 <div
                   key={`${item.ticker}-${item.category}`}
-                  className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-amber-300/25"
+                  className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4 transition-colors duration-200 hover:border-amber-300/25"
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -470,7 +470,7 @@ export default function WatchlistPage() {
                     </div>
                     <RiskBadge risk={item.impact} />
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-slate-400">
+                  <p className="mt-3 text-sm leading-6 text-slate-600">
                     {item.headline}
                   </p>
                 </div>
@@ -479,7 +479,7 @@ export default function WatchlistPage() {
           </Card>
         </div>
 
-        <Card className="border-white/10 bg-white/[0.04] text-white">
+        <Card className="border-[#dedfd6] bg-white text-[#202c29]">
           <CardHeader>
             <CardTitle>Tracked Companies</CardTitle>
           </CardHeader>
@@ -487,20 +487,20 @@ export default function WatchlistPage() {
             {activeWatchlist.length > 0 ? (
               <Table>
                 <TableHeader>
-                  <TableRow className="border-white/10">
-                    <TableHead className="text-slate-400">Ticker</TableHead>
-                    <TableHead className="text-slate-400">Company</TableHead>
-                    <TableHead className="text-slate-400">Sector</TableHead>
-                    <TableHead className="text-slate-400">Price</TableHead>
-                    <TableHead className="text-slate-400">Prev Close</TableHead>
-                    <TableHead className="text-slate-400">Daily Change</TableHead>
-                    <TableHead className="text-slate-400">Volume</TableHead>
-                    <TableHead className="text-slate-400">Risk</TableHead>
-                    <TableHead className="text-slate-400">Score</TableHead>
-                    <TableHead className="text-slate-400">Sentiment</TableHead>
-                    <TableHead className="text-slate-400">Filing</TableHead>
-                    <TableHead className="text-slate-400">Status</TableHead>
-                    <TableHead className="text-slate-400">Action</TableHead>
+                  <TableRow className="border-[#dedfd6]">
+                    <TableHead className="text-slate-600">Ticker</TableHead>
+                    <TableHead className="text-slate-600">Company</TableHead>
+                    <TableHead className="text-slate-600">Sector</TableHead>
+                    <TableHead className="text-slate-600">Price</TableHead>
+                    <TableHead className="text-slate-600">Prev Close</TableHead>
+                    <TableHead className="text-slate-600">Daily Change</TableHead>
+                    <TableHead className="text-slate-600">Volume</TableHead>
+                    <TableHead className="text-slate-600">Risk</TableHead>
+                    <TableHead className="text-slate-600">Score</TableHead>
+                    <TableHead className="text-slate-600">Sentiment</TableHead>
+                    <TableHead className="text-slate-600">Filing</TableHead>
+                    <TableHead className="text-slate-600">Status</TableHead>
+                    <TableHead className="text-slate-600">Action</TableHead>
                   </TableRow>
                 </TableHeader>
 
@@ -511,46 +511,46 @@ export default function WatchlistPage() {
                   const isPositive = (dailyChangePercent ?? 0) >= 0;
 
                   return (
-                    <TableRow key={w.ticker} className="border-white/10">
-                      <TableCell className="font-medium text-white">
+                    <TableRow key={w.ticker} className="border-[#dedfd6]">
+                      <TableCell className="font-medium text-[#202c29]">
                         {w.ticker}
                       </TableCell>
-                      <TableCell className="text-slate-300">
+                      <TableCell className="text-slate-700">
                         {w.company}
                       </TableCell>
-                      <TableCell className="text-slate-300">
+                      <TableCell className="text-slate-700">
                         {w.sector}
                       </TableCell>
-                      <TableCell className="text-slate-300">
+                      <TableCell className="text-slate-700">
                         {formatCurrency(w.currentPrice, currency)}
                       </TableCell>
-                      <TableCell className="text-slate-300">
+                      <TableCell className="text-slate-700">
                         {formatCurrency(w.previousClose, currency)}
                       </TableCell>
                       <TableCell>
                         <Badge
                           className={
                             isPositive
-                              ? "bg-emerald-500/15 text-emerald-200"
-                              : "bg-red-500/15 text-red-200"
+                              ? "bg-emerald-500/15 text-emerald-800"
+                              : "bg-red-500/15 text-red-800"
                           }
                         >
                           {formatPercent(dailyChangePercent)}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-slate-300">
+                      <TableCell className="text-slate-700">
                         {formatCompactNumber(w.volume)}
                       </TableCell>
                       <TableCell>
                         <RiskBadge risk={w.risk} />
                       </TableCell>
-                      <TableCell className="text-slate-300">
+                      <TableCell className="text-slate-700">
                         {w.riskScore}
                       </TableCell>
-                      <TableCell className="text-slate-300">
+                      <TableCell className="text-slate-700">
                         {w.sentiment}
                       </TableCell>
-                      <TableCell className="text-slate-300">
+                      <TableCell className="text-slate-700">
                         {w.filing}
                       </TableCell>
                       <TableCell>
@@ -562,7 +562,7 @@ export default function WatchlistPage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="border-white/10 bg-white/5 text-white hover:bg-white/10"
+                              className="border-[#dedfd6] bg-[#eeefe9] text-[#202c29] hover:bg-[#eeefe9]"
                             >
                               Open
                               <ArrowUpRight className="ml-2 h-3.5 w-3.5" />
@@ -573,7 +573,7 @@ export default function WatchlistPage() {
                             size="sm"
                             disabled={removingTicker === w.ticker}
                             onClick={() => handleRemoveTicker(w.ticker)}
-                            className="bg-red-500/80 text-white hover:bg-red-600"
+                            className="bg-red-500/80 text-[#202c29] hover:bg-red-600"
                           >
                             {removingTicker === w.ticker ? (
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -590,14 +590,14 @@ export default function WatchlistPage() {
                 </TableBody>
               </Table>
             ) : (
-              <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 p-8 text-center">
+              <div className="rounded-xl border border-dashed border-[#dedfd6] bg-[#f4f5f0] p-8 text-center">
                 <Search className="mx-auto h-8 w-8 text-slate-500" />
 
-                <h2 className="mt-4 text-lg font-semibold text-white">
+                <h2 className="mt-4 text-lg font-semibold text-[#202c29]">
                   Your watchlist is empty
                 </h2>
 
-                <p className="mt-2 text-sm text-slate-400">
+                <p className="mt-2 text-sm text-slate-600">
                   Use the watchlist to monitor stocks before simulating a buy.
                   Search a ticker, open its research page, and add it here when
                   you want to keep tracking price, filings, and AI context.
@@ -605,13 +605,13 @@ export default function WatchlistPage() {
 
                 <div className="mt-5 flex flex-wrap justify-center gap-3">
                   <Link href="/stock/AAPL">
-                    <Button className="bg-blue-500 text-white hover:bg-blue-600">
+                    <Button className="bg-[#245544] text-[#202c29] hover:bg-[#245544]">
                       Research AAPL
                     </Button>
                   </Link>
 
                   <Link href="/dashboard">
-                    <Button className="bg-white/10 text-white hover:bg-white/20">
+                    <Button className="bg-[#eeefe9] text-[#202c29] hover:bg-[#eeefe9]">
                       Search Stocks
                     </Button>
                   </Link>
@@ -621,10 +621,10 @@ export default function WatchlistPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-white/10 bg-white/[0.04] text-white">
+        <Card className="border-[#dedfd6] bg-white text-[#202c29]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileSearch className="h-5 w-5 text-violet-300" />
+              <FileSearch className="h-5 w-5 text-[#285b4b]" />
               Filing Change Monitor
             </CardTitle>
           </CardHeader>
@@ -665,15 +665,15 @@ function MetricCard({
   icon: React.ReactNode;
 }) {
   return (
-    <Card className="border-white/10 bg-[#0d1424]/80 text-white shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300/25">
+    <Card className="border-[#dedfd6] bg-[#f4f3ee] text-[#202c29]  transition-all duration-200  hover:border-blue-300/25">
       <CardContent className="p-5">
         <div className="flex items-center justify-between">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.05]">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#dedfd6] bg-white">
             {icon}
           </div>
-          <Badge className="bg-white/10 text-slate-300">{change}</Badge>
+          <Badge className="bg-[#eeefe9] text-slate-700">{change}</Badge>
         </div>
-        <p className="mt-5 text-sm text-slate-400">{title}</p>
+        <p className="mt-5 text-sm text-slate-600">{title}</p>
         <p className="mt-1 text-2xl font-semibold">{value}</p>
       </CardContent>
     </Card>
@@ -683,10 +683,10 @@ function MetricCard({
 function RiskBadge({ risk }: { risk: string }) {
   const styles =
     risk === "High"
-      ? "bg-red-500/15 text-red-200"
+      ? "bg-red-500/15 text-red-800"
       : risk === "Medium"
-        ? "bg-amber-500/15 text-amber-200"
-        : "bg-emerald-500/15 text-emerald-200";
+        ? "bg-amber-500/15 text-amber-800"
+        : "bg-emerald-500/15 text-emerald-800";
 
   return <Badge className={styles}>{risk}</Badge>;
 }
@@ -694,10 +694,10 @@ function RiskBadge({ risk }: { risk: string }) {
 function StatusBadge({ status }: { status: string }) {
   const styles =
     status === "Needs Review"
-      ? "bg-red-500/15 text-red-200"
+      ? "bg-red-500/15 text-red-800"
       : status === "Monitor"
-        ? "bg-amber-500/15 text-amber-200"
-        : "bg-emerald-500/15 text-emerald-200";
+        ? "bg-amber-500/15 text-amber-800"
+        : "bg-emerald-500/15 text-emerald-800";
 
   return <Badge className={styles}>{status}</Badge>;
 }
@@ -712,9 +712,9 @@ function MonitorCard({
   detail: string;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-blue-300/25">
-      <p className="text-sm text-slate-400">{title}</p>
-      <p className="mt-2 font-semibold text-white">{value}</p>
+    <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4 transition-colors duration-200 hover:border-blue-300/25">
+      <p className="text-sm text-slate-600">{title}</p>
+      <p className="mt-2 font-semibold text-[#202c29]">{value}</p>
       <p className="mt-1 text-sm text-slate-500">{detail}</p>
     </div>
   );

@@ -474,7 +474,7 @@ export default function CompanyPage() {
             <Button
               type="button"
               variant="outline"
-              className="mb-4 border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/10 hover:text-white"
+              className="mb-4 border-[#dedfd6] bg-white text-slate-700 hover:bg-[#eeefe9] hover:text-[#202c29]"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Portfolio
@@ -483,7 +483,7 @@ export default function CompanyPage() {
 
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
-              <Badge className="mb-3 bg-blue-500/15 text-blue-200">
+              <Badge className="mb-3 bg-[#e8eee8] text-[#285b4b]">
                 Company Intelligence
               </Badge>
 
@@ -491,15 +491,15 @@ export default function CompanyPage() {
                 {company.companyName}
               </h1>
 
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
                 {company.summary}
               </p>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <Badge className="bg-white/10 text-slate-300">
+                <Badge className="bg-[#eeefe9] text-slate-700">
                   {company.ticker}
                 </Badge>
-                <Badge className="bg-violet-500/15 text-violet-200">
+                <Badge className="bg-[#e8eee8] text-[#285b4b]">
                   {company.sector}
                 </Badge>
                 <SentimentBadge sentiment={company.sentiment ?? "Stable"} />
@@ -507,7 +507,7 @@ export default function CompanyPage() {
 
               <div className="mt-4 flex flex-wrap items-center gap-3">
                 <Link href={`/ask?question=${encodedAskQuestion}`}>
-                  <Button className="bg-violet-500 text-white hover:bg-violet-600">
+                  <Button className="bg-[#245544] text-[#202c29] hover:bg-[#245544]">
                     <Sparkles className="mr-2 h-4 w-4" />
                     Ask AI About {ticker}
                   </Button>
@@ -515,7 +515,7 @@ export default function CompanyPage() {
 
                 <Button
                   type="button"
-                  className="bg-emerald-500 text-white hover:bg-emerald-600"
+                  className="bg-emerald-500 text-[#202c29] hover:bg-emerald-600"
                   disabled={generatingReport}
                   onClick={handleGenerateLatestReport}
                 >
@@ -533,7 +533,7 @@ export default function CompanyPage() {
                 </Button>
 
                 <Link href="/reports">
-                  <Button className="bg-blue-500 text-white hover:bg-blue-600">
+                  <Button className="bg-[#245544] text-[#202c29] hover:bg-[#245544]">
                     <FileText className="mr-2 h-4 w-4" />
                     View Reports
                   </Button>
@@ -542,7 +542,7 @@ export default function CompanyPage() {
                 <Link href="/governance">
                   <Button
                     variant="outline"
-                    className="border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/10 hover:text-white"
+                    className="border-[#dedfd6] bg-white text-slate-700 hover:bg-[#eeefe9] hover:text-[#202c29]"
                   >
                     <FileSearch className="mr-2 h-4 w-4" />
                     Generate Report from Agent Run
@@ -555,20 +555,20 @@ export default function CompanyPage() {
                 loadingSec ||
                 loadingReports ||
                 loadingAgentRuns) && (
-                <p className="mt-3 flex items-center gap-2 text-xs text-blue-300">
+                <p className="mt-3 flex items-center gap-2 text-xs text-[#285b4b]">
                   <Loader2 className="h-3 w-3 animate-spin" />
                   Loading company, market, SEC, report, and AI run intelligence...
                 </p>
               )}
 
               {reportMessage && (
-                <p className="mt-3 text-xs text-emerald-300">
+                <p className="mt-3 text-xs text-emerald-800">
                   {reportMessage}
                 </p>
               )}
 
               {apiError && (
-                <p className="mt-3 text-xs text-red-300">{apiError}</p>
+                <p className="mt-3 text-xs text-red-800">{apiError}</p>
               )}
             </div>
 
@@ -581,7 +581,7 @@ export default function CompanyPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/10 hover:text-white"
+                  className="border-[#dedfd6] bg-white text-slate-700 hover:bg-[#eeefe9] hover:text-[#202c29]"
                 >
                   <ExternalLink className="mr-2 h-4 w-4" />
                   SEC Search
@@ -591,7 +591,7 @@ export default function CompanyPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/10 hover:text-white"
+                className="border-[#dedfd6] bg-white text-slate-700 hover:bg-[#eeefe9] hover:text-[#202c29]"
                 onClick={() => window.location.reload()}
               >
                 <RefreshCcw className="mr-2 h-4 w-4" />
@@ -606,42 +606,42 @@ export default function CompanyPage() {
             title="Risk Score"
             value={String(company.riskScore ?? 0)}
             change="Internal"
-            icon={<ShieldAlert className="h-5 w-5 text-amber-300" />}
+            icon={<ShieldAlert className="h-5 w-5 text-amber-800" />}
           />
 
           <MetricCard
             title="Portfolio Weight"
             value={`${company.portfolioWeight ?? 0}%`}
             change="Exposure"
-            icon={<Gauge className="h-5 w-5 text-blue-300" />}
+            icon={<Gauge className="h-5 w-5 text-[#285b4b]" />}
           />
 
           <MetricCard
             title="Current Price"
             value={formatCurrency(marketData?.currentPrice)}
             change={marketData?.currency ?? "Market"}
-            icon={<DollarSign className="h-5 w-5 text-emerald-300" />}
+            icon={<DollarSign className="h-5 w-5 text-emerald-800" />}
           />
 
           <MetricCard
             title="Market Cap"
             value={formatLargeNumber(marketData?.marketCap)}
             change={marketData?.exchange ?? "Exchange"}
-            icon={<Building2 className="h-5 w-5 text-violet-300" />}
+            icon={<Building2 className="h-5 w-5 text-[#285b4b]" />}
           />
         </div>
 
-        <Card className="border-white/10 bg-white/[0.04] text-white">
+        <Card className="border-[#dedfd6] bg-white text-[#202c29]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-violet-300" />
+              <Sparkles className="h-5 w-5 text-[#285b4b]" />
               Latest {ticker} AI Agent Runs
             </CardTitle>
           </CardHeader>
 
           <CardContent className="space-y-3">
             {loadingAgentRuns && (
-              <p className="flex items-center gap-2 text-sm text-blue-300">
+              <p className="flex items-center gap-2 text-sm text-[#285b4b]">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Loading latest AI agent runs...
               </p>
@@ -653,24 +653,24 @@ export default function CompanyPage() {
               agentRunsByTicker.runs.map((run) => (
                 <div
                   key={run.id}
-                  className="grid gap-4 rounded-2xl border border-white/10 bg-black/20 p-4 lg:grid-cols-[1fr_auto]"
+                  className="grid gap-4 rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4 lg:grid-cols-[1fr_auto]"
                 >
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <Badge className="bg-violet-500/15 text-violet-200">
+                      <Badge className="bg-[#e8eee8] text-[#285b4b]">
                         Run #{run.id}
                       </Badge>
 
-                      <Badge className="bg-emerald-500/15 text-emerald-200">
+                      <Badge className="bg-emerald-500/15 text-emerald-800">
                         Grounding {run.groundingScore}%
                       </Badge>
 
-                      <Badge className="bg-amber-500/15 text-amber-200">
+                      <Badge className="bg-amber-500/15 text-amber-800">
                         Unsupported {run.unsupportedClaims}
                       </Badge>
                     </div>
 
-                    <p className="mt-3 text-sm font-medium leading-6 text-white">
+                    <p className="mt-3 text-sm font-medium leading-6 text-[#202c29]">
                       {run.question}
                     </p>
 
@@ -683,7 +683,7 @@ export default function CompanyPage() {
                   <div className="flex items-center gap-3">
                     <Button
                       type="button"
-                      className="bg-emerald-500 text-white hover:bg-emerald-600"
+                      className="bg-emerald-500 text-[#202c29] hover:bg-emerald-600"
                       disabled={generatingRunReportId === run.id}
                       onClick={() => handleGenerateReportFromRun(run.id)}
                     >
@@ -705,8 +705,8 @@ export default function CompanyPage() {
 
             {!loadingAgentRuns &&
               (!agentRunsByTicker || agentRunsByTicker.runs.length === 0) && (
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
-                  <p className="text-sm leading-6 text-slate-400">
+                <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-5">
+                  <p className="text-sm leading-6 text-slate-600">
                     No AI agent runs found for {ticker} yet. Click Ask AI About{" "}
                     {ticker}, run the question, then return to this page.
                   </p>
@@ -715,17 +715,17 @@ export default function CompanyPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-white/10 bg-white/[0.04] text-white">
+        <Card className="border-[#dedfd6] bg-white text-[#202c29]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-blue-300" />
+              <FileText className="h-5 w-5 text-[#285b4b]" />
               Latest {ticker} Reports
             </CardTitle>
           </CardHeader>
 
           <CardContent className="space-y-3">
             {loadingReports && (
-              <p className="flex items-center gap-2 text-sm text-blue-300">
+              <p className="flex items-center gap-2 text-sm text-[#285b4b]">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Loading latest reports...
               </p>
@@ -737,24 +737,24 @@ export default function CompanyPage() {
               reportsByTicker.reports.map((report) => (
                 <div
                   key={report.id}
-                  className="grid gap-4 rounded-2xl border border-white/10 bg-black/20 p-4 lg:grid-cols-[1fr_auto]"
+                  className="grid gap-4 rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4 lg:grid-cols-[1fr_auto]"
                 >
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <Badge className="bg-blue-500/15 text-blue-200">
+                      <Badge className="bg-[#e8eee8] text-[#285b4b]">
                         {report.id}
                       </Badge>
                       <StatusBadge status={report.status} />
-                      <Badge className="bg-violet-500/15 text-violet-200">
+                      <Badge className="bg-[#e8eee8] text-[#285b4b]">
                         {report.type}
                       </Badge>
                     </div>
 
-                    <p className="mt-3 font-medium text-white">
+                    <p className="mt-3 font-medium text-[#202c29]">
                       {report.company}
                     </p>
 
-                    <p className="mt-1 text-sm text-slate-400">
+                    <p className="mt-1 text-sm text-slate-600">
                       Created {report.created} · Grounding {report.grounding}% ·{" "}
                       Unsupported claims {report.unsupported}
                     </p>
@@ -764,7 +764,7 @@ export default function CompanyPage() {
                     <Link href={`/reports/${report.id}`}>
                       <Button
                         type="button"
-                        className="bg-blue-500 text-white hover:bg-blue-600"
+                        className="bg-[#245544] text-[#202c29] hover:bg-[#245544]"
                       >
                         Open Report
                       </Button>
@@ -775,8 +775,8 @@ export default function CompanyPage() {
 
             {!loadingReports &&
               (!reportsByTicker || reportsByTicker.reports.length === 0) && (
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
-                  <p className="text-sm leading-6 text-slate-400">
+                <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-5">
+                  <p className="text-sm leading-6 text-slate-600">
                     No reports found for {ticker} yet. Ask FinCredit AI about{" "}
                     {ticker}, then generate a report from the answer.
                   </p>
@@ -786,10 +786,10 @@ export default function CompanyPage() {
         </Card>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-          <Card className="border-white/10 bg-white/[0.04] text-white">
+          <Card className="border-[#dedfd6] bg-white text-[#202c29]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5 text-emerald-300" />
+                <Activity className="h-5 w-5 text-emerald-800" />
                 Live Market Snapshot
               </CardTitle>
             </CardHeader>
@@ -824,17 +824,17 @@ export default function CompanyPage() {
                     />
                   </div>
 
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                  <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm text-slate-400">Daily Move</p>
+                      <p className="text-sm text-slate-600">Daily Move</p>
                       {priceChange != null && priceChange >= 0 ? (
-                        <TrendingUp className="h-5 w-5 text-emerald-300" />
+                        <TrendingUp className="h-5 w-5 text-emerald-800" />
                       ) : (
-                        <TrendingDown className="h-5 w-5 text-red-300" />
+                        <TrendingDown className="h-5 w-5 text-red-800" />
                       )}
                     </div>
 
-                    <p className="mt-2 text-2xl font-semibold text-white">
+                    <p className="mt-2 text-2xl font-semibold text-[#202c29]">
                       {priceChange != null
                         ? `${priceChange >= 0 ? "+" : ""}${priceChange.toFixed(
                             2
@@ -842,7 +842,7 @@ export default function CompanyPage() {
                         : "N/A"}
                     </p>
 
-                    <p className="mt-1 text-sm text-slate-400">
+                    <p className="mt-1 text-sm text-slate-600">
                       {priceChangePercent != null
                         ? `${
                             priceChangePercent >= 0 ? "+" : ""
@@ -866,10 +866,10 @@ export default function CompanyPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-white/10 bg-white/[0.04] text-white">
+          <Card className="border-[#dedfd6] bg-white text-[#202c29]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Landmark className="h-5 w-5 text-blue-300" />
+                <Landmark className="h-5 w-5 text-[#285b4b]" />
                 SEC Fundamentals
               </CardTitle>
             </CardHeader>
@@ -937,10 +937,10 @@ export default function CompanyPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-          <Card className="min-w-0 border-white/10 bg-white/[0.04] text-white">
+          <Card className="min-w-0 border-[#dedfd6] bg-white text-[#202c29]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <LineChart className="h-5 w-5 text-emerald-300" />
+                <LineChart className="h-5 w-5 text-emerald-800" />
                 Market Snapshot History
               </CardTitle>
             </CardHeader>
@@ -950,22 +950,22 @@ export default function CompanyPage() {
                 <div className="h-[300px] min-h-[300px] min-w-0 w-full overflow-hidden">
                   <ResponsiveContainer width="100%" height={300}>
                     <AreaChart data={marketChartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                      <XAxis dataKey="date" stroke="#94a3b8" />
-                      <YAxis stroke="#94a3b8" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e0e6d8" />
+                      <XAxis dataKey="date" stroke="#7b8870" />
+                      <YAxis stroke="#7b8870" />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: "#0f172a",
-                          border: "1px solid rgba(255,255,255,0.1)",
+                          backgroundColor: "#ffffff",
+                          border: "1px solid #d5ddcc",
                           borderRadius: "12px",
-                          color: "white",
+                          color: "#283b2d",
                         }}
                       />
                       <Area
                         type="monotone"
                         dataKey="price"
-                        stroke="#34d399"
-                        fill="#34d399"
+                        stroke="#6b9162"
+                        fill="#6b9162"
                         fillOpacity={0.15}
                       />
                     </AreaChart>
@@ -977,10 +977,10 @@ export default function CompanyPage() {
             </CardContent>
           </Card>
 
-          <Card className="min-w-0 border-white/10 bg-white/[0.04] text-white">
+          <Card className="min-w-0 border-[#dedfd6] bg-white text-[#202c29]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-violet-300" />
+                <BarChart3 className="h-5 w-5 text-[#285b4b]" />
                 SEC Fundamentals History
               </CardTitle>
             </CardHeader>
@@ -990,29 +990,29 @@ export default function CompanyPage() {
                 <div className="h-[300px] min-h-[300px] min-w-0 w-full overflow-hidden">
                   <ResponsiveContainer width="100%" height={300}>
                     <AreaChart data={secChartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                      <XAxis dataKey="date" stroke="#94a3b8" />
-                      <YAxis stroke="#94a3b8" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e0e6d8" />
+                      <XAxis dataKey="date" stroke="#7b8870" />
+                      <YAxis stroke="#7b8870" />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: "#0f172a",
-                          border: "1px solid rgba(255,255,255,0.1)",
+                          backgroundColor: "#ffffff",
+                          border: "1px solid #d5ddcc",
                           borderRadius: "12px",
-                          color: "white",
+                          color: "#283b2d",
                         }}
                       />
                       <Area
                         type="monotone"
                         dataKey="revenue"
-                        stroke="#818cf8"
-                        fill="#818cf8"
+                        stroke="#a4b58c"
+                        fill="#a4b58c"
                         fillOpacity={0.15}
                       />
                       <Area
                         type="monotone"
                         dataKey="netIncome"
-                        stroke="#34d399"
-                        fill="#34d399"
+                        stroke="#6b9162"
+                        fill="#6b9162"
                         fillOpacity={0.08}
                       />
                     </AreaChart>
@@ -1026,10 +1026,10 @@ export default function CompanyPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-          <Card className="border-white/10 bg-white/[0.04] text-white">
+          <Card className="border-[#dedfd6] bg-white text-[#202c29]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-amber-300" />
+                <AlertTriangle className="h-5 w-5 text-amber-800" />
                 Risk Drivers
               </CardTitle>
             </CardHeader>
@@ -1039,14 +1039,14 @@ export default function CompanyPage() {
                 riskDrivers.map((risk, index) => (
                   <div
                     key={`${risk.title}-${index}`}
-                    className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                    className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4"
                   >
                     <div className="flex items-center justify-between gap-4">
-                      <p className="font-medium text-white">{risk.title}</p>
+                      <p className="font-medium text-[#202c29]">{risk.title}</p>
                       <SeverityBadge severity={risk.severity} />
                     </div>
 
-                    <p className="mt-2 text-sm leading-6 text-slate-400">
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
                       {risk.detail}
                     </p>
                   </div>
@@ -1057,10 +1057,10 @@ export default function CompanyPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-white/10 bg-white/[0.04] text-white">
+          <Card className="border-[#dedfd6] bg-white text-[#202c29]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Database className="h-5 w-5 text-emerald-300" />
+                <Database className="h-5 w-5 text-emerald-800" />
                 Evidence
               </CardTitle>
             </CardHeader>
@@ -1070,22 +1070,22 @@ export default function CompanyPage() {
                 evidenceItems.map((item, index) => (
                   <div
                     key={`${item.source}-${index}`}
-                    className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                    className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                      <Badge className="bg-emerald-500/15 text-emerald-200">
+                      <Badge className="bg-emerald-500/15 text-emerald-800">
                         {item.source}
                       </Badge>
 
                       <div className="flex items-center gap-3">
                         <Progress value={item.confidence} className="w-24" />
-                        <span className="text-sm text-slate-300">
+                        <span className="text-sm text-slate-700">
                           {item.confidence}%
                         </span>
                       </div>
                     </div>
 
-                    <p className="mt-3 text-sm leading-6 text-slate-300">
+                    <p className="mt-3 text-sm leading-6 text-slate-700">
                       {item.claim}
                     </p>
                   </div>
@@ -1097,10 +1097,10 @@ export default function CompanyPage() {
           </Card>
         </div>
 
-        <Card className="border-white/10 bg-white/[0.04] text-white">
+        <Card className="border-[#dedfd6] bg-white text-[#202c29]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-blue-300" />
+              <ShieldCheck className="h-5 w-5 text-[#285b4b]" />
               AI Workflow Connection
             </CardTitle>
           </CardHeader>
@@ -1141,14 +1141,14 @@ function MetricCard({
   icon: React.ReactNode;
 }) {
   return (
-    <Card className="border-white/10 bg-white/[0.04] text-white">
+    <Card className="border-[#dedfd6] bg-white text-[#202c29]">
       <CardContent className="p-5">
         <div className="flex items-center justify-between">
           {icon}
-          <Badge className="bg-white/10 text-slate-300">{change}</Badge>
+          <Badge className="bg-[#eeefe9] text-slate-700">{change}</Badge>
         </div>
 
-        <p className="mt-5 text-sm text-slate-400">{title}</p>
+        <p className="mt-5 text-sm text-slate-600">{title}</p>
         <p className="mt-1 text-2xl font-semibold">{value}</p>
       </CardContent>
     </Card>
@@ -1157,9 +1157,9 @@ function MetricCard({
 
 function MiniMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-      <p className="text-sm text-slate-400">{label}</p>
-      <p className="mt-2 break-words text-sm font-medium leading-6 text-white">
+    <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4">
+      <p className="text-sm text-slate-600">{label}</p>
+      <p className="mt-2 break-words text-sm font-medium leading-6 text-[#202c29]">
         {value}
       </p>
     </div>
@@ -1176,9 +1176,9 @@ function RatioCard({
   progress: number;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-      <p className="text-sm text-slate-400">{label}</p>
-      <p className="mt-2 text-xl font-semibold text-white">{value}</p>
+    <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4">
+      <p className="text-sm text-slate-600">{label}</p>
+      <p className="mt-2 text-xl font-semibold text-[#202c29]">{value}</p>
       <Progress value={Math.min(Math.max(progress, 0), 100)} className="mt-3" />
     </div>
   );
@@ -1186,17 +1186,17 @@ function RatioCard({
 
 function WorkflowCard({ title, detail }: { title: string; detail: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-      <p className="font-medium text-white">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-400">{detail}</p>
+    <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4">
+      <p className="font-medium text-[#202c29]">{title}</p>
+      <p className="mt-2 text-sm leading-6 text-slate-600">{detail}</p>
     </div>
   );
 }
 
 function EmptyState({ text }: { text: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
-      <p className="text-sm leading-6 text-slate-400">{text}</p>
+    <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-5">
+      <p className="text-sm leading-6 text-slate-600">{text}</p>
     </div>
   );
 }
@@ -1204,10 +1204,10 @@ function EmptyState({ text }: { text: string }) {
 function SeverityBadge({ severity }: { severity: string }) {
   const styles =
     severity === "High"
-      ? "bg-red-500/15 text-red-200"
+      ? "bg-red-500/15 text-red-800"
       : severity === "Medium"
-        ? "bg-amber-500/15 text-amber-200"
-        : "bg-emerald-500/15 text-emerald-200";
+        ? "bg-amber-500/15 text-amber-800"
+        : "bg-emerald-500/15 text-emerald-800";
 
   return <Badge className={styles}>{severity}</Badge>;
 }
@@ -1215,10 +1215,10 @@ function SeverityBadge({ severity }: { severity: string }) {
 function SentimentBadge({ sentiment }: { sentiment: string }) {
   const styles =
     sentiment === "Positive"
-      ? "bg-emerald-500/15 text-emerald-200"
+      ? "bg-emerald-500/15 text-emerald-800"
       : sentiment === "Negative"
-        ? "bg-red-500/15 text-red-200"
-        : "bg-amber-500/15 text-amber-200";
+        ? "bg-red-500/15 text-red-800"
+        : "bg-amber-500/15 text-amber-800";
 
   return <Badge className={styles}>{sentiment}</Badge>;
 }
@@ -1226,10 +1226,10 @@ function SentimentBadge({ sentiment }: { sentiment: string }) {
 function StatusBadge({ status }: { status: string }) {
   const styles =
     status === "Approved"
-      ? "bg-emerald-500/15 text-emerald-200"
+      ? "bg-emerald-500/15 text-emerald-800"
       : status === "Rejected"
-        ? "bg-red-500/15 text-red-200"
-        : "bg-amber-500/15 text-amber-200";
+        ? "bg-red-500/15 text-red-800"
+        : "bg-amber-500/15 text-amber-800";
 
   return <Badge className={styles}>{status}</Badge>;
 }

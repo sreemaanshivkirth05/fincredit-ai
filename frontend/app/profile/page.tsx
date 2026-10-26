@@ -27,20 +27,20 @@ export default function ProfilePage() {
     <AppShell>
       <div className="space-y-6">
         <div>
-          <Badge className="mb-3 bg-blue-500/15 text-blue-200">Profile</Badge>
-          <h1 className="text-3xl font-semibold tracking-tight text-white">
+          <Badge className="mb-3 bg-[#e8eee8] text-[#285b4b]">Profile</Badge>
+          <h1 className="text-3xl font-semibold tracking-tight text-[#202c29]">
             Account Profile
           </h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
             Your portfolio, watchlist, transaction history, and AI evidence
             trail are unique to this account.
           </p>
         </div>
 
-        <Card className="border-white/10 bg-white/[0.04] text-white">
+        <Card className="border-[#dedfd6] bg-white text-[#202c29]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <UserCircle className="h-5 w-5 text-blue-300" />
+              <UserCircle className="h-5 w-5 text-[#285b4b]" />
               Current User
             </CardTitle>
           </CardHeader>
@@ -49,10 +49,10 @@ export default function ProfilePage() {
             <ProfileRow label="Email" value={user?.email || "Loading..."} />
             <ProfileRow label="Role" value={user?.role || "Loading..."} />
 
-            <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4">
+            <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 p-4">
               <div className="flex items-start gap-3">
-                <ShieldCheck className="mt-0.5 h-5 w-5 text-emerald-300" />
-                <p className="text-sm leading-6 text-emerald-100">
+                <ShieldCheck className="mt-0.5 h-5 w-5 text-emerald-800" />
+                <p className="text-sm leading-6 text-emerald-800">
                   Account isolation is active for portfolio holdings,
                   transactions, watchlist rows, and AI history.
                 </p>
@@ -63,7 +63,7 @@ export default function ProfilePage() {
               type="button"
               onClick={handleLogout}
               data-testid="profile-logout"
-              className="bg-red-500 text-white hover:bg-red-600"
+              className="bg-red-500 text-[#202c29] hover:bg-red-600"
             >
               <LogOut className="mr-2 h-4 w-4" />
               Logout
@@ -77,9 +77,9 @@ export default function ProfilePage() {
 
 function ProfileRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+    <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4">
       <p className="text-xs text-slate-500">{label}</p>
-      <p className="mt-1 break-words text-sm font-medium text-white">
+      <p className="mt-1 break-words text-sm font-medium text-[#202c29]">
         {value}
       </p>
     </div>

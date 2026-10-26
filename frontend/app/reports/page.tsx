@@ -211,7 +211,7 @@ export default function ReportsPage() {
       <div className="space-y-6">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
-            <Badge className="mb-3 bg-blue-500/15 text-blue-200">
+            <Badge className="mb-3 bg-[#e8eee8] text-[#285b4b]">
               AI Reports
             </Badge>
 
@@ -219,30 +219,30 @@ export default function ReportsPage() {
               Reports & Analyst Outputs
             </h1>
 
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
               Review, search, filter, approve, export, and audit AI-generated
               analyst reports created from saved LangGraph agent runs.
             </p>
 
             {loading && (
-              <p className="mt-2 flex items-center gap-2 text-xs text-blue-300">
+              <p className="mt-2 flex items-center gap-2 text-xs text-[#285b4b]">
                 <Loader2 className="h-3 w-3 animate-spin" />
                 Loading reports from PostgreSQL...
               </p>
             )}
 
             {!loading && reportsData && (
-              <p className="mt-2 text-xs text-emerald-300">
+              <p className="mt-2 text-xs text-emerald-800">
                 Reports connected: {reportsData.message}
               </p>
             )}
 
             {apiError && (
-              <p className="mt-2 text-xs text-red-300">{apiError}</p>
+              <p className="mt-2 text-xs text-red-800">{apiError}</p>
             )}
           </div>
 
-          <Badge className="w-fit bg-white/10 text-slate-300">
+          <Badge className="w-fit bg-[#eeefe9] text-slate-700">
             LangGraph Report Workflow
           </Badge>
         </div>
@@ -252,32 +252,32 @@ export default function ReportsPage() {
             title="Total Reports"
             value={String(reports.totalReports)}
             change="PostgreSQL"
-            icon={<FileText className="h-5 w-5 text-blue-300" />}
+            icon={<FileText className="h-5 w-5 text-[#285b4b]" />}
           />
           <MetricCard
             title="AI Agent Reports"
             value={String(aiGeneratedReports.length)}
             change="Generated"
-            icon={<Sparkles className="h-5 w-5 text-violet-300" />}
+            icon={<Sparkles className="h-5 w-5 text-[#285b4b]" />}
           />
           <MetricCard
             title="Needs Review"
             value={String(reports.needsReview)}
             change="Analyst queue"
-            icon={<Gauge className="h-5 w-5 text-amber-300" />}
+            icon={<Gauge className="h-5 w-5 text-amber-800" />}
           />
           <MetricCard
             title="Avg Stored Score"
             value={`${reports.avgGrounding}%`}
             change="Availability / legacy scores; not accuracy"
-            icon={<ShieldCheck className="h-5 w-5 text-emerald-300" />}
+            icon={<ShieldCheck className="h-5 w-5 text-emerald-800" />}
           />
         </div>
 
-        <Card className="border-white/10 bg-white/[0.04] text-white">
+        <Card className="border-[#dedfd6] bg-white text-[#202c29]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <SlidersHorizontal className="h-5 w-5 text-violet-300" />
+              <SlidersHorizontal className="h-5 w-5 text-[#285b4b]" />
               Search & Filter Reports
             </CardTitle>
           </CardHeader>
@@ -290,14 +290,14 @@ export default function ReportsPage() {
                   value={searchText}
                   onChange={(event) => setSearchText(event.target.value)}
                   placeholder="Search report ID, ticker, company, type, or status..."
-                  className="border-white/10 bg-black/30 pl-9 text-white placeholder:text-slate-500"
+                  className="border-[#dedfd6] bg-black/30 pl-9 text-[#202c29] placeholder:text-slate-500"
                 />
               </div>
 
               <select
                 value={statusFilter}
                 onChange={(event) => setStatusFilter(event.target.value)}
-                className="h-10 rounded-md border border-white/10 bg-black/30 px-3 text-sm text-white outline-none"
+                className="h-10 rounded-md border border-[#dedfd6] bg-black/30 px-3 text-sm text-[#202c29] outline-none"
               >
                 <option value="All">All Statuses</option>
                 <option value="Approved">Approved</option>
@@ -308,7 +308,7 @@ export default function ReportsPage() {
               <select
                 value={groundingFilter}
                 onChange={(event) => setGroundingFilter(event.target.value)}
-                className="h-10 rounded-md border border-white/10 bg-black/30 px-3 text-sm text-white outline-none"
+                className="h-10 rounded-md border border-[#dedfd6] bg-black/30 px-3 text-sm text-[#202c29] outline-none"
               >
                 <option value="All">All Grounding</option>
                 <option value="90+">90%+</option>
@@ -319,7 +319,7 @@ export default function ReportsPage() {
               <select
                 value={sortMode}
                 onChange={(event) => setSortMode(event.target.value)}
-                className="h-10 rounded-md border border-white/10 bg-black/30 px-3 text-sm text-white outline-none"
+                className="h-10 rounded-md border border-[#dedfd6] bg-black/30 px-3 text-sm text-[#202c29] outline-none"
               >
                 <option value="Latest">Latest First</option>
                 <option value="Grounding High">Grounding High</option>
@@ -330,29 +330,29 @@ export default function ReportsPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/10 hover:text-white"
+                className="border-[#dedfd6] bg-white text-slate-700 hover:bg-[#eeefe9] hover:text-[#202c29]"
                 onClick={resetFilters}
               >
                 Reset
               </Button>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
-              <Badge className="bg-white/10 text-slate-300">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+              <Badge className="bg-[#eeefe9] text-slate-700">
                 Showing {filteredReports.length} of {reports.reports.length}
               </Badge>
               {searchText && (
-                <Badge className="bg-blue-500/15 text-blue-200">
+                <Badge className="bg-[#e8eee8] text-[#285b4b]">
                   Search: {searchText}
                 </Badge>
               )}
               {statusFilter !== "All" && (
-                <Badge className="bg-amber-500/15 text-amber-200">
+                <Badge className="bg-amber-500/15 text-amber-800">
                   Status: {statusFilter}
                 </Badge>
               )}
               {groundingFilter !== "All" && (
-                <Badge className="bg-emerald-500/15 text-emerald-200">
+                <Badge className="bg-emerald-500/15 text-emerald-800">
                   Grounding: {groundingFilter}
                 </Badge>
               )}
@@ -361,36 +361,36 @@ export default function ReportsPage() {
         </Card>
 
         {latestReport && (
-          <Card className="border-white/10 bg-white/[0.04] text-white">
+          <Card className="border-[#dedfd6] bg-white text-[#202c29]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-violet-300" />
+                <Sparkles className="h-5 w-5 text-[#285b4b]" />
                 Top Matching Report
               </CardTitle>
             </CardHeader>
 
             <CardContent>
               <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
+                <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-5">
                   <div className="flex flex-wrap items-center gap-3">
-                    <Badge className="bg-blue-500/15 text-blue-200">
+                    <Badge className="bg-[#e8eee8] text-[#285b4b]">
                       {latestReport.ticker}
                     </Badge>
                     <StatusBadge status={latestReport.status} />
-                    <Badge className="bg-violet-500/15 text-violet-200">
+                    <Badge className="bg-[#e8eee8] text-[#285b4b]">
                       {latestReport.type}
                     </Badge>
                   </div>
 
-                  <h2 className="mt-4 text-xl font-semibold text-white">
+                  <h2 className="mt-4 text-xl font-semibold text-[#202c29]">
                     {latestReport.company}
                   </h2>
 
-                  <p className="mt-2 text-sm text-slate-400">
+                  <p className="mt-2 text-sm text-slate-600">
                     Report ID: {latestReport.id}
                   </p>
 
-                  <p className="mt-3 text-sm leading-6 text-slate-300">
+                  <p className="mt-3 text-sm leading-6 text-slate-700">
                     This is the top report matching your current filters. Open
                     it to review the full AI report, approval history, comments,
                     and PDF export.
@@ -400,7 +400,7 @@ export default function ReportsPage() {
                     <Link href={`/reports/${latestReport.id}`}>
                       <Button
                         type="button"
-                        className="bg-blue-500 text-white hover:bg-blue-600"
+                        className="bg-[#245544] text-[#202c29] hover:bg-[#245544]"
                       >
                         View Report
                       </Button>
@@ -425,10 +425,10 @@ export default function ReportsPage() {
           </Card>
         )}
 
-        <Card className="border-white/10 bg-white/[0.04] text-white">
+        <Card className="border-[#dedfd6] bg-white text-[#202c29]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-blue-300" />
+              <FileText className="h-5 w-5 text-[#285b4b]" />
               Generated Report Records
             </CardTitle>
           </CardHeader>
@@ -436,37 +436,37 @@ export default function ReportsPage() {
           <CardContent>
             <Table>
               <TableHeader>
-                <TableRow className="border-white/10">
-                  <TableHead className="text-slate-400">Report ID</TableHead>
-                  <TableHead className="text-slate-400">Ticker</TableHead>
-                  <TableHead className="text-slate-400">Report Name</TableHead>
-                  <TableHead className="text-slate-400">Type</TableHead>
-                  <TableHead className="text-slate-400">Status</TableHead>
-                  <TableHead className="text-slate-400">Stored score</TableHead>
-                  <TableHead className="text-slate-400">Unsupported</TableHead>
-                  <TableHead className="text-slate-400">Created</TableHead>
-                  <TableHead className="text-slate-400">Action</TableHead>
+                <TableRow className="border-[#dedfd6]">
+                  <TableHead className="text-slate-600">Report ID</TableHead>
+                  <TableHead className="text-slate-600">Ticker</TableHead>
+                  <TableHead className="text-slate-600">Report Name</TableHead>
+                  <TableHead className="text-slate-600">Type</TableHead>
+                  <TableHead className="text-slate-600">Status</TableHead>
+                  <TableHead className="text-slate-600">Stored score</TableHead>
+                  <TableHead className="text-slate-600">Unsupported</TableHead>
+                  <TableHead className="text-slate-600">Created</TableHead>
+                  <TableHead className="text-slate-600">Action</TableHead>
                 </TableRow>
               </TableHeader>
 
               <TableBody>
                 {filteredReports.map((report) => (
-                  <TableRow key={report.id} className="border-white/10">
-                    <TableCell className="font-medium text-white">
+                  <TableRow key={report.id} className="border-[#dedfd6]">
+                    <TableCell className="font-medium text-[#202c29]">
                       {report.id}
                     </TableCell>
 
                     <TableCell>
-                      <Badge className="bg-blue-500/15 text-blue-200">
+                      <Badge className="bg-[#e8eee8] text-[#285b4b]">
                         {report.ticker}
                       </Badge>
                     </TableCell>
 
-                    <TableCell className="max-w-[280px] text-slate-300">
+                    <TableCell className="max-w-[280px] text-slate-700">
                       {report.company}
                     </TableCell>
 
-                    <TableCell className="text-slate-300">
+                    <TableCell className="text-slate-700">
                       {report.type}
                     </TableCell>
 
@@ -477,17 +477,17 @@ export default function ReportsPage() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Progress value={report.grounding} className="w-20" />
-                        <span className="text-sm text-slate-300">
+                        <span className="text-sm text-slate-700">
                           {report.grounding}%
                         </span>
                       </div>
                     </TableCell>
 
-                    <TableCell className="text-slate-300">
+                    <TableCell className="text-slate-700">
                       {report.unsupported}
                     </TableCell>
 
-                    <TableCell className="text-slate-300">
+                    <TableCell className="text-slate-700">
                       {report.created}
                     </TableCell>
 
@@ -496,7 +496,7 @@ export default function ReportsPage() {
                         <Button
                           type="button"
                           size="sm"
-                          className="bg-blue-500 text-white hover:bg-blue-600"
+                          className="bg-[#245544] text-[#202c29] hover:bg-[#245544]"
                         >
                           View Report
                         </Button>
@@ -508,7 +508,7 @@ export default function ReportsPage() {
             </Table>
 
             {filteredReports.length === 0 && (
-              <p className="mt-4 text-sm text-slate-400">
+              <p className="mt-4 text-sm text-slate-600">
                 No reports match the current filters. Reset filters or generate
                 more reports from the Governance page.
               </p>
@@ -517,10 +517,10 @@ export default function ReportsPage() {
         </Card>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-          <Card className="border-white/10 bg-white/[0.04] text-white">
+          <Card className="border-[#dedfd6] bg-white text-[#202c29]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-emerald-300" />
+                <BarChart3 className="h-5 w-5 text-emerald-800" />
                 Filtered Stored Scores
               </CardTitle>
             </CardHeader>
@@ -529,20 +529,20 @@ export default function ReportsPage() {
               <div className="h-[320px] min-h-[320px] min-w-0 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={visibleReportQuality}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                    <XAxis dataKey="report" stroke="#94a3b8" />
-                    <YAxis stroke="#94a3b8" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e6d8" />
+                    <XAxis dataKey="report" stroke="#7b8870" />
+                    <YAxis stroke="#7b8870" />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: "#0f172a",
-                        border: "1px solid rgba(255,255,255,0.1)",
+                        backgroundColor: "#ffffff",
+                        border: "1px solid #d5ddcc",
                         borderRadius: "12px",
-                        color: "white",
+                        color: "#283b2d",
                       }}
                     />
                     <Bar
                       dataKey="grounding"
-                      fill="#34d399"
+                      fill="#6b9162"
                       radius={[8, 8, 0, 0]}
                     />
                   </BarChart>
@@ -550,7 +550,7 @@ export default function ReportsPage() {
               </div>
 
               {visibleReportQuality.length === 0 && (
-                <p className="mt-4 text-sm text-slate-400">
+                <p className="mt-4 text-sm text-slate-600">
                   Report grounding chart will appear when matching reports are
                   available.
                 </p>
@@ -558,10 +558,10 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-white/10 bg-white/[0.04] text-white">
+          <Card className="border-[#dedfd6] bg-white text-[#202c29]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Workflow className="h-5 w-5 text-violet-300" />
+                <Workflow className="h-5 w-5 text-[#285b4b]" />
                 Report Workflow
               </CardTitle>
             </CardHeader>
@@ -570,14 +570,14 @@ export default function ReportsPage() {
               {reports.workflow.map((step) => (
                 <div
                   key={step.title}
-                  className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                  className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4"
                 >
                   <div className="flex items-center justify-between gap-4">
-                    <p className="font-medium text-white">{step.title}</p>
+                    <p className="font-medium text-[#202c29]">{step.title}</p>
                     <StatusBadge status={step.status} />
                   </div>
 
-                  <p className="mt-2 text-sm leading-6 text-slate-400">
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
                     {step.detail}
                   </p>
                 </div>
@@ -586,10 +586,10 @@ export default function ReportsPage() {
           </Card>
         </div>
 
-        <Card className="border-white/10 bg-white/[0.04] text-white">
+        <Card className="border-[#dedfd6] bg-white text-[#202c29]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-emerald-300" />
+              <CheckCircle2 className="h-5 w-5 text-emerald-800" />
               How Reports Are Created
             </CardTitle>
           </CardHeader>
@@ -636,13 +636,13 @@ function MetricCard({
   icon: React.ReactNode;
 }) {
   return (
-    <Card className="border-white/10 bg-white/[0.04] text-white">
+    <Card className="border-[#dedfd6] bg-white text-[#202c29]">
       <CardContent className="p-5">
         <div className="flex items-center justify-between">
           {icon}
-          <Badge className="bg-white/10 text-slate-300">{change}</Badge>
+          <Badge className="bg-[#eeefe9] text-slate-700">{change}</Badge>
         </div>
-        <p className="mt-5 text-sm text-slate-400">{title}</p>
+        <p className="mt-5 text-sm text-slate-600">{title}</p>
         <p className="mt-1 text-2xl font-semibold">{value}</p>
       </CardContent>
     </Card>
@@ -651,9 +651,9 @@ function MetricCard({
 
 function MiniMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-      <p className="text-sm text-slate-400">{label}</p>
-      <p className="mt-2 text-sm font-medium leading-6 text-white">{value}</p>
+    <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4">
+      <p className="text-sm text-slate-600">{label}</p>
+      <p className="mt-2 text-sm font-medium leading-6 text-[#202c29]">{value}</p>
     </div>
   );
 }
@@ -668,13 +668,13 @@ function ProcessStep({
   detail: string;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-500/15 text-sm font-semibold text-violet-200">
+    <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4">
+      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e8eee8] text-sm font-semibold text-[#285b4b]">
         {step}
       </div>
 
-      <p className="mt-4 font-medium text-white">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-400">{detail}</p>
+      <p className="mt-4 font-medium text-[#202c29]">{title}</p>
+      <p className="mt-2 text-sm leading-6 text-slate-600">{detail}</p>
     </div>
   );
 }
@@ -682,12 +682,12 @@ function ProcessStep({
 function StatusBadge({ status }: { status: string }) {
   const styles =
     status === "Approved" || status === "Complete" || status === "Ready"
-      ? "bg-emerald-500/15 text-emerald-200"
+      ? "bg-emerald-500/15 text-emerald-800"
       : status === "Rejected"
-        ? "bg-red-500/15 text-red-200"
+        ? "bg-red-500/15 text-red-800"
         : status === "Needs Review" || status === "In Review"
-          ? "bg-amber-500/15 text-amber-200"
-          : "bg-blue-500/15 text-blue-200";
+          ? "bg-amber-500/15 text-amber-800"
+          : "bg-[#e8eee8] text-[#285b4b]";
 
   return <Badge className={styles}>{status}</Badge>;
 }

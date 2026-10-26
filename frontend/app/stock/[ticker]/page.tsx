@@ -492,9 +492,9 @@ function getErrorMessage(error: unknown) {
 
 function MetricCard({ label, value, helper }: MetricCardProps) {
   return (
-    <Card className="border-white/10 bg-[#0d1424]/80 text-white shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-300/25">
+    <Card className="border-[#dedfd6] bg-[#f4f3ee] text-[#202c29]  transition-all duration-200  hover:border-emerald-300/25">
       <CardContent className="p-5">
-        <p className="text-sm text-slate-400">{label}</p>
+        <p className="text-sm text-slate-600">{label}</p>
         <p className="mt-2 text-2xl font-semibold">{value}</p>
         {helper ? (
           <p className="mt-1 text-xs leading-5 text-slate-500">{helper}</p>
@@ -509,7 +509,7 @@ function scoreTone(status?: string) {
 
   if (normalized.includes("strong")) {
     return {
-      badge: "bg-emerald-500/15 text-emerald-200",
+      badge: "bg-emerald-500/15 text-emerald-800",
       bar: "bg-emerald-400",
       border: "hover:border-emerald-300/30",
     };
@@ -517,7 +517,7 @@ function scoreTone(status?: string) {
 
   if (normalized.includes("weak") || normalized.includes("elevated")) {
     return {
-      badge: "bg-red-500/15 text-red-200",
+      badge: "bg-red-500/15 text-red-800",
       bar: "bg-red-400",
       border: "hover:border-red-300/30",
     };
@@ -525,14 +525,14 @@ function scoreTone(status?: string) {
 
   if (normalized.includes("unknown")) {
     return {
-      badge: "bg-slate-500/20 text-slate-200",
+      badge: "bg-slate-500/20 text-slate-700",
       bar: "bg-slate-400",
       border: "hover:border-slate-300/30",
     };
   }
 
   return {
-    badge: "bg-amber-500/15 text-amber-200",
+    badge: "bg-amber-500/15 text-amber-800",
     bar: "bg-amber-300",
     border: "hover:border-amber-300/30",
   };
@@ -544,11 +544,11 @@ function ScoreBar({ score, status }: { score: number; status?: string }) {
 
   return (
     <div className="mt-3">
-      <div className="mb-2 flex items-center justify-between text-xs text-slate-400">
+      <div className="mb-2 flex items-center justify-between text-xs text-slate-600">
         <span>Score</span>
         <span>{safeScore}/100</span>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-white/10">
+      <div className="h-2 overflow-hidden rounded-full bg-[#eeefe9]">
         <div
           className={`h-full rounded-full ${tone.bar}`}
           style={{ width: `${safeScore}%` }}
@@ -568,11 +568,11 @@ function TextList({
   tone?: "slate" | "emerald" | "amber" | "red" | "blue";
 }) {
   const colors = {
-    slate: "border-white/10 bg-white/[0.04] text-slate-300",
-    emerald: "border-emerald-400/20 bg-emerald-500/10 text-emerald-100",
-    amber: "border-amber-400/20 bg-amber-500/10 text-amber-100",
-    red: "border-red-400/20 bg-red-500/10 text-red-100",
-    blue: "border-blue-400/20 bg-blue-500/10 text-blue-100",
+    slate: "border-[#dedfd6] bg-white text-slate-700",
+    emerald: "border-emerald-400/20 bg-emerald-500/10 text-emerald-800",
+    amber: "border-amber-400/20 bg-amber-500/10 text-amber-800",
+    red: "border-red-400/20 bg-red-500/10 text-red-800",
+    blue: "border-blue-400/20 bg-[#e8eee8] text-[#285b4b]",
   };
 
   if (!items || items.length === 0) {
@@ -598,12 +598,12 @@ function IntelligenceScoreCard({ score }: { score: IntelligenceScore }) {
 
   return (
     <div
-      className={`rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors ${tone.border}`}
+      className={`rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4 transition-colors ${tone.border}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="font-medium text-white">{score.label}</p>
-          <p className="mt-2 text-sm leading-6 text-slate-400">
+          <p className="font-medium text-[#202c29]">{score.label}</p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
             {score.explanation}
           </p>
         </div>
@@ -641,9 +641,9 @@ function MiniMetric({
   helper?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+    <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4">
       <p className="text-xs text-slate-500">{label}</p>
-      <p className="mt-2 text-lg font-semibold text-white">{value}</p>
+      <p className="mt-2 text-lg font-semibold text-[#202c29]">{value}</p>
       {helper ? <p className="mt-1 text-xs text-slate-500">{helper}</p> : null}
     </div>
   );
@@ -1100,10 +1100,10 @@ export default function StockDetailPage() {
 
   const changeClass =
     computedDailyChange === null
-      ? "text-slate-400"
+      ? "text-slate-600"
       : computedDailyChange >= 0
-        ? "text-emerald-300"
-        : "text-red-300";
+        ? "text-emerald-800"
+        : "text-red-800";
 
   const changeIcon =
     computedDailyChange === null ? null : computedDailyChange >= 0 ? (
@@ -1209,11 +1209,11 @@ export default function StockDetailPage() {
       <AppShell>
         <div className="flex min-h-[70vh] items-center justify-center">
           <div className="text-center">
-            <Loader2 className="mx-auto h-8 w-8 animate-spin text-blue-300" />
-            <p className="mt-4 text-lg font-semibold text-white">
+            <Loader2 className="mx-auto h-8 w-8 animate-spin text-[#285b4b]" />
+            <p className="mt-4 text-lg font-semibold text-[#202c29]">
               Loading {ticker}...
             </p>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 text-sm text-slate-600">
               Fetching price, chart, SEC fundamentals, watchlist, portfolio, and news.
             </p>
           </div>
@@ -1227,25 +1227,25 @@ export default function StockDetailPage() {
       <div className="space-y-6">
         <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
           <div>
-            <Badge className="mb-3 bg-blue-500/15 text-blue-200">
+            <Badge className="mb-3 bg-[#e8eee8] text-[#285b4b]">
               Stock Research
             </Badge>
 
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-4xl font-semibold tracking-tight text-white">
+              <h1 className="text-4xl font-semibold tracking-tight text-[#202c29]">
                 {ticker}
               </h1>
 
-              <Badge className="bg-white/10 text-slate-300">
+              <Badge className="bg-[#eeefe9] text-slate-700">
                 {exchange ? String(exchange) : "Exchange unavailable"}
               </Badge>
 
-              <Badge className="bg-white/10 text-slate-300">
+              <Badge className="bg-[#eeefe9] text-slate-700">
                 {String(currency)}
               </Badge>
 
               {sector ? (
-                <Badge className="bg-emerald-500/15 text-emerald-200">
+                <Badge className="bg-emerald-500/15 text-emerald-800">
                   {String(sector)}
                 </Badge>
               ) : null}
@@ -1257,13 +1257,13 @@ export default function StockDetailPage() {
               ) : null}
 
               {isInPortfolio ? (
-                <Badge className="bg-blue-500/15 text-blue-200">
+                <Badge className="bg-[#e8eee8] text-[#285b4b]">
                   In Portfolio
                 </Badge>
               ) : null}
             </div>
 
-            <p className="mt-2 text-lg text-slate-400">{companyName}</p>
+            <p className="mt-2 text-lg text-slate-600">{companyName}</p>
 
             {fetchedAt ? (
               <p className="mt-2 text-xs text-slate-500">
@@ -1276,7 +1276,7 @@ export default function StockDetailPage() {
             <Button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="bg-blue-500 text-white hover:bg-blue-600"
+              className="bg-[#245544] text-[#202c29] hover:bg-[#245544]"
             >
               {isRefreshing ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1289,7 +1289,7 @@ export default function StockDetailPage() {
             <Link href={askAiHref}>
               <Button
                 data-testid="stock-ask-ai"
-                className="bg-violet-500 text-white hover:bg-violet-600"
+                className="bg-[#245544] text-[#202c29] hover:bg-[#245544]"
               >
                 <Sparkles className="mr-2 h-4 w-4" />
                 Ask AI
@@ -1299,13 +1299,13 @@ export default function StockDetailPage() {
         </div>
 
         {errors.length > 0 ? (
-          <Card className="border-red-500/30 bg-red-500/10 text-red-100">
+          <Card className="border-red-500/30 bg-red-500/10 text-red-800">
             <CardContent className="p-5">
               <p className="font-medium">
                 Some stock data could not be loaded.
               </p>
 
-              <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-red-200">
+              <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-red-800">
                 {errors.map((error) => (
                   <li key={error}>{error}</li>
                 ))}
@@ -1315,20 +1315,20 @@ export default function StockDetailPage() {
         ) : null}
 
         {portfolioSuccessMessage ? (
-          <Card className="border-emerald-500/30 bg-emerald-500/10 text-emerald-100">
+          <Card className="border-emerald-500/30 bg-emerald-500/10 text-emerald-800">
             <CardContent className="flex flex-col gap-3 p-5 md:flex-row md:items-center md:justify-between">
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-300" />
+                <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-800" />
                 <div>
                   <p className="font-medium">{portfolioSuccessMessage}</p>
-                  <p className="mt-1 text-sm text-emerald-200/80">
+                  <p className="mt-1 text-sm text-emerald-800/80">
                     This is a paper-trading transaction. No real money was used.
                   </p>
                 </div>
               </div>
 
               <Link href="/portfolio">
-                <Button className="bg-emerald-500 text-white hover:bg-emerald-600">
+                <Button className="bg-emerald-500 text-[#202c29] hover:bg-emerald-600">
                   Open Portfolio
                 </Button>
               </Link>
@@ -1336,10 +1336,10 @@ export default function StockDetailPage() {
           </Card>
         ) : null}
 
-        <Card className="border-white/10 bg-white/[0.04] text-white">
+        <Card className="border-[#dedfd6] bg-white text-[#202c29]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-emerald-300" />
+              <CheckCircle2 className="h-5 w-5 text-emerald-800" />
               How to Use This Page
             </CardTitle>
           </CardHeader>
@@ -1355,12 +1355,12 @@ export default function StockDetailPage() {
               ].map((step, index) => (
                 <div
                   key={step}
-                  className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-blue-300/25"
+                  className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4 transition-colors duration-200 hover:border-blue-300/25"
                 >
-                  <p className="text-xs font-semibold text-blue-200">
+                  <p className="text-xs font-semibold text-[#285b4b]">
                     {index + 1}
                   </p>
-                  <p className="mt-2 text-sm leading-5 text-slate-300">
+                  <p className="mt-2 text-sm leading-5 text-slate-700">
                     {step}
                   </p>
                 </div>
@@ -1371,17 +1371,17 @@ export default function StockDetailPage() {
 
         <section
           data-testid="stock-intelligence-section"
-          className="space-y-5 rounded-3xl border border-cyan-300/20 bg-cyan-500/[0.04] p-5 shadow-2xl shadow-cyan-950/20"
+          className="space-y-5 rounded-xl border border-cyan-300/20 bg-[#e8eee8] p-5 shadow-sm shadow-cyan-950/20"
         >
           <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
             <div>
-              <Badge className="mb-3 bg-cyan-500/15 text-cyan-100">
+              <Badge className="mb-3 bg-[#e8eee8] text-[#285b4b]">
                 FinCredit Intelligence Layer
               </Badge>
-              <h2 className="text-3xl font-semibold tracking-tight text-white">
+              <h2 className="text-3xl font-semibold tracking-tight text-[#202c29]">
                 Stock Intelligence
               </h2>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
                 A deterministic research layer that turns market, SEC, news,
                 valuation, and portfolio context into decision-readiness
                 signals for paper-trading education.
@@ -1389,7 +1389,7 @@ export default function StockDetailPage() {
             </div>
 
             <Link href={intelligenceAskHref}>
-              <Button className="bg-cyan-500 text-white hover:bg-cyan-600">
+              <Button className="bg-[#245544] text-[#202c29] hover:bg-[#245544]">
                 <Sparkles className="mr-2 h-4 w-4" />
                 Ask AI About This Intelligence
               </Button>
@@ -1397,26 +1397,26 @@ export default function StockDetailPage() {
           </div>
 
           {isIntelligenceLoading ? (
-            <Card className="border-white/10 bg-black/20 text-white">
+            <Card className="border-[#dedfd6] bg-[#f4f5f0] text-[#202c29]">
               <CardContent className="flex min-h-[180px] items-center justify-center p-6">
                 <div className="text-center">
-                  <Loader2 className="mx-auto h-7 w-7 animate-spin text-cyan-300" />
-                  <p className="mt-3 text-sm text-slate-400">
+                  <Loader2 className="mx-auto h-7 w-7 animate-spin text-[#285b4b]" />
+                  <p className="mt-3 text-sm text-slate-600">
                     Building stock intelligence signals...
                   </p>
                 </div>
               </CardContent>
             </Card>
           ) : intelligenceError ? (
-            <Card className="border-amber-400/20 bg-amber-500/10 text-amber-100">
+            <Card className="border-amber-400/20 bg-amber-500/10 text-amber-800">
               <CardContent className="p-5">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
+                  <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-800" />
                   <div>
                     <p className="font-medium">
                       Stock intelligence is temporarily unavailable.
                     </p>
-                    <p className="mt-1 text-sm leading-6 text-amber-100/80">
+                    <p className="mt-1 text-sm leading-6 text-amber-800/80">
                       The rest of the page remains available. Missing data
                       should be researched further before any simulated
                       decision.
@@ -1427,18 +1427,18 @@ export default function StockDetailPage() {
             </Card>
           ) : intelligence ? (
             <>
-              <Card className="border-white/10 bg-[#0d1424]/90 text-white">
+              <Card className="border-[#dedfd6] bg-[#f4f3ee] text-[#202c29]">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-2xl">
-                    <Sparkles className="h-5 w-5 text-cyan-300" />
+                    <Sparkles className="h-5 w-5 text-[#285b4b]" />
                     Beginner Summary
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm leading-7 text-slate-300">
+                  <p className="text-sm leading-7 text-slate-700">
                     {intelligence.beginnerSummary}
                   </p>
-                  <p className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm leading-6 text-amber-100">
+                  <p className="mt-4 rounded-xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm leading-6 text-amber-800">
                     {intelligence.disclaimer}
                   </p>
                 </CardContent>
@@ -1449,10 +1449,10 @@ export default function StockDetailPage() {
                 className="space-y-4"
               >
                 <div>
-                  <h3 className="text-xl font-semibold text-white">
+                  <h3 className="text-xl font-semibold text-[#202c29]">
                     Investment Case Scorecard
                   </h3>
-                  <p className="mt-1 text-sm text-slate-400">
+                  <p className="mt-1 text-sm text-slate-600">
                     Scores are screening signals for research readiness, not a
                     recommendation.
                   </p>
@@ -1467,14 +1467,14 @@ export default function StockDetailPage() {
               {financialHealth ? (
                 <Card
                   data-testid="financial-health-scanner"
-                  className="border-white/10 bg-white/[0.04] text-white"
+                  className="border-[#dedfd6] bg-white text-[#202c29]"
                 >
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-2xl">
-                      <Activity className="h-5 w-5 text-emerald-300" />
+                      <Activity className="h-5 w-5 text-emerald-800" />
                       Financial Health Scanner
                     </CardTitle>
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-slate-600">
                       Approximate ratios from latest available SEC fundamentals.
                     </p>
                   </CardHeader>
@@ -1521,13 +1521,13 @@ export default function StockDetailPage() {
                       />
                     </div>
 
-                    <p className="text-sm leading-6 text-slate-400">
+                    <p className="text-sm leading-6 text-slate-600">
                       {financialHealth.explanation}
                     </p>
 
                     <div className="grid gap-4 lg:grid-cols-2">
                       <div>
-                        <p className="mb-2 text-sm font-medium text-white">
+                        <p className="mb-2 text-sm font-medium text-[#202c29]">
                           Strengths
                         </p>
                         <TextList
@@ -1537,7 +1537,7 @@ export default function StockDetailPage() {
                         />
                       </div>
                       <div>
-                        <p className="mb-2 text-sm font-medium text-white">
+                        <p className="mb-2 text-sm font-medium text-[#202c29]">
                           Red Flags
                         </p>
                         <TextList
@@ -1554,21 +1554,21 @@ export default function StockDetailPage() {
               {valuation ? (
                 <Card
                   data-testid="valuation-reality-check"
-                  className="border-white/10 bg-white/[0.04] text-white"
+                  className="border-[#dedfd6] bg-white text-[#202c29]"
                 >
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-2xl">
-                      <BarChart3 className="h-5 w-5 text-blue-300" />
+                      <BarChart3 className="h-5 w-5 text-[#285b4b]" />
                       Valuation Reality Check
                     </CardTitle>
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-slate-600">
                       Available yfinance valuation metrics converted into a
                       plain-language risk screen.
                     </p>
                   </CardHeader>
                   <CardContent className="space-y-5">
                     {valuation.missingData.length > 0 ? (
-                      <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
+                      <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-800">
                         Some valuation metrics are missing. Evidence is limited,
                         so valuation should be researched further.
                       </div>
@@ -1616,7 +1616,7 @@ export default function StockDetailPage() {
                       />
                     </div>
 
-                    <p className="text-sm leading-6 text-slate-400">
+                    <p className="text-sm leading-6 text-slate-600">
                       {valuation.explanation}
                     </p>
                   </CardContent>
@@ -1626,33 +1626,33 @@ export default function StockDetailPage() {
               {bullBearBase ? (
                 <Card
                   data-testid="bull-bear-base-case"
-                  className="border-white/10 bg-white/[0.04] text-white"
+                  className="border-[#dedfd6] bg-white text-[#202c29]"
                 >
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-2xl">
-                      <TrendingUp className="h-5 w-5 text-cyan-300" />
+                      <TrendingUp className="h-5 w-5 text-[#285b4b]" />
                       Bull / Bear / Base Case
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-5">
                     <div className="grid gap-4 lg:grid-cols-3">
-                      <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4">
-                        <p className="font-medium text-emerald-100">
+                      <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 p-4">
+                        <p className="font-medium text-emerald-800">
                           Bull Case
                         </p>
-                        <p className="mt-2 text-sm leading-6 text-emerald-100/80">
+                        <p className="mt-2 text-sm leading-6 text-emerald-800/80">
                           {bullBearBase.bullCase}
                         </p>
                       </div>
-                      <div className="rounded-2xl border border-red-400/20 bg-red-500/10 p-4">
-                        <p className="font-medium text-red-100">Bear Case</p>
-                        <p className="mt-2 text-sm leading-6 text-red-100/80">
+                      <div className="rounded-xl border border-red-400/20 bg-red-500/10 p-4">
+                        <p className="font-medium text-red-800">Bear Case</p>
+                        <p className="mt-2 text-sm leading-6 text-red-800/80">
                           {bullBearBase.bearCase}
                         </p>
                       </div>
-                      <div className="rounded-2xl border border-blue-400/20 bg-blue-500/10 p-4">
-                        <p className="font-medium text-blue-100">Base Case</p>
-                        <p className="mt-2 text-sm leading-6 text-blue-100/80">
+                      <div className="rounded-xl border border-blue-400/20 bg-[#e8eee8] p-4">
+                        <p className="font-medium text-[#285b4b]">Base Case</p>
+                        <p className="mt-2 text-sm leading-6 text-[#285b4b]/80">
                           {bullBearBase.baseCase}
                         </p>
                       </div>
@@ -1660,7 +1660,7 @@ export default function StockDetailPage() {
 
                     <div className="grid gap-4 lg:grid-cols-3">
                       <div>
-                        <p className="mb-2 text-sm font-medium text-white">
+                        <p className="mb-2 text-sm font-medium text-[#202c29]">
                           What Could Go Right
                         </p>
                         <TextList
@@ -1670,7 +1670,7 @@ export default function StockDetailPage() {
                         />
                       </div>
                       <div>
-                        <p className="mb-2 text-sm font-medium text-white">
+                        <p className="mb-2 text-sm font-medium text-[#202c29]">
                           What Could Go Wrong
                         </p>
                         <TextList
@@ -1680,7 +1680,7 @@ export default function StockDetailPage() {
                         />
                       </div>
                       <div>
-                        <p className="mb-2 text-sm font-medium text-white">
+                        <p className="mb-2 text-sm font-medium text-[#202c29]">
                           What To Monitor
                         </p>
                         <TextList
@@ -1695,16 +1695,16 @@ export default function StockDetailPage() {
               ) : null}
 
               {portfolioFit ? (
-                <Card className="border-white/10 bg-white/[0.04] text-white">
+                <Card className="border-[#dedfd6] bg-white text-[#202c29]">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-2xl">
-                      <Wallet className="h-5 w-5 text-violet-300" />
+                      <Wallet className="h-5 w-5 text-[#285b4b]" />
                       Portfolio Fit
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-5">
                     {portfolioFit.missingData.length > 0 ? (
-                      <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
+                      <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-800">
                         Login and build a paper portfolio to see personalized
                         portfolio fit.
                       </div>
@@ -1734,26 +1734,26 @@ export default function StockDetailPage() {
                     </div>
 
                     <div className="grid gap-4 lg:grid-cols-2">
-                      <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                        <p className="text-sm font-medium text-white">
+                      <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4">
+                        <p className="text-sm font-medium text-[#202c29]">
                           Concentration
                         </p>
-                        <p className="mt-2 text-sm leading-6 text-slate-400">
+                        <p className="mt-2 text-sm leading-6 text-slate-600">
                           {portfolioFit.concentrationMessage}
                         </p>
                       </div>
-                      <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                        <p className="text-sm font-medium text-white">
+                      <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4">
+                        <p className="text-sm font-medium text-[#202c29]">
                           Diversification Impact
                         </p>
-                        <p className="mt-2 text-sm leading-6 text-slate-400">
+                        <p className="mt-2 text-sm leading-6 text-slate-600">
                           {portfolioFit.diversificationImpact}
                         </p>
                       </div>
                     </div>
 
                     <div>
-                      <p className="mb-2 text-sm font-medium text-white">
+                      <p className="mb-2 text-sm font-medium text-[#202c29]">
                         Portfolio Risk Drivers
                       </p>
                       <TextList
@@ -1770,11 +1770,11 @@ export default function StockDetailPage() {
                 {decisionReadiness ? (
                   <Card
                     data-testid="decision-readiness-score"
-                    className="border-white/10 bg-white/[0.04] text-white"
+                    className="border-[#dedfd6] bg-white text-[#202c29]"
                   >
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-2xl">
-                        <CheckCircle2 className="h-5 w-5 text-emerald-300" />
+                        <CheckCircle2 className="h-5 w-5 text-emerald-800" />
                         Decision Readiness Score
                       </CardTitle>
                     </CardHeader>
@@ -1786,13 +1786,13 @@ export default function StockDetailPage() {
                         score={decisionReadiness.score}
                         status={decisionReadiness.status}
                       />
-                      <p className="mt-4 text-sm leading-6 text-slate-400">
+                      <p className="mt-4 text-sm leading-6 text-slate-600">
                         {decisionReadiness.explanation}
                       </p>
 
                       <div className="mt-5 grid gap-4 md:grid-cols-2">
                         <div>
-                          <p className="mb-2 text-sm font-medium text-white">
+                          <p className="mb-2 text-sm font-medium text-[#202c29]">
                             Completed Checks
                           </p>
                           <TextList
@@ -1802,7 +1802,7 @@ export default function StockDetailPage() {
                           />
                         </div>
                         <div>
-                          <p className="mb-2 text-sm font-medium text-white">
+                          <p className="mb-2 text-sm font-medium text-[#202c29]">
                             Missing Checks
                           </p>
                           <TextList
@@ -1814,7 +1814,7 @@ export default function StockDetailPage() {
                       </div>
 
                       <div className="mt-5">
-                        <p className="mb-2 text-sm font-medium text-white">
+                        <p className="mb-2 text-sm font-medium text-[#202c29]">
                           Warnings
                         </p>
                         <TextList
@@ -1830,11 +1830,11 @@ export default function StockDetailPage() {
                 {evidenceStrength ? (
                   <Card
                     data-testid="evidence-strength-meter"
-                    className="border-white/10 bg-white/[0.04] text-white"
+                    className="border-[#dedfd6] bg-white text-[#202c29]"
                   >
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-2xl">
-                        <Database className="h-5 w-5 text-cyan-300" />
+                        <Database className="h-5 w-5 text-[#285b4b]" />
                         Evidence Strength Meter
                       </CardTitle>
                     </CardHeader>
@@ -1846,13 +1846,13 @@ export default function StockDetailPage() {
                         score={evidenceStrength.score}
                         status={evidenceStrength.status}
                       />
-                      <p className="mt-4 text-sm leading-6 text-slate-400">
+                      <p className="mt-4 text-sm leading-6 text-slate-600">
                         {evidenceStrength.explanation}
                       </p>
 
                       <div className="mt-5 grid gap-4 md:grid-cols-2">
                         <div>
-                          <p className="mb-2 text-sm font-medium text-white">
+                          <p className="mb-2 text-sm font-medium text-[#202c29]">
                             Sources Available
                           </p>
                           <TextList
@@ -1862,7 +1862,7 @@ export default function StockDetailPage() {
                           />
                         </div>
                         <div>
-                          <p className="mb-2 text-sm font-medium text-white">
+                          <p className="mb-2 text-sm font-medium text-[#202c29]">
                             Sources Missing
                           </p>
                           <TextList
@@ -1878,7 +1878,7 @@ export default function StockDetailPage() {
               </div>
 
               {intelligence.redFlags.length > 0 ? (
-                <Card className="border-red-400/20 bg-red-500/10 text-red-100">
+                <Card className="border-red-400/20 bg-red-500/10 text-red-800">
                   <CardContent className="p-5">
                     <p className="font-medium">Research Red Flags</p>
                     <div className="mt-3">
@@ -1896,9 +1896,9 @@ export default function StockDetailPage() {
         </section>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Card className="border-white/10 bg-[#0d1424]/80 text-white shadow-lg shadow-black/10 md:col-span-2">
+          <Card className="border-[#dedfd6] bg-[#f4f3ee] text-[#202c29]  md:col-span-2">
             <CardContent className="p-5">
-              <p className="text-sm text-slate-400">Current Price</p>
+              <p className="text-sm text-slate-600">Current Price</p>
 
               <div className="mt-3 flex flex-wrap items-end gap-4">
                 <p className="text-4xl font-semibold">
@@ -1948,16 +1948,16 @@ export default function StockDetailPage() {
           />
         </div>
 
-        <Card className="border-white/10 bg-white/[0.04] text-white">
+        <Card className="border-[#dedfd6] bg-white text-[#202c29]">
           <CardHeader>
             <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
               <div>
                 <CardTitle className="flex items-center gap-2 text-2xl">
-                  <BarChart3 className="h-5 w-5 text-emerald-300" />
+                  <BarChart3 className="h-5 w-5 text-emerald-800" />
                   Price Chart
                 </CardTitle>
 
-                <p className="mt-2 text-sm text-slate-400">
+                <p className="mt-2 text-sm text-slate-600">
                   Real historical price chart from yfinance.
                   {isChartLoading ? " Loading chart..." : ""}
                 </p>
@@ -1972,8 +1972,8 @@ export default function StockDetailPage() {
                     onClick={() => setSelectedRange(range)}
                     className={
                       selectedRange === range
-                        ? "bg-blue-500 text-white hover:bg-blue-600"
-                        : "bg-white/10 text-white hover:bg-white/20"
+                        ? "bg-[#245544] text-[#202c29] hover:bg-[#245544]"
+                        : "bg-[#eeefe9] text-[#202c29] hover:bg-[#eeefe9]"
                     }
                   >
                     {range}
@@ -1986,10 +1986,10 @@ export default function StockDetailPage() {
           <CardContent>
             <div className="h-[380px] w-full">
               {isChartLoading ? (
-                <div className="flex h-full items-center justify-center rounded-2xl border border-white/10 bg-black/20">
+                <div className="flex h-full items-center justify-center rounded-xl border border-[#dedfd6] bg-[#f4f5f0]">
                   <div className="text-center">
-                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-blue-300" />
-                    <p className="mt-3 text-sm text-slate-400">
+                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#285b4b]" />
+                    <p className="mt-3 text-sm text-slate-600">
                       Loading {selectedRange} chart...
                     </p>
                   </div>
@@ -2000,11 +2000,11 @@ export default function StockDetailPage() {
                     data={chartData}
                     margin={{ top: 8, right: 16, left: 10, bottom: 8 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e6d8" />
 
                     <XAxis
                       dataKey="date"
-                      stroke="#94a3b8"
+                      stroke="#7b8870"
                       ticks={xAxisTicks}
                       interval={0}
                       tickMargin={10}
@@ -2017,17 +2017,17 @@ export default function StockDetailPage() {
 
                     <YAxis
                       domain={["auto", "auto"]}
-                      stroke="#94a3b8"
+                      stroke="#7b8870"
                       tick={{ fontSize: 12 }}
                       tickFormatter={(value) => `$${Number(value).toFixed(2)}`}
                     />
 
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: "#0f172a",
-                        border: "1px solid rgba(255,255,255,0.1)",
+                        backgroundColor: "#ffffff",
+                        border: "1px solid #d5ddcc",
                         borderRadius: "12px",
-                        color: "white",
+                        color: "#283b2d",
                       }}
                       formatter={(value) => [
                         formatCurrency(value, String(currency)),
@@ -2041,7 +2041,7 @@ export default function StockDetailPage() {
                     <Line
                       type="monotone"
                       dataKey="close"
-                      stroke="#60a5fa"
+                      stroke="#437c5b"
                       strokeWidth={2}
                       dot={false}
                       activeDot={{ r: 4 }}
@@ -2049,12 +2049,12 @@ export default function StockDetailPage() {
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-white/10 bg-black/20">
+                <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-[#dedfd6] bg-[#f4f5f0]">
                   <div className="text-center">
-                    <p className="font-medium text-white">
+                    <p className="font-medium text-[#202c29]">
                       No chart data available for {selectedRange}.
                     </p>
-                    <p className="mt-1 text-sm text-slate-400">
+                    <p className="mt-1 text-sm text-slate-600">
                       Try another range or check the backend chart endpoint.
                     </p>
                   </div>
@@ -2065,32 +2065,32 @@ export default function StockDetailPage() {
         </Card>
 
         <div className="grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
-          <Card className="border-white/10 bg-white/[0.04] text-white">
+          <Card className="border-[#dedfd6] bg-white text-[#202c29]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-2xl">
-                <Database className="h-5 w-5 text-emerald-300" />
+                <Database className="h-5 w-5 text-emerald-800" />
                 SEC Fundamentals
               </CardTitle>
 
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-slate-600">
                 Latest available fundamentals from SEC Company Facts.
               </p>
             </CardHeader>
 
             <CardContent>
               {secWarnings.length > 0 ? (
-                <div className="mb-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
+                <div className="mb-4 rounded-xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-800">
                   <div className="flex items-start gap-3">
-                    <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
+                    <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-800" />
                     <div>
-                      <p className="font-medium text-amber-100">
+                      <p className="font-medium text-amber-800">
                         SEC fundamentals are unavailable for this ticker right now.
                       </p>
-                      <p className="mt-1 text-amber-100/80">
+                      <p className="mt-1 text-amber-800/80">
                         SEC Company Facts are mainly available for SEC-reporting
                         public companies. Market data may still be available.
                       </p>
-                      <p className="mt-1 text-amber-100/80">
+                      <p className="mt-1 text-amber-800/80">
                         The rest of the stock page stays available, including
                         price, chart, news, watchlist, portfolio actions, and Ask
                         AI.
@@ -2138,20 +2138,20 @@ export default function StockDetailPage() {
                 />
               </div>
 
-              <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-slate-400">
+              <div className="mt-4 rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4 text-sm text-slate-600">
                 <p>
-                  <span className="font-medium text-white">Filing Date:</span>{" "}
+                  <span className="font-medium text-[#202c29]">Filing Date:</span>{" "}
                   {formatDate(filingDate)}
                 </p>
 
                 <p className="mt-2">
-                  <span className="font-medium text-white">Source:</span>{" "}
+                  <span className="font-medium text-[#202c29]">Source:</span>{" "}
                   {String(secSource)}
                 </p>
 
                 {secFetchedAt ? (
                   <p className="mt-2">
-                    <span className="font-medium text-white">Fetched:</span>{" "}
+                    <span className="font-medium text-[#202c29]">Fetched:</span>{" "}
                     {formatDateTime(secFetchedAt)}
                   </p>
                 ) : null}
@@ -2159,23 +2159,23 @@ export default function StockDetailPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-white/10 bg-white/[0.04] text-white">
+          <Card className="border-[#dedfd6] bg-white text-[#202c29]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-2xl">
-                <Activity className="h-5 w-5 text-violet-300" />
+                <Activity className="h-5 w-5 text-[#285b4b]" />
                 Actions
               </CardTitle>
             </CardHeader>
 
             <CardContent>
-              <p className="text-sm leading-6 text-slate-400">
+              <p className="text-sm leading-6 text-slate-600">
                 Save this stock, simulate a buy, or ask AI how it fits a beginner paper-trading portfolio.
               </p>
 
               {isInPortfolio && portfolioHolding ? (
-                <div className="mt-4 rounded-2xl border border-blue-400/20 bg-blue-500/10 p-4 text-sm text-blue-100">
+                <div className="mt-4 rounded-xl border border-blue-400/20 bg-[#e8eee8] p-4 text-sm text-[#285b4b]">
                   <p className="font-medium">Already in portfolio</p>
-                  <p className="mt-1 text-blue-100/80">
+                  <p className="mt-1 text-[#285b4b]/80">
                     You currently hold {portfolioHolding.shares} simulated share
                     {portfolioHolding.shares === 1 ? "" : "s"} of {ticker}.
                   </p>
@@ -2186,7 +2186,7 @@ export default function StockDetailPage() {
                 <Button
                   onClick={() => setShowPortfolioForm((current) => !current)}
                   data-testid="stock-add-portfolio"
-                  className="justify-start bg-blue-500 text-white hover:bg-blue-600"
+                  className="justify-start bg-[#245544] text-[#202c29] hover:bg-[#245544]"
                 >
                   <Wallet className="mr-2 h-4 w-4" />
                   {showPortfolioForm
@@ -2197,18 +2197,18 @@ export default function StockDetailPage() {
                 </Button>
 
                 {showPortfolioForm ? (
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-blue-300/25">
-                    <p className="text-sm font-medium text-white">
+                  <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4 transition-colors duration-200 hover:border-blue-300/25">
+                    <p className="text-sm font-medium text-[#202c29]">
                       Simulate Buying {ticker}
                     </p>
 
-                    <p className="mt-2 text-xs leading-5 text-slate-400">
+                    <p className="mt-2 text-xs leading-5 text-slate-600">
                       This creates a virtual paper-trading position. It does not place a real trade.
                     </p>
 
                     <div className="mt-4 space-y-3">
                       <div>
-                        <label className="text-xs text-slate-400">Shares</label>
+                        <label className="text-xs text-slate-600">Shares</label>
                         <input
                           type="number"
                           min="0"
@@ -2217,23 +2217,23 @@ export default function StockDetailPage() {
                           onChange={(event) =>
                             setPortfolioShares(event.target.value)
                           }
-                          className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-400"
+                          className="mt-1 w-full rounded-xl border border-[#dedfd6] bg-slate-950 px-3 py-2 text-sm text-[#202c29] outline-none focus:border-blue-400"
                         />
                       </div>
 
                       <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
+                        <div className="rounded-xl border border-[#dedfd6] bg-white p-3">
                           <p className="text-xs text-slate-500">Buy Price</p>
-                          <p className="mt-1 font-semibold text-white">
+                          <p className="mt-1 font-semibold text-[#202c29]">
                             {formatCurrency(currentPrice, String(currency))}
                           </p>
                         </div>
 
-                        <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
+                        <div className="rounded-xl border border-[#dedfd6] bg-white p-3">
                           <p className="text-xs text-slate-500">
                             Estimated Cost
                           </p>
-                          <p className="mt-1 font-semibold text-white">
+                          <p className="mt-1 font-semibold text-[#202c29]">
                             {formatCurrency(estimatedCost, String(currency))}
                           </p>
                         </div>
@@ -2242,7 +2242,7 @@ export default function StockDetailPage() {
                       <Button
                         onClick={handleSimulatedBuy}
                         disabled={isPortfolioLoading}
-                        className="w-full bg-emerald-500 text-white hover:bg-emerald-600"
+                        className="w-full bg-emerald-500 text-[#202c29] hover:bg-emerald-600"
                       >
                         {isPortfolioLoading ? (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -2253,7 +2253,7 @@ export default function StockDetailPage() {
                       </Button>
 
                       <Link href="/portfolio">
-                        <Button className="w-full bg-white/10 text-white hover:bg-white/20">
+                        <Button className="w-full bg-[#eeefe9] text-[#202c29] hover:bg-[#eeefe9]">
                           Open Portfolio
                         </Button>
                       </Link>
@@ -2266,8 +2266,8 @@ export default function StockDetailPage() {
                   disabled={isWatchlistLoading}
                   className={
                     isWatchlisted
-                      ? "justify-start bg-red-500/80 text-white hover:bg-red-600"
-                      : "justify-start bg-emerald-500 text-white hover:bg-emerald-600"
+                      ? "justify-start bg-red-500/80 text-[#202c29] hover:bg-red-600"
+                      : "justify-start bg-emerald-500 text-[#202c29] hover:bg-emerald-600"
                   }
                 >
                   {isWatchlistLoading ? (
@@ -2286,7 +2286,7 @@ export default function StockDetailPage() {
                 <Link href={askAiHref}>
                   <Button
                     data-testid="stock-ask-ai"
-                    className="w-full justify-start bg-violet-500 text-white hover:bg-violet-600"
+                    className="w-full justify-start bg-[#245544] text-[#202c29] hover:bg-[#245544]"
                   >
                     <Sparkles className="mr-2 h-4 w-4" />
                     Ask AI About {ticker}
@@ -2294,7 +2294,7 @@ export default function StockDetailPage() {
                 </Link>
 
                 <Link href="/watchlist">
-                  <Button className="w-full justify-start bg-white/10 text-white hover:bg-white/20">
+                  <Button className="w-full justify-start bg-[#eeefe9] text-[#202c29] hover:bg-[#eeefe9]">
                     <Star className="mr-2 h-4 w-4" />
                     Open Watchlist
                   </Button>
@@ -2304,16 +2304,16 @@ export default function StockDetailPage() {
           </Card>
         </div>
 
-        <Card className="border-white/10 bg-white/[0.04] text-white">
+        <Card className="border-[#dedfd6] bg-white text-[#202c29]">
           <CardHeader>
             <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
               <div>
                 <CardTitle className="flex items-center gap-2 text-2xl">
-                  <Newspaper className="h-5 w-5 text-blue-300" />
+                  <Newspaper className="h-5 w-5 text-[#285b4b]" />
                   Recent News
                 </CardTitle>
 
-                <p className="mt-2 text-sm text-slate-400">
+                <p className="mt-2 text-sm text-slate-600">
                   Latest market news for {ticker} from yfinance.
                   {isNewsLoading ? " Loading news..." : ""}
                 </p>
@@ -2322,7 +2322,7 @@ export default function StockDetailPage() {
               <Button
                 onClick={loadNewsData}
                 disabled={isNewsLoading}
-                className="bg-white/10 text-white hover:bg-white/20"
+                className="bg-[#eeefe9] text-[#202c29] hover:bg-[#eeefe9]"
               >
                 {isNewsLoading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -2336,10 +2336,10 @@ export default function StockDetailPage() {
 
           <CardContent>
             {isNewsLoading ? (
-              <div className="flex min-h-[220px] items-center justify-center rounded-2xl border border-white/10 bg-black/20">
+              <div className="flex min-h-[220px] items-center justify-center rounded-xl border border-[#dedfd6] bg-[#f4f5f0]">
                 <div className="text-center">
-                  <Loader2 className="mx-auto h-7 w-7 animate-spin text-blue-300" />
-                  <p className="mt-3 text-sm text-slate-400">
+                  <Loader2 className="mx-auto h-7 w-7 animate-spin text-[#285b4b]" />
+                  <p className="mt-3 text-sm text-slate-600">
                     Loading recent news...
                   </p>
                 </div>
@@ -2349,7 +2349,7 @@ export default function StockDetailPage() {
                 {newsItems.map((item, index) => (
                   <div
                     key={`${item.title}-${index}`}
-                    className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                    className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4"
                   >
                     <div className="flex gap-4">
                       {item.thumbnail ? (
@@ -2359,7 +2359,7 @@ export default function StockDetailPage() {
                           className="h-20 w-20 rounded-xl object-cover"
                         />
                       ) : (
-                        <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-white/10">
+                        <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-[#eeefe9]">
                           <Newspaper className="h-6 w-6 text-slate-500" />
                         </div>
                       )}
@@ -2367,25 +2367,25 @@ export default function StockDetailPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           {item.publisher ? (
-                            <Badge className="bg-blue-500/15 text-blue-200">
+                            <Badge className="bg-[#e8eee8] text-[#285b4b]">
                               {item.publisher}
                             </Badge>
                           ) : null}
 
                           {item.type ? (
-                            <Badge className="bg-white/10 text-slate-300">
+                            <Badge className="bg-[#eeefe9] text-slate-700">
                               {item.type}
                             </Badge>
                           ) : null}
 
                           {item.relevanceScore ? (
-                            <Badge className="bg-emerald-500/15 text-emerald-200">
+                            <Badge className="bg-emerald-500/15 text-emerald-800">
                               Relevance {item.relevanceScore}
                             </Badge>
                           ) : null}
                         </div>
 
-                        <h3 className="mt-2 line-clamp-2 font-semibold leading-6 text-white">
+                        <h3 className="mt-2 line-clamp-2 font-semibold leading-6 text-[#202c29]">
                           {item.title}
                         </h3>
 
@@ -2394,7 +2394,7 @@ export default function StockDetailPage() {
                         </p>
 
                         {item.relevanceReason ? (
-                          <p className="mt-1 text-xs text-emerald-300">
+                          <p className="mt-1 text-xs text-emerald-800">
                             {item.relevanceReason}
                           </p>
                         ) : null}
@@ -2402,7 +2402,7 @@ export default function StockDetailPage() {
                     </div>
 
                     {item.summary ? (
-                      <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-400">
+                      <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">
                         {item.summary}
                       </p>
                     ) : null}
@@ -2412,7 +2412,7 @@ export default function StockDetailPage() {
                         href={item.link}
                         target="_blank"
                         rel="noreferrer"
-                        className="mt-4 inline-flex items-center text-sm font-medium text-blue-300 hover:text-blue-200"
+                        className="mt-4 inline-flex items-center text-sm font-medium text-[#285b4b] hover:text-[#285b4b]"
                       >
                         Read article
                         <ExternalLink className="ml-2 h-3.5 w-3.5" />
@@ -2422,14 +2422,14 @@ export default function StockDetailPage() {
                 ))}
               </div>
             ) : (
-              <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 p-8 text-center">
+              <div className="rounded-xl border border-dashed border-[#dedfd6] bg-[#f4f5f0] p-8 text-center">
                 <Newspaper className="mx-auto h-8 w-8 text-slate-500" />
 
-                <h2 className="mt-4 text-lg font-semibold text-white">
+                <h2 className="mt-4 text-lg font-semibold text-[#202c29]">
                   No recent news found
                 </h2>
 
-                <p className="mt-2 text-sm text-slate-400">
+                <p className="mt-2 text-sm text-slate-600">
                   yfinance did not return news for {ticker}. Try refreshing or search another stock.
                 </p>
               </div>
@@ -2437,40 +2437,40 @@ export default function StockDetailPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-white/10 bg-white/[0.04] text-white">
+        <Card className="border-[#dedfd6] bg-white text-[#202c29]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-2xl">
-              <Building2 className="h-5 w-5 text-violet-300" />
+              <Building2 className="h-5 w-5 text-[#285b4b]" />
               Beginner Research Flow
             </CardTitle>
           </CardHeader>
 
           <CardContent>
             <div className="grid gap-4 md:grid-cols-4">
-              <div className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-blue-300/25">
-                <p className="font-medium text-white">1. Research</p>
-                <p className="mt-2 text-sm leading-6 text-slate-400">
+              <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4 transition-colors duration-200 hover:border-blue-300/25">
+                <p className="font-medium text-[#202c29]">1. Research</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
                   Review price, chart, market stats, and SEC fundamentals.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-blue-300/25">
-                <p className="font-medium text-white">2. Read News</p>
-                <p className="mt-2 text-sm leading-6 text-slate-400">
+              <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4 transition-colors duration-200 hover:border-blue-300/25">
+                <p className="font-medium text-[#202c29]">2. Read News</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
                   Understand recent events that may explain price movement.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-emerald-300/25">
-                <p className="font-medium text-white">3. Save or Simulate</p>
-                <p className="mt-2 text-sm leading-6 text-slate-400">
+              <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4 transition-colors duration-200 hover:border-emerald-300/25">
+                <p className="font-medium text-[#202c29]">3. Save or Simulate</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
                   Add the stock to your watchlist or simulate a paper-trading buy.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-emerald-300/25">
-                <p className="font-medium text-white">4. Track</p>
-                <p className="mt-2 text-sm leading-6 text-slate-400">
+              <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4 transition-colors duration-200 hover:border-emerald-300/25">
+                <p className="font-medium text-[#202c29]">4. Track</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
                   Open your portfolio to track cost basis, value, and P/L.
                 </p>
               </div>

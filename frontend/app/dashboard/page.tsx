@@ -1,945 +1,340 @@
 "use client";
-
-import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-
 import {
-  Activity,
-  BarChart3,
-  Bot,
-  Building2,
-  CheckCircle2,
-  Database,
-  FileText,
-  Gauge,
-  History,
-  RefreshCcw,
-  ShieldCheck,
-  Sparkles,
-  Star,
-  TrendingDown,
-  TrendingUp,
+  ArrowUpRight,
+  ArrowRight,
+  RefreshCw,
+  Search,
   Users,
-  Wallet,
+  BriefcaseBusiness,
+  MessageSquareText,
 } from "lucide-react";
-
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-
 import { AppShell } from "@/components/app-shell";
-import { StockSearch } from "@/components/stock-search";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { getDashboardData, resetDemoData } from "@/lib/api";
-
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-
-type DashboardMetric = {
-  label: string;
-  value: string;
-  detail: string;
-};
-
-type DashboardReport = {
-  id: string;
-  ticker: string;
-  company: string;
-  status: string;
-  grounding: number;
-  created: string;
-};
-
-type DashboardAgentRun = {
-  id: number;
-  question: string;
-  ticker: string | null;
-  groundingScore: number;
-  unsupportedClaims: number;
-  createdAt: string;
-};
-
-type DashboardMarketSnapshot = {
-  ticker: string;
-  companyName: string;
-  currentPrice: number | null;
-  previousClose: number | null;
-  marketCap: number | null;
-  fetchedAt: string;
-};
-
-type DashboardSecFundamental = {
-  ticker: string;
-  companyName: string;
-  revenue: number | null;
-  netIncome: number | null;
-  assets: number | null;
-  liabilities: number | null;
-  fiscalYear: number | null;
-  filed: string | null;
-  fetchedAt: string;
-};
-
-type DashboardData = {
-  portfolioValue: number;
+  getDashboardData,
+  getCommitteeRuns,
+  getStoredUser,
+  resetDemoData,
+  CommitteeRun,
+} from "@/lib/api";
+type Dashboard = {
   portfolioCount: number;
-  averageRiskScore: number;
   totalReports: number;
-  approvedReports: number;
   needsReviewReports: number;
-  rejectedReports: number;
-  avgGrounding: number;
-  unsupportedClaims: number;
-  metrics: DashboardMetric[];
-  latestReports: DashboardReport[];
-  latestAgentRuns: DashboardAgentRun[];
-  latestMarketSnapshots: DashboardMarketSnapshot[];
-  latestSecFundamentals: DashboardSecFundamental[];
-  message: string;
+  latestAgentRuns: {
+    id: number;
+    question: string;
+    ticker: string | null;
+    createdAt: string;
+  }[];
+  latestMarketSnapshots: {
+    ticker: string;
+    companyName: string;
+    currentPrice: number | null;
+    fetchedAt: string;
+  }[];
+  latestReports: {
+    id: string;
+    ticker: string;
+    company: string;
+    status: string;
+    created: string;
+  }[];
 };
-
 export default function DashboardPage() {
-  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
-  const [loadError, setLoadError] = useState("");
-  useEffect(() => { getDashboardData().then(setDashboard).catch(() => setLoadError("Unable to load your workspace. Check your connection and sign in again.")); }, []);
-  return <AppShell>{loadError ? <div role="alert" className="text-red-200">{loadError} <button onClick={() => window.location.reload()}>Retry</button></div> : dashboard ? <DashboardContent dashboard={dashboard}/> : <p role="status" className="text-slate-400">Loading your research workspace…</p>}</AppShell>;
-}
-
-function DashboardContent({dashboard: initial}: {dashboard: DashboardData}) {
-  const [dashboard, setDashboard] = useState(initial);
-  const reportStatusChart = [
-    {
-      status: "Approved",
-      count: dashboard.approvedReports,
-    },
-    {
-      status: "Needs Review",
-      count: dashboard.needsReviewReports,
-    },
-    {
-      status: "Rejected",
-      count: dashboard.rejectedReports,
-    },
-  ];
-
-  const approvedRate =
-    dashboard.totalReports > 0
-      ? Math.round((dashboard.approvedReports / dashboard.totalReports) * 100)
-      : 0;
-
-  const needsReviewRate =
-    dashboard.totalReports > 0
-      ? Math.round(
-          (dashboard.needsReviewReports / dashboard.totalReports) * 100
-        )
-      : 0;
-
-  const [resettingDemo, setResettingDemo] = useState(false);
+  const [data, setData] = useState<Dashboard | null>(null);
+  const [runs, setRuns] = useState<CommitteeRun[]>([]);
+  const [error, setError] = useState("");
+  const [researchError, setResearchError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [name, setName] = useState("");
+  const [resetting, setResetting] = useState(false);
   const [resetMessage, setResetMessage] = useState("");
-  const [resetError, setResetError] = useState("");
-
-  async function handleResetDemoData() {
-    const confirmed = window.confirm(
-      "This will reset demo portfolio, transactions, and watchlist data. Continue?"
-    );
-
-    if (!confirmed) return;
-
-    try {
-      setResettingDemo(true);
-      setResetMessage("");
-      setResetError("");
-
-      const response = await resetDemoData();
-      setDashboard(await getDashboardData());
-      setResetMessage(
-        `${response.message} Holdings: ${response.holdingsCount}, transactions: ${response.transactionsCount}, watchlist: ${response.watchlistCount}.`
+  async function load() {
+    setLoading(true);
+    setError("");
+    setResearchError("");
+    const results = await Promise.allSettled([
+      getDashboardData(),
+      getCommitteeRuns(),
+    ]);
+    if (results[0].status === "fulfilled") setData(results[0].value);
+    else
+      setError(
+        "Your overview couldn't load. Check your connection and try again.",
       );
-    } catch (error) {
-      console.error(error);
-      setResetError("Demo reset failed. Confirm the backend is running.");
+    if (results[1].status === "fulfilled") setRuns(results[1].value);
+    else setResearchError("Saved committee reviews are unavailable right now.");
+    setLoading(false);
+  }
+  useEffect(() => {
+    setName(getStoredUser()?.fullName?.split(" ")[0] || "");
+    void load();
+  }, []);
+  async function reset() {
+    if (
+      !window.confirm(
+        "Reset your development demo holdings, transactions and watchlist?",
+      )
+    )
+      return;
+    setResetting(true);
+    try {
+      const r = await resetDemoData();
+      setResetMessage(r.message);
+      await load();
+    } catch {
+      setResetMessage(
+        "Reset unavailable. Demo resets are disabled outside development.",
+      );
     } finally {
-      setResettingDemo(false);
+      setResetting(false);
     }
   }
-
   return (
-    <div className="space-y-6">
-        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+    <AppShell>
+      <div className="fc-overview">
+        <header className="fc-page-heading">
           <div>
-            <Badge className="mb-3 bg-blue-500/15 text-blue-200">
-              Stock Research Dashboard
-            </Badge>
-
-            <Link
-              href="/"
-              className="mb-3 block w-fit text-sm font-medium text-slate-400 transition hover:text-white"
-            >
-              Back to public homepage
-            </Link>
-
-            <h1 className="text-3xl font-semibold tracking-tight">
-              FinCredit AI
-            </h1>
-
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-              AI-powered stock research and paper-trading sandbox for beginner
-              investors. Research a ticker, simulate buy/sell decisions, then
-              ask the AI to explain portfolio fit with evidence.
-            </p>
-
-            <p className="mt-2 max-w-3xl text-xs leading-5 text-amber-200">
-              FinCredit AI is a simulated paper-trading and education tool. It
-              is not financial advice and does not place real trades.
-            </p>
-
-            <p className="mt-2 text-xs text-emerald-300">
-              Dashboard ready: {dashboard.message}
-            </p>
+            <p className="fc-kicker">YOUR RESEARCH DESK</p>
+            <h1>A clearer view{name ? `, ${name}` : ""}.</h1>
+            <p>Pick up a thesis. Explore a company. See the bigger picture.</p>
           </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <Link href="/stock/AAPL">
-              <Button className="bg-emerald-500 text-white hover:bg-emerald-600">
-                <TrendingUp className="mr-2 h-4 w-4" />
-                Research AAPL
-              </Button>
-            </Link>
-
-            <Link href="/portfolio">
-              <Button className="bg-blue-500 text-white hover:bg-blue-600">
-                <Wallet className="mr-2 h-4 w-4" />
-                Open Portfolio
-              </Button>
-            </Link>
-
-            <Link href="/committee">
-              <Button className="bg-violet-500 text-white hover:bg-violet-600">
-                <Sparkles className="mr-2 h-4 w-4" />
-                Investment Committee
-              </Button>
-            </Link>
-
-            <Link href="/watchlist">
-              <Button className="bg-white/10 text-white hover:bg-white/20">
-                <Star className="mr-2 h-4 w-4" />
-                Open Watchlist
-              </Button>
-            </Link>
-
-            <Button
-              type="button"
-              onClick={handleResetDemoData}
-              disabled={resettingDemo}
-              data-testid="dashboard-reset-demo"
-              className="bg-amber-500 text-white hover:bg-amber-600"
-            >
-              {resettingDemo ? (
-                <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCcw className="mr-2 h-4 w-4" />
-              )}
-              Reset Demo Data
-            </Button>
-          </div>
-        </div>
-
-        {(resetMessage || resetError) && (
-          <Card
-            data-testid="dashboard-reset-status"
-            className={
-              resetError
-                ? "border-red-500/30 bg-red-500/10 text-red-100"
-                : "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
-            }
+          <button
+            className="fc-outline-button"
+            onClick={load}
+            disabled={loading}
           >
-            <CardContent className="flex flex-col gap-3 p-5 md:flex-row md:items-center md:justify-between">
-              <p className="text-sm leading-6">
-                {resetError || resetMessage}
-              </p>
-              {!resetError && (
-                <Link href="/portfolio">
-                  <Button className="bg-emerald-500 text-white hover:bg-emerald-600">
-                    Open Portfolio
-                  </Button>
-                </Link>
-              )}
-            </CardContent>
-          </Card>
+            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+            Refresh
+          </button>
+        </header>
+        {error && (
+          <div role="alert" className="fc-error">
+            {error}
+          </div>
         )}
-
-        <Card className="border-white/10 bg-white/[0.04] text-white">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-emerald-300" />
-              Demo Product Loop
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
-              {[
-                "Search stock",
-                "Research",
-                "Add to watchlist/portfolio",
-                "Refresh prices",
-                "Ask AI",
-                "Review evidence",
-              ].map((step, index) => (
-                <div
-                  key={step}
-                  className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-blue-300/25"
-                >
-                  <p className="text-xs font-semibold text-blue-200">
-                    Step {index + 1}
-                  </p>
-                  <p className="mt-2 text-sm font-medium text-white">{step}</p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <ProductCard
-            title="Stock Research"
-            detail="Open a ticker page with price, historical chart, market stats, SEC fundamentals, and recent news."
-            icon={<TrendingUp className="h-5 w-5 text-emerald-300" />}
-          />
-          <ProductCard
-            title="Paper Portfolio"
-            detail="Simulate buys and sells, track cost basis, weights, and unrealized profit or loss."
-            icon={<Wallet className="h-5 w-5 text-blue-300" />}
-          />
-          <ProductCard
-            title="Watchlist"
-            detail="Monitor stocks before committing them to the paper portfolio."
-            icon={<Star className="h-5 w-5 text-yellow-300" />}
-          />
-          <ProductCard
-            title="Portfolio-Aware AI"
-            detail="Ask questions that use holdings, transactions, watchlist, market, SEC, and news context."
-            icon={<Sparkles className="h-5 w-5 text-violet-300" />}
-          />
-          <ProductCard
-            title="Transaction History"
-            detail="Review simulated BUY and SELL activity, including realized P/L on sells."
-            icon={<History className="h-5 w-5 text-amber-300" />}
-          />
-          <ProductCard
-            title="Evidence & Reports"
-            detail="Inspect evidence, governance audit details, and generated report records."
-            icon={<FileText className="h-5 w-5 text-blue-300" />}
-          />
-        </div>
-
-        <Card className="border-white/10 bg-white/[0.04] text-white">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <TrendingUp className="h-5 w-5 text-emerald-300" />
-              Explore Stocks
-            </CardTitle>
-          </CardHeader>
-
-          <CardContent>
-            <p className="mb-3 text-sm text-slate-400">
-              Search a ticker such as AAPL, MSFT, NVDA, or TSLA to open the new
-              beginner-friendly stock research page with price, chart, market
-              stats, SEC fundamentals, and AI actions.
+        <div className="fc-overview-top">
+          <section className="fc-feature-panel">
+            <p className="fc-kicker">THE INVESTMENT COMMITTEE</p>
+            <h2>
+              Good research invites
+              <br />
+              <em>a counterargument.</em>
+            </h2>
+            <p>
+              Bring a question to the table. Compare perspectives, inspect the
+              evidence, and keep your own judgment.
             </p>
-
-            <StockSearch />
-          </CardContent>
-        </Card>
-
-        <div className="grid gap-4 md:grid-cols-4">
-          {dashboard.metrics.map((metric, index) => (
-            <MetricCard
-              key={metric.label}
-              title={metric.label}
-              value={metric.value}
-              detail={metric.detail}
-              icon={getMetricIcon(index)}
-            />
+            <Link href="/committee" className="fc-solid-button">
+              Start a committee review <ArrowUpRight size={16} />
+            </Link>
+            <div className="fc-feature-rule">
+              <span>01 &nbsp; Evidence</span>
+              <span>02 &nbsp; Debate</span>
+              <span>03 &nbsp; Review</span>
+            </div>
+          </section>
+          <section className="fc-panel fc-at-glance">
+            <div className="fc-panel-heading">
+              <h2>At a glance</h2>
+              <span className="fc-kicker">SAVED RECORDS</span>
+            </div>
+            {[
+              {
+                label: "Your portfolio positions",
+                value: data?.portfolioCount,
+                href: "/portfolio",
+              },
+              {
+                label: "Recent committee reviews",
+                value: researchError ? undefined : runs.length,
+                href: "/committee",
+              },
+              {
+                label: "Workspace reports",
+                value: data?.totalReports,
+                href: "/reports",
+              },
+              {
+                label: "Reports awaiting review",
+                value: data?.needsReviewReports,
+                href: "/governance",
+              },
+            ].map((x) => (
+              <Link key={x.label} href={x.href} className="fc-stat-row">
+                <span>{x.label}</span>
+                <strong>
+                  {loading ? (
+                    <span className="fc-skeleton" />
+                  ) : (
+                    (x.value ?? "—")
+                  )}
+                </strong>
+                <ArrowUpRight size={15} />
+              </Link>
+            ))}
+            <p className="fc-small-note">
+              Committee count covers your latest 50 reviews. Legacy reports
+              belong to the shared workspace.
+            </p>
+          </section>
+        </div>
+        <div className="fc-quick-actions">
+          {[
+            {
+              title: "Research a company",
+              sub: "Open market context",
+              href: "/stock/AAPL",
+              icon: Search,
+            },
+            {
+              title: "Inspect your portfolio",
+              sub: "Holdings & scenarios",
+              href: "/portfolio",
+              icon: BriefcaseBusiness,
+            },
+            {
+              title: "Ask a focused question",
+              sub: "Portfolio-aware answers",
+              href: "/ask",
+              icon: MessageSquareText,
+            },
+          ].map((x) => (
+            <Link href={x.href} key={x.href}>
+              <x.icon size={20} strokeWidth={1.5} />
+              <div>
+                <strong>{x.title}</strong>
+                <span>{x.sub}</span>
+              </div>
+              <ArrowUpRight size={17} />
+            </Link>
           ))}
         </div>
-
-        <div className="grid gap-4 md:grid-cols-4">
-          <MiniSummaryCard
-            title="Approved Reports"
-            value={String(dashboard.approvedReports)}
-            detail={`${approvedRate}% of total reports`}
-            icon={<CheckCircle2 className="h-5 w-5 text-emerald-300" />}
-          />
-
-          <MiniSummaryCard
-            title="Needs Review"
-            value={String(dashboard.needsReviewReports)}
-            detail={`${needsReviewRate}% waiting for analyst review`}
-            icon={<Gauge className="h-5 w-5 text-amber-300" />}
-          />
-
-          <MiniSummaryCard
-            title="Rejected Reports"
-            value={String(dashboard.rejectedReports)}
-            detail="Reports rejected during review"
-            icon={<ShieldCheck className="h-5 w-5 text-red-300" />}
-          />
-
-          <MiniSummaryCard
-            title="Paper Trading"
-            value="Next"
-            detail="Portfolio buy/sell simulation comes after watchlist"
-            icon={<Users className="h-5 w-5 text-violet-300" />}
-          />
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <Card className="border-white/10 bg-white/[0.04] text-white">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-blue-300" />
-                Latest AI Reports
-              </CardTitle>
-            </CardHeader>
-
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-white/10">
-                    <TableHead className="text-slate-400">Report</TableHead>
-                    <TableHead className="text-slate-400">Ticker</TableHead>
-                    <TableHead className="text-slate-400">Status</TableHead>
-                    <TableHead className="text-slate-400">
-                      Grounding
-                    </TableHead>
-                    <TableHead className="text-slate-400">Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-
-                <TableBody>
-                  {dashboard.latestReports.map((report) => (
-                    <TableRow key={report.id} className="border-white/10">
-                      <TableCell>
-                        <div>
-                          <p className="font-medium text-white">{report.id}</p>
-                          <p className="mt-1 max-w-[260px] truncate text-xs text-slate-400">
-                            {report.company}
-                          </p>
-                        </div>
-                      </TableCell>
-
-                      <TableCell>
-                        <Badge className="bg-blue-500/15 text-blue-200">
-                          {report.ticker}
-                        </Badge>
-                      </TableCell>
-
-                      <TableCell>
-                        <StatusBadge status={report.status} />
-                      </TableCell>
-
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Progress value={report.grounding} className="w-20" />
-                          <span className="text-sm text-slate-300">
-                            {report.grounding}%
-                          </span>
-                        </div>
-                      </TableCell>
-
-                      <TableCell>
-                        <Link href={`/reports/${report.id}`}>
-                          <Button
-                            size="sm"
-                            className="bg-white/10 text-white hover:bg-white/20"
-                          >
-                            Open
-                          </Button>
-                        </Link>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-
-              {dashboard.latestReports.length === 0 && (
-                <p className="mt-4 text-sm text-slate-400">
-                  Reports are still available as an advanced feature. Phase 40A
-                  does not expand report/governance functionality.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="border-white/10 bg-white/[0.04] text-white">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-emerald-300" />
-                Report Approval Status
-              </CardTitle>
-            </CardHeader>
-
-            <CardContent>
-              <div className="h-[300px] min-h-[300px] w-full min-w-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={reportStatusChart}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                    <XAxis dataKey="status" stroke="#94a3b8" />
-                    <YAxis stroke="#94a3b8" />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#0f172a",
-                        border: "1px solid rgba(255,255,255,0.1)",
-                        borderRadius: "12px",
-                        color: "white",
-                      }}
-                    />
-                    <Bar dataKey="count" fill="#60a5fa" radius={[8, 8, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+        <div className="fc-overview-bottom">
+          <section className="fc-panel">
+            <div className="fc-panel-heading">
+              <div>
+                <p className="fc-kicker">CONTINUE EXPLORING</p>
+                <h2>Your research notebook</h2>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-          <Card className="border-white/10 bg-white/[0.04] text-white">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bot className="h-5 w-5 text-violet-300" />
-                Latest LangGraph Agent Runs
-              </CardTitle>
-            </CardHeader>
-
-            <CardContent className="space-y-3">
-              {dashboard.latestAgentRuns.map((run) => (
-                <div
-                  key={run.id}
-                  className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-violet-300/25"
+              <Link href="/committee" className="fc-text-link">
+                View all <ArrowRight size={14} />
+              </Link>
+            </div>
+            {researchError ? (
+              <p role="status" className="fc-small-note">
+                {researchError}
+              </p>
+            ) : loading ? (
+              <div className="fc-loading-rows" aria-label="Loading research">
+                <span />
+                <span />
+                <span />
+              </div>
+            ) : runs.length ? (
+              runs.slice(0, 5).map((r) => (
+                <Link
+                  href={`/committee?run=${r.id}`}
+                  className="fc-research-row"
+                  key={r.id}
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-violet-500/15 text-violet-200">
-                        Run #{run.id}
-                      </Badge>
-
-                      <Badge className="bg-blue-500/15 text-blue-200">
-                        {run.ticker ?? "Portfolio"}
-                      </Badge>
-                    </div>
-
-                    <p className="text-xs text-slate-500">
-                      {new Date(run.createdAt).toLocaleString()}
-                    </p>
+                  <span className="fc-record-symbol">
+                    <Users size={17} />
+                  </span>
+                  <div>
+                    <strong>{r.question}</strong>
+                    <span>
+                      {r.ticker || "Portfolio"} ·{" "}
+                      {new Date(r.createdAt).toLocaleDateString()}
+                    </span>
                   </div>
-
-                  <p className="mt-3 text-sm leading-6 text-slate-300">
-                    {run.question}
-                  </p>
-
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <MiniMetric
-                      label="Grounding"
-                      value={`${run.groundingScore}%`}
-                    />
-
-                    <MiniMetric
-                      label="Unsupported Claims"
-                      value={String(run.unsupportedClaims)}
-                    />
-                  </div>
-                </div>
-              ))}
-
-              {dashboard.latestAgentRuns.length === 0 && (
-                <p className="text-sm text-slate-400">
-                  No agent runs yet. Ask a stock question in Ask FinCredit.
+                  <span className={`fc-status-pill ${r.status}`}>
+                    {r.status}
+                  </span>
+                  <ArrowUpRight size={15} />
+                </Link>
+              ))
+            ) : (
+              <div className="fc-empty-state">
+                <span className="fc-empty-index">01</span>
+                <h3>Your first question belongs here.</h3>
+                <p>
+                  Saved reviews keep the evidence, assumptions and opposing
+                  perspectives together.
                 </p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="border-white/10 bg-white/[0.04] text-white">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5 text-blue-300" />
-                Latest Market Snapshots
-              </CardTitle>
-            </CardHeader>
-
-            <CardContent className="space-y-3">
-              {dashboard.latestMarketSnapshots.map((snapshot, index) => {
-                const priceMove =
-                  snapshot.currentPrice !== null &&
-                  snapshot.previousClose !== null
-                    ? snapshot.currentPrice - snapshot.previousClose
-                    : null;
-
-                return (
-                  <div
-                    key={`${snapshot.ticker}-${snapshot.fetchedAt}-${index}`}
-                    className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-blue-300/25"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Badge className="bg-blue-500/15 text-blue-200">
-                            {snapshot.ticker}
-                          </Badge>
-
-                          <p className="text-sm font-medium text-white">
-                            {snapshot.companyName}
-                          </p>
-                        </div>
-
-                        <p className="mt-2 text-xs text-slate-500">
-                          {new Date(snapshot.fetchedAt).toLocaleString()}
-                        </p>
-                      </div>
-
-                      <PriceMoveBadge value={priceMove} />
-                    </div>
-
-                    <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                      <MiniMetric
-                        label="Current Price"
-                        value={formatMoney(snapshot.currentPrice)}
-                      />
-
-                      <MiniMetric
-                        label="Previous Close"
-                        value={formatMoney(snapshot.previousClose)}
-                      />
-
-                      <MiniMetric
-                        label="Market Cap"
-                        value={formatLargeMoney(snapshot.marketCap)}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-
-              {dashboard.latestMarketSnapshots.length === 0 && (
-                <p className="text-sm text-slate-400">
-                  Market snapshots will appear here after later phases connect
-                  dashboard storage again. For now, use stock search above.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-          <Card className="border-white/10 bg-white/[0.04] text-white">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Database className="h-5 w-5 text-emerald-300" />
-                Latest SEC Fundamentals
-              </CardTitle>
-            </CardHeader>
-
-            <CardContent className="space-y-3">
-              {dashboard.latestSecFundamentals.map((sec, index) => (
-                <div
-                  key={`${sec.ticker}-${sec.fetchedAt}-${index}`}
-                  className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-emerald-300/25"
+                <Link href="/committee" className="fc-text-link">
+                  Begin a review <ArrowRight size={15} />
+                </Link>
+              </div>
+            )}
+          </section>
+          <section className="fc-panel">
+            <div className="fc-panel-heading">
+              <div>
+                <p className="fc-kicker">SHARED LIBRARY</p>
+                <h2>Latest reports</h2>
+              </div>
+              <Link href="/reports" aria-label="View reports">
+                <ArrowUpRight size={18} />
+              </Link>
+            </div>
+            {loading ? (
+              <div className="fc-loading-rows">
+                <span />
+                <span />
+              </div>
+            ) : data?.latestReports.length ? (
+              data.latestReports.slice(0, 4).map((r) => (
+                <Link
+                  href={`/reports/${encodeURIComponent(r.id)}`}
+                  key={r.id}
+                  className="fc-library-row"
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-emerald-500/15 text-emerald-200">
-                        {sec.ticker}
-                      </Badge>
-
-                      <p className="text-sm font-medium text-white">
-                        {sec.companyName}
-                      </p>
-                    </div>
-
-                    <Badge className="bg-white/10 text-slate-300">
-                      FY {sec.fiscalYear ?? "N/A"}
-                    </Badge>
+                  <span className="fc-ticker">{r.ticker}</span>
+                  <div>
+                    <strong>{r.company}</strong>
+                    <span>{r.status}</span>
                   </div>
-
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    <MiniMetric
-                      label="Revenue"
-                      value={formatLargeMoney(sec.revenue)}
-                    />
-
-                    <MiniMetric
-                      label="Net Income"
-                      value={formatLargeMoney(sec.netIncome)}
-                    />
-
-                    <MiniMetric
-                      label="Assets"
-                      value={formatLargeMoney(sec.assets)}
-                    />
-
-                    <MiniMetric
-                      label="Liabilities"
-                      value={formatLargeMoney(sec.liabilities)}
-                    />
-                  </div>
-
-                  <p className="mt-3 text-xs text-slate-500">
-                    Filed: {sec.filed ?? "N/A"} · Fetched:{" "}
-                    {new Date(sec.fetchedAt).toLocaleString()}
-                  </p>
-                </div>
-              ))}
-
-              {dashboard.latestSecFundamentals.length === 0 && (
-                <p className="text-sm text-slate-400">
-                  SEC fundamentals are now shown on the new stock detail page.
-                  Open a ticker from the search box to view them.
+                  <ArrowUpRight size={15} />
+                </Link>
+              ))
+            ) : (
+              <div className="fc-empty-state">
+                <h3>A place for deeper reading.</h3>
+                <p>
+                  Available company reports will appear here. Start with stock
+                  research to explore the underlying records.
                 </p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="border-white/10 bg-white/[0.04] text-white">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-violet-300" />
-                Product Roadmap
-              </CardTitle>
-            </CardHeader>
-
-            <CardContent className="space-y-3">
-              <RoadmapItem
-                title="Phase 40A: Stock Research"
-                detail="Create /stock/[ticker], show price, chart, market stats, SEC fundamentals, news placeholder, and AI action links."
-                status="Current"
-              />
-
-              <RoadmapItem
-                title="Phase 40B: Watchlist"
-                detail="Connect add/remove watchlist actions from stock detail pages and create persistent watchlist state."
-                status="Next"
-              />
-
-              <RoadmapItem
-                title="Phase 40C: Paper Portfolio"
-                detail="Add simulated buy/sell transactions, holdings, cost basis, current value, and profit/loss."
-                status="Planned"
-              />
-
-              <RoadmapItem
-                title="Phase 40D: Portfolio-Aware AI"
-                detail="Use holdings, watchlist, market data, fundamentals, and risk signals to answer beginner investing questions."
-                status="Planned"
-              />
-            </CardContent>
-          </Card>
+                <Link href="/stock/AAPL" className="fc-text-link">
+                  Explore a company ↗
+                </Link>
+              </div>
+            )}
+          </section>
         </div>
+        <details className="fc-dev-tools">
+          <summary>Development demo tools</summary>
+          <p>
+            Resetting replaces your demo portfolio, transactions and watchlist.
+            Available in development only.
+          </p>
+          <button
+            className="fc-outline-button"
+            data-testid="dashboard-reset-demo"
+            disabled={resetting}
+            onClick={reset}
+          >
+            {resetting ? "Resetting…" : "Reset demo data"}
+          </button>
+          {resetMessage && (
+            <p role="status" data-testid="dashboard-reset-status">
+              {resetMessage}
+            </p>
+          )}
+        </details>
       </div>
+    </AppShell>
   );
-}
-
-function getMetricIcon(index: number) {
-  const icons = [
-    <Activity key="portfolio" className="h-5 w-5 text-blue-300" />,
-    <Gauge key="risk" className="h-5 w-5 text-amber-300" />,
-    <TrendingUp key="stock" className="h-5 w-5 text-emerald-300" />,
-    <ShieldCheck key="ai" className="h-5 w-5 text-violet-300" />,
-  ];
-
-  return icons[index] ?? icons[0];
-}
-
-function MetricCard({
-  title,
-  value,
-  detail,
-  icon,
-}: {
-  title: string;
-  value: string;
-  detail: string;
-  icon: ReactNode;
-}) {
-  return (
-    <Card className="border-white/10 bg-[#0d1424]/80 text-white shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300/25">
-      <CardContent className="p-5">
-        <div className="flex items-center justify-between">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.05]">
-            {icon}
-          </div>
-          <Badge className="bg-white/10 text-slate-300">MVP</Badge>
-        </div>
-
-        <p className="mt-5 text-sm text-slate-400">{title}</p>
-        <p className="mt-1 text-2xl font-semibold">{value}</p>
-        <p className="mt-2 text-xs leading-5 text-slate-500">{detail}</p>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ProductCard({
-  title,
-  detail,
-  icon,
-}: {
-  title: string;
-  detail: string;
-  icon: ReactNode;
-}) {
-  return (
-    <Card className="border-white/10 bg-[#0d1424]/80 text-white shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-300/25">
-      <CardContent className="p-5">
-        <div className="flex items-center justify-between">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.05]">
-            {icon}
-          </div>
-          <Badge className="bg-white/10 text-slate-300">Demo</Badge>
-        </div>
-
-        <p className="mt-4 font-semibold text-white">{title}</p>
-        <p className="mt-2 text-sm leading-6 text-slate-400">{detail}</p>
-      </CardContent>
-    </Card>
-  );
-}
-
-function MiniSummaryCard({
-  title,
-  value,
-  detail,
-  icon,
-}: {
-  title: string;
-  value: string;
-  detail: string;
-  icon: ReactNode;
-}) {
-  return (
-    <Card className="border-white/10 bg-[#0d1424]/80 text-white shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-300/25">
-      <CardContent className="p-5">
-        <div className="flex items-center justify-between">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.05]">
-            {icon}
-          </div>
-          <Badge className="bg-white/10 text-slate-300">Summary</Badge>
-        </div>
-
-        <p className="mt-5 text-sm text-slate-400">{title}</p>
-        <p className="mt-1 text-2xl font-semibold">{value}</p>
-        <p className="mt-2 text-xs leading-5 text-slate-500">{detail}</p>
-      </CardContent>
-    </Card>
-  );
-}
-
-function MiniMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3 transition-colors duration-200 hover:border-white/20">
-      <p className="text-xs text-slate-500">{label}</p>
-      <p className="mt-1 break-words text-sm font-medium text-white">{value}</p>
-    </div>
-  );
-}
-
-function RoadmapItem({
-  title,
-  detail,
-  status,
-}: {
-  title: string;
-  detail: string;
-  status: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-black/20 p-4 transition-colors duration-200 hover:border-violet-300/25">
-      <div className="flex items-center justify-between gap-3">
-        <p className="font-medium text-white">{title}</p>
-        <Badge className="bg-violet-500/15 text-violet-200">{status}</Badge>
-      </div>
-
-      <p className="mt-2 text-sm leading-6 text-slate-400">{detail}</p>
-    </div>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const styles =
-    status === "Approved"
-      ? "bg-emerald-500/15 text-emerald-200"
-      : status === "Rejected"
-        ? "bg-red-500/15 text-red-200"
-        : "bg-amber-500/15 text-amber-200";
-
-  return <Badge className={styles}>{status}</Badge>;
-}
-
-function PriceMoveBadge({ value }: { value: number | null }) {
-  if (value === null) {
-    return <Badge className="bg-white/10 text-slate-300">No price move</Badge>;
-  }
-
-  const isPositive = value >= 0;
-
-  return (
-    <Badge
-      className={
-        isPositive
-          ? "bg-emerald-500/15 text-emerald-200"
-          : "bg-red-500/15 text-red-200"
-      }
-    >
-      {isPositive ? (
-        <TrendingUp className="mr-1 h-3 w-3" />
-      ) : (
-        <TrendingDown className="mr-1 h-3 w-3" />
-      )}
-      {isPositive ? "+" : ""}
-      {value.toFixed(2)}
-    </Badge>
-  );
-}
-
-function formatMoney(value: number | null) {
-  if (value === null || value === undefined) {
-    return "$0.00";
-  }
-
-  return `$${value.toFixed(2)}`;
-}
-
-function formatLargeMoney(value: number | null) {
-  if (value === null || value === undefined) {
-    return "$0";
-  }
-
-  if (value >= 1_000_000_000_000) {
-    return `$${(value / 1_000_000_000_000).toFixed(2)}T`;
-  }
-
-  if (value >= 1_000_000_000) {
-    return `$${(value / 1_000_000_000).toFixed(2)}B`;
-  }
-
-  if (value >= 1_000_000) {
-    return `$${(value / 1_000_000).toFixed(2)}M`;
-  }
-
-  return `$${value.toLocaleString()}`;
 }

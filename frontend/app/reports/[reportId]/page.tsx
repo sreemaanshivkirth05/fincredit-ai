@@ -203,14 +203,14 @@ export default function ReportDocumentPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="mb-4 border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/10 hover:text-white"
+                className="mb-4 border-[#dedfd6] bg-white text-slate-700 hover:bg-[#eeefe9] hover:text-[#202c29]"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Reports
               </Button>
             </Link>
 
-            <Badge className="mb-3 bg-violet-500/15 text-violet-200">
+            <Badge className="mb-3 bg-[#e8eee8] text-[#285b4b]">
               Full AI Report
             </Badge>
 
@@ -218,31 +218,31 @@ export default function ReportDocumentPage() {
               {reportId}
             </h1>
 
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
               Full AI analyst report document generated from a saved
               LangGraph/LLM agent run, with approval workflow, review comments,
               status history, PDF export, and source run traceability.
             </p>
 
             {loading && (
-              <p className="mt-2 flex items-center gap-2 text-xs text-blue-300">
+              <p className="mt-2 flex items-center gap-2 text-xs text-[#285b4b]">
                 <Loader2 className="h-3 w-3 animate-spin" />
                 Loading report document from PostgreSQL...
               </p>
             )}
 
             {!loading && reportDocument && (
-              <p className="mt-2 text-xs text-emerald-300">
+              <p className="mt-2 text-xs text-emerald-800">
                 Report document connected: {reportDocument.message}
               </p>
             )}
 
             {statusMessage && (
-              <p className="mt-1 text-xs text-emerald-300">{statusMessage}</p>
+              <p className="mt-1 text-xs text-emerald-800">{statusMessage}</p>
             )}
 
             {apiError && (
-              <p className="mt-2 text-xs text-red-300">{apiError}</p>
+              <p className="mt-2 text-xs text-red-800">{apiError}</p>
             )}
           </div>
 
@@ -252,7 +252,7 @@ export default function ReportDocumentPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/10 hover:text-white"
+                  className="border-[#dedfd6] bg-white text-slate-700 hover:bg-[#eeefe9] hover:text-[#202c29]"
                 >
                   <BrainCircuit className="mr-2 h-4 w-4" />
                   View Source Agent Run
@@ -267,7 +267,7 @@ export default function ReportDocumentPage() {
             >
               <Button
                 type="button"
-                className="bg-blue-500 text-white hover:bg-blue-600"
+                className="bg-[#245544] text-[#202c29] hover:bg-[#245544]"
               >
                 <Download className="mr-2 h-4 w-4" />
                 Export PDF
@@ -285,44 +285,44 @@ export default function ReportDocumentPage() {
                 title="Ticker"
                 value={reportDocument.ticker ?? "Portfolio"}
                 change="Scope"
-                icon={<Target className="h-5 w-5 text-blue-300" />}
+                icon={<Target className="h-5 w-5 text-[#285b4b]" />}
               />
 
               <MetricCard
                 title="Agent Run"
                 value={`#${reportDocument.agentRunId}`}
                 change="Traceable"
-                icon={<BrainCircuit className="h-5 w-5 text-violet-300" />}
+                icon={<BrainCircuit className="h-5 w-5 text-[#285b4b]" />}
               />
 
               <MetricCard
                 title="Evidence Items"
                 value={String(reportDocument.evidence.length)}
                 change="Grounded"
-                icon={<FileSearch className="h-5 w-5 text-emerald-300" />}
+                icon={<FileSearch className="h-5 w-5 text-emerald-800" />}
               />
 
               <MetricCard
                 title="Avg Confidence"
                 value={`${averageEvidenceConfidence}%`}
                 change="Evidence"
-                icon={<ShieldCheck className="h-5 w-5 text-amber-300" />}
+                icon={<ShieldCheck className="h-5 w-5 text-amber-800" />}
               />
             </div>
 
-            <Card className="border-emerald-500/20 bg-emerald-500/[0.05] text-white">
+            <Card className="border-emerald-500/20 bg-emerald-500/[0.05] text-[#202c29]">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <BrainCircuit className="h-5 w-5 text-emerald-300" />
+                  <BrainCircuit className="h-5 w-5 text-emerald-800" />
                   Source Agent Run Traceability
                 </CardTitle>
               </CardHeader>
 
               <CardContent className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                 <div>
-                  <p className="text-sm leading-6 text-slate-300">
+                  <p className="text-sm leading-6 text-slate-700">
                     This report was generated from saved AI agent run{" "}
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-[#202c29]">
                       #{reportDocument.agentRunId}
                     </span>
                     . Open the source run to inspect the original question,
@@ -333,7 +333,7 @@ export default function ReportDocumentPage() {
                 <Link href={`/agent-runs/${reportDocument.agentRunId}`}>
                   <Button
                     type="button"
-                    className="w-fit bg-emerald-500 text-white hover:bg-emerald-600"
+                    className="w-fit bg-emerald-500 text-[#202c29] hover:bg-emerald-600"
                   >
                     <BrainCircuit className="mr-2 h-4 w-4" />
                     Open Source Agent Run
@@ -342,17 +342,17 @@ export default function ReportDocumentPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-white/10 bg-white/[0.04] text-white">
+            <Card className="border-[#dedfd6] bg-white text-[#202c29]">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <MessageSquareText className="h-5 w-5 text-amber-300" />
+                  <MessageSquareText className="h-5 w-5 text-amber-800" />
                   Analyst Review Action
                 </CardTitle>
               </CardHeader>
 
               <CardContent className="space-y-4">
                 <div>
-                  <p className="mb-2 text-sm text-slate-400">
+                  <p className="mb-2 text-sm text-slate-600">
                     Add an optional review comment before approving, rejecting,
                     or marking this report as needing review.
                   </p>
@@ -361,14 +361,14 @@ export default function ReportDocumentPage() {
                     value={reviewComment}
                     onChange={(event) => setReviewComment(event.target.value)}
                     placeholder="Example: Approved after reviewing SEC evidence, risk drivers, and grounding score."
-                    className="min-h-[110px] border-white/10 bg-black/30 text-slate-100 placeholder:text-slate-500"
+                    className="min-h-[110px] border-[#dedfd6] bg-black/30 text-slate-700 placeholder:text-slate-500"
                   />
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
                   <Button
                     type="button"
-                    className="bg-emerald-500 text-white hover:bg-emerald-600"
+                    className="bg-emerald-500 text-[#202c29] hover:bg-emerald-600"
                     disabled={updatingStatus === "Approved"}
                     onClick={() => handleStatusUpdate("Approved")}
                   >
@@ -387,7 +387,7 @@ export default function ReportDocumentPage() {
 
                   <Button
                     type="button"
-                    className="bg-amber-500 text-white hover:bg-amber-600"
+                    className="bg-amber-500 text-[#202c29] hover:bg-amber-600"
                     disabled={updatingStatus === "Needs Review"}
                     onClick={() => handleStatusUpdate("Needs Review")}
                   >
@@ -403,7 +403,7 @@ export default function ReportDocumentPage() {
 
                   <Button
                     type="button"
-                    className="bg-red-500 text-white hover:bg-red-600"
+                    className="bg-red-500 text-[#202c29] hover:bg-red-600"
                     disabled={updatingStatus === "Rejected"}
                     onClick={() => handleStatusUpdate("Rejected")}
                   >
@@ -424,34 +424,34 @@ export default function ReportDocumentPage() {
             </Card>
 
             <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-              <Card className="border-white/10 bg-white/[0.04] text-white">
+              <Card className="border-[#dedfd6] bg-white text-[#202c29]">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-blue-300" />
+                    <FileText className="h-5 w-5 text-[#285b4b]" />
                     Analyst Question
                   </CardTitle>
                 </CardHeader>
 
                 <CardContent>
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
-                    <p className="text-sm leading-7 text-slate-200">
+                  <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-5">
+                    <p className="text-sm leading-7 text-slate-700">
                       {reportDocument.question}
                     </p>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="border-white/10 bg-white/[0.04] text-white">
+              <Card className="border-[#dedfd6] bg-white text-[#202c29]">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <History className="h-5 w-5 text-violet-300" />
+                    <History className="h-5 w-5 text-[#285b4b]" />
                     Approval History
                   </CardTitle>
                 </CardHeader>
 
                 <CardContent className="space-y-3">
                   {historyLoading && (
-                    <p className="flex items-center gap-2 text-sm text-blue-300">
+                    <p className="flex items-center gap-2 text-sm text-[#285b4b]">
                       <Loader2 className="h-4 w-4 animate-spin" />
                       Loading status history...
                     </p>
@@ -463,7 +463,7 @@ export default function ReportDocumentPage() {
                     statusHistory.events.map((event) => (
                       <div
                         key={event.id}
-                        className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                        className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-3">
                           <div className="flex flex-wrap items-center gap-2">
@@ -474,13 +474,13 @@ export default function ReportDocumentPage() {
                             <StatusBadge status={event.newStatus} />
                           </div>
 
-                          <Badge className="bg-white/10 text-slate-300">
+                          <Badge className="bg-[#eeefe9] text-slate-700">
                             {event.changedBy}
                           </Badge>
                         </div>
 
                         {event.comment && (
-                          <p className="mt-3 text-sm leading-6 text-slate-300">
+                          <p className="mt-3 text-sm leading-6 text-slate-700">
                             {event.comment}
                           </p>
                         )}
@@ -500,7 +500,7 @@ export default function ReportDocumentPage() {
 
                   {!historyLoading &&
                     (!statusHistory || statusHistory.events.length === 0) && (
-                      <p className="text-sm text-slate-400">
+                      <p className="text-sm text-slate-600">
                         No approval history yet. Add a review comment and update
                         the report status.
                       </p>
@@ -509,40 +509,40 @@ export default function ReportDocumentPage() {
               </Card>
             </div>
 
-            <Card className="border-white/10 bg-white/[0.04] text-white">
+            <Card className="border-[#dedfd6] bg-white text-[#202c29]">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <BadgeCheck className="h-5 w-5 text-emerald-300" />
+                  <BadgeCheck className="h-5 w-5 text-emerald-800" />
                   AI Analyst Report
                 </CardTitle>
               </CardHeader>
 
               <CardContent>
-                <div className="space-y-4 rounded-2xl border border-white/10 bg-black/20 p-5">
+                <div className="space-y-4 rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-5">
                   <ReactMarkdown
                     components={{
                       strong: ({ children }) => (
-                        <strong className="font-semibold text-white">
+                        <strong className="font-semibold text-[#202c29]">
                           {children}
                         </strong>
                       ),
                       p: ({ children }) => (
-                        <p className="text-sm leading-7 text-slate-200">
+                        <p className="text-sm leading-7 text-slate-700">
                           {children}
                         </p>
                       ),
                       ol: ({ children }) => (
-                        <ol className="ml-5 list-decimal space-y-2 text-sm leading-7 text-slate-200">
+                        <ol className="ml-5 list-decimal space-y-2 text-sm leading-7 text-slate-700">
                           {children}
                         </ol>
                       ),
                       ul: ({ children }) => (
-                        <ul className="ml-5 list-disc space-y-2 text-sm leading-7 text-slate-200">
+                        <ul className="ml-5 list-disc space-y-2 text-sm leading-7 text-slate-700">
                           {children}
                         </ul>
                       ),
                       li: ({ children }) => (
-                        <li className="text-sm leading-7 text-slate-200">
+                        <li className="text-sm leading-7 text-slate-700">
                           {children}
                         </li>
                       ),
@@ -555,10 +555,10 @@ export default function ReportDocumentPage() {
             </Card>
 
             <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-              <Card className="border-white/10 bg-white/[0.04] text-white">
+              <Card className="border-[#dedfd6] bg-white text-[#202c29]">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Target className="h-5 w-5 text-red-300" />
+                    <Target className="h-5 w-5 text-red-800" />
                     Risk Drivers
                   </CardTitle>
                 </CardHeader>
@@ -567,34 +567,34 @@ export default function ReportDocumentPage() {
                   {reportDocument.riskDrivers.map((risk, index) => (
                     <div
                       key={`${risk.ticker}-${risk.driver}-${index}`}
-                      className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                      className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4"
                     >
                       <div className="flex items-center justify-between gap-4">
-                        <Badge className="bg-blue-500/15 text-blue-200">
+                        <Badge className="bg-[#e8eee8] text-[#285b4b]">
                           {risk.ticker}
                         </Badge>
 
                         <RiskImpactBadge impact={risk.impact} />
                       </div>
 
-                      <p className="mt-3 text-sm leading-6 text-slate-300">
+                      <p className="mt-3 text-sm leading-6 text-slate-700">
                         {risk.driver}
                       </p>
                     </div>
                   ))}
 
                   {reportDocument.riskDrivers.length === 0 && (
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-slate-600">
                       No risk drivers were stored for this report.
                     </p>
                   )}
                 </CardContent>
               </Card>
 
-              <Card className="border-white/10 bg-white/[0.04] text-white">
+              <Card className="border-[#dedfd6] bg-white text-[#202c29]">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Lightbulb className="h-5 w-5 text-amber-300" />
+                    <Lightbulb className="h-5 w-5 text-amber-800" />
                     Suggested Actions
                   </CardTitle>
                 </CardHeader>
@@ -603,14 +603,14 @@ export default function ReportDocumentPage() {
                   {reportDocument.suggestedActions.map((action, index) => (
                     <div
                       key={`${action}-${index}`}
-                      className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                      className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4"
                     >
                       <div className="flex items-start gap-3">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-xs font-semibold text-amber-200">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-xs font-semibold text-amber-800">
                           {index + 1}
                         </div>
 
-                        <p className="text-sm leading-6 text-slate-300">
+                        <p className="text-sm leading-6 text-slate-700">
                           {action}
                         </p>
                       </div>
@@ -618,7 +618,7 @@ export default function ReportDocumentPage() {
                   ))}
 
                   {reportDocument.suggestedActions.length === 0 && (
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-slate-600">
                       No suggested actions were stored for this report.
                     </p>
                   )}
@@ -626,10 +626,10 @@ export default function ReportDocumentPage() {
               </Card>
             </div>
 
-            <Card className="border-white/10 bg-white/[0.04] text-white">
+            <Card className="border-[#dedfd6] bg-white text-[#202c29]">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <FileSearch className="h-5 w-5 text-emerald-300" />
+                  <FileSearch className="h-5 w-5 text-emerald-800" />
                   Evidence Used
                 </CardTitle>
               </CardHeader>
@@ -638,39 +638,39 @@ export default function ReportDocumentPage() {
                 {reportDocument.evidence.map((item, index) => (
                   <div
                     key={`${item.source}-${index}`}
-                    className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                    className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                      <Badge className="bg-emerald-500/15 text-emerald-200">
+                      <Badge className="bg-emerald-500/15 text-emerald-800">
                         {item.source}
                       </Badge>
 
                       <div className="flex items-center gap-3">
                         <Progress value={item.confidence} className="w-24" />
-                        <span className="text-sm text-slate-300">
+                        <span className="text-sm text-slate-700">
                           {item.confidence}%
                         </span>
                       </div>
                     </div>
 
-                    <p className="mt-3 text-sm leading-6 text-slate-300">
+                    <p className="mt-3 text-sm leading-6 text-slate-700">
                       {item.claim}
                     </p>
                   </div>
                 ))}
 
                 {reportDocument.evidence.length === 0 && (
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-slate-600">
                     No evidence items were stored for this report.
                   </p>
                 )}
               </CardContent>
             </Card>
 
-            <Card className="border-white/10 bg-white/[0.04] text-white">
+            <Card className="border-[#dedfd6] bg-white text-[#202c29]">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-violet-300" />
+                  <Calendar className="h-5 w-5 text-[#285b4b]" />
                   Report Metadata
                 </CardTitle>
               </CardHeader>
@@ -703,7 +703,7 @@ export default function ReportDocumentPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      className="border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/10 hover:text-white"
+                      className="border-[#dedfd6] bg-white text-slate-700 hover:bg-[#eeefe9] hover:text-[#202c29]"
                     >
                       <BrainCircuit className="mr-2 h-4 w-4" />
                       Open Source Agent Run #{reportDocument.agentRunId}
@@ -731,14 +731,14 @@ function MetricCard({
   icon: React.ReactNode;
 }) {
   return (
-    <Card className="border-white/10 bg-white/[0.04] text-white">
+    <Card className="border-[#dedfd6] bg-white text-[#202c29]">
       <CardContent className="p-5">
         <div className="flex items-center justify-between">
           {icon}
-          <Badge className="bg-white/10 text-slate-300">{change}</Badge>
+          <Badge className="bg-[#eeefe9] text-slate-700">{change}</Badge>
         </div>
 
-        <p className="mt-5 text-sm text-slate-400">{title}</p>
+        <p className="mt-5 text-sm text-slate-600">{title}</p>
         <p className="mt-1 text-2xl font-semibold">{value}</p>
       </CardContent>
     </Card>
@@ -747,9 +747,9 @@ function MetricCard({
 
 function MiniMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-      <p className="text-sm text-slate-400">{label}</p>
-      <p className="mt-2 break-words text-sm font-medium leading-6 text-white">
+    <div className="rounded-xl border border-[#dedfd6] bg-[#f4f5f0] p-4">
+      <p className="text-sm text-slate-600">{label}</p>
+      <p className="mt-2 break-words text-sm font-medium leading-6 text-[#202c29]">
         {value}
       </p>
     </div>
@@ -759,10 +759,10 @@ function MiniMetric({ label, value }: { label: string; value: string }) {
 function RiskImpactBadge({ impact }: { impact: string }) {
   const styles =
     impact === "High"
-      ? "bg-red-500/15 text-red-200"
+      ? "bg-red-500/15 text-red-800"
       : impact === "Medium"
-        ? "bg-amber-500/15 text-amber-200"
-        : "bg-emerald-500/15 text-emerald-200";
+        ? "bg-amber-500/15 text-amber-800"
+        : "bg-emerald-500/15 text-emerald-800";
 
   return <Badge className={styles}>{impact}</Badge>;
 }
@@ -770,12 +770,12 @@ function RiskImpactBadge({ impact }: { impact: string }) {
 function StatusBadge({ status }: { status: string }) {
   const styles =
     status === "Approved"
-      ? "bg-emerald-500/15 text-emerald-200"
+      ? "bg-emerald-500/15 text-emerald-800"
       : status === "Rejected"
-        ? "bg-red-500/15 text-red-200"
+        ? "bg-red-500/15 text-red-800"
         : status === "Initial"
-          ? "bg-blue-500/15 text-blue-200"
-          : "bg-amber-500/15 text-amber-200";
+          ? "bg-[#e8eee8] text-[#285b4b]"
+          : "bg-amber-500/15 text-amber-800";
 
   return <Badge className={styles}>{status}</Badge>;
 }
