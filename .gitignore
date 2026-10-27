@@ -56,3 +56,43 @@ frontend/test-results/
 
 # Deployment secrets
 .env.production
+
+# Private environment/credential files (only sanitized examples are shareable)
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+credentials*
+secrets/
+.secrets/
+*.token
+service-account*.json
+*credentials*.json
+token*.json
+passwords*
+.netrc
+.pypirc
+.aws/
+.ssh/
+
+# Local inference weights, caches, database exports, and virtual environments
+.venv/
+.ollama/
+/models/
+*.gguf
+*.safetensors
+*.pt
+*.pth
+*.onnx
+*.bin
+*.db-*
+*.sqlite-*
+*.sqlite3-*
+*.sql
+*.dump
+*.backup

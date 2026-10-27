@@ -1,0 +1,49 @@
+{
+  "checkedAtUTC": "2026-10-27T21:01:59.214695+00:00",
+  "checks": {
+    "rebuilt_source_matches_workspace": true,
+    "registration_and_login": true,
+    "authentication_required": true,
+    "portfolio_paper_buy_and_isolation": true,
+    "dashboard_saved_position_count": true,
+    "creation_configured_without_committee_job": true,
+    "retrieval_and_listing": true,
+    "cross_user_isolation": true,
+    "invalid_requests_rejected": true,
+    "snapshot_api_and_sql_modification_blocked": true,
+    "snapshot_unchanged_after_test_portfolio_changes": true,
+    "backend_restart_persistence": true,
+    "ask_api_and_persistence": "deterministic_fallback",
+    "committee_worker_saved_packet_and_isolation": {
+      "status": "partial",
+      "modelGeneratedPerspectives": 0,
+      "unavailablePerspectives": 2
+    },
+    "disabled_blocks_create_list_retrieve": true,
+    "existing_authenticated_apis_with_simulation_disabled": true,
+    "reenabling_preserves_saved_run": true,
+    "logout_endpoint": true,
+    "preexisting_records_unchanged": true
+  },
+  "testAccounts": [
+    {
+      "label": "A",
+      "email": "phase1-verify-20261027T210159Z-f6853b-a@example.test",
+      "id": 3
+    },
+    {
+      "label": "B",
+      "email": "phase1-verify-20261027T210159Z-f6853b-b@example.test",
+      "id": 4
+    }
+  ],
+  "recordIds": {
+    "simulation": "96abfec7-bbbb-476a-bf1e-47baf7a8203b",
+    "ask": 1,
+    "committee": "d3bd6807-678e-4502-bc52-4dc8fc0a13f3"
+  },
+  "browserChecks": "pending manual verification",
+  "preexistingRowsCompared": 30,
+  "changedOrMissingPreexistingRows": 0,
+  "finalSimulationEnabled": false
+}

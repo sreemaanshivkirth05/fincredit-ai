@@ -1,4 +1,5 @@
 from app.api.committee import router as committee_router
+from app.api.simulation import router as simulation_router
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
@@ -90,3 +91,4 @@ app.include_router(stock_intelligence_router, prefix=settings.API_PREFIX)
 app.include_router(market_chart_router)
 
 app.include_router(committee_router, prefix=settings.API_PREFIX)
+app.include_router(simulation_router, prefix=settings.API_PREFIX)

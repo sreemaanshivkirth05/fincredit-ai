@@ -1331,10 +1331,7 @@ def answer_agent(state: FinCreditState) -> FinCreditState:
             error_message=error_message,
         )
 
-        if "timed out after 20 seconds" in error_message:
-            llm_status = "Fallback used because local LLM timed out after 20 seconds"
-        else:
-            llm_status = f"Fallback used because model generation failed: {error_message}"
+        llm_status = f"Fallback used because model generation failed: {error_message}"
 
     ticker = state.get("ticker")
     portfolio_context = state.get("portfolio_context", [])

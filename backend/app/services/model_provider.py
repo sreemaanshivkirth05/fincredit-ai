@@ -81,18 +81,26 @@ def generate_huggingface(prompt):
 
 
 def generate_local(prompt):
-    from ollama import Client
+    from ollama import Client, ResponseError
+    from httpx import TimeoutException
     try:
         client = Client(host=settings.OLLAMA_BASE_URL, timeout=settings.LLM_TIMEOUT_SECONDS)
         response = client.chat(model=settings.OLLAMA_MODEL,
             messages=[{"role": "user", "content": prompt}],
-            options={"temperature": 0.2, "num_ctx": 8192, "num_predict": 768})
+            options={"temperature": 0.2, "num_ctx": 8192,
+                     "num_predict": settings.OLLAMA_MAX_OUTPUT_TOKENS})
         answer = response.message.content
         if not isinstance(answer, str) or not answer.strip():
             raise ModelUnavailable("Local model returned no answer")
-        return ModelAnswer(answer, "ollama", settings.OLLAMA_MODEL)
+        notice = "Output reached its token limit; review for incompleteness" if response.done_reason == "length" else ""
+        return ModelAnswer(answer, "ollama", settings.OLLAMA_MODEL, notice)
     except ModelUnavailable:
         raise
+    except ResponseError as error:
+        reason = "Configured Ollama model is not installed" if error.status_code == 404 else "Local Ollama rejected generation"
+        raise ModelUnavailable(reason) from None
+    except TimeoutException:
+        raise ModelUnavailable(f"Local Ollama timed out after {settings.LLM_TIMEOUT_SECONDS} seconds") from None
     except Exception:
         raise ModelUnavailable("Local Ollama is unavailable or timed out") from None
 

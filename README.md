@@ -21,6 +21,7 @@ The complete light editorial redesign is on [`feat/editorial-ui-redesign`](https
 | [Investment Committee](#investment-committee) | How opposing perspectives use the same saved evidence |
 | [Release scope and limitations](docs/RELEASE-0.2.md) | What is implemented, what remains unverified, and what is future work |
 | [Optional local setup](docs/DEPLOYMENT.md#local-docker-windows--docker-desktop) | How to run the project yourself |
+| [GitHub Codespaces](docs/CODESPACES.md) | Private ports, manual Compose startup, and optional local Ollama inference |
 
 ## The problem
 

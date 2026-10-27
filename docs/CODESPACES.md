@@ -1,0 +1,181 @@
+# GitHub Codespaces
+
+Use branch `feat/fincredit-simulation-lab` and the checked-in dev container.
+Select the **4-core / 16 GB** machine in Codespaces creation options. The
+`hostRequirements` setting requests that minimum; GitHub may offer a larger
+machine if repository/organization policy requires it. No GPU is required.
+
+Creation installs development tools (Python 3.12, Node 22, Docker/Compose,
+GitHub CLI). It does **not** build/start the application, seed the database,
+download a model, or run inference. Docker's development daemon is started by
+the Docker-in-Docker feature; application services are started only below.
+There are no application `postCreateCommand` or `postStartCommand` hooks.
+
+## Compose commands and private ports
+
+Run these Bash commands from the repository root in the Codespace. Define the
+helper again in each new terminal. The explicit project name keeps volumes
+stable, and the non-secret env example prevents loading a workstation `.env`.
+Shell variables take precedence over env-file defaults for timeout/output limits.
+
+```bash
+dc() {
+  docker compose --project-name fincredit-codespaces \
+    --env-file .devcontainer/compose.env.example \
+    -f docker-compose.yml -f compose.codespaces.yml "$@"
+}
+docker compose version  # Requires 2.24.4 or newer for !override / !reset.
+dc config --quiet
+```
+
+Ports **3000** and **8000** are automatically forwarded. GitHub defaults them
+to private; the attach hook explicitly reapplies private access. If that hook
+fails (for example, GitHub authentication is unavailable), keep services stopped
+until you can confirm **Private** in the Ports panel or run:
+
+```bash
+gh codespace ports visibility 3000:private 8000:private -c "$CODESPACE_NAME"
+gh codespace ports -c "$CODESPACE_NAME"
+```
+
+Only these ports bind on Codespace loopback. PostgreSQL **5432** has its base
+published mapping removed; Ollama **11434** has no published mapping. Neither
+is automatically forwarded. Containers use `postgres:5432` and `ollama:11434`
+on the internal Compose network. Do not add either port to the Ports panel.
+The port attributes specify HTTP for the containers; GitHub supplies HTTPS on
+the browser-facing forwarded URLs.
+
+## Start the application manually
+
+```bash
+dc up -d --build postgres backend frontend
+dc ps
+curl --fail http://localhost:8000/api/health
+curl --fail http://localhost:3000/api/health
+```
+
+Open port **3000** from the Ports panel. Create a new application account via
+Register. This override uses additive `prepare_release`, without demo bootstrap
+or reset; it does not seed demo/admin accounts. Existing development defaults
+in the base Compose file are public demo fixtures, not deployment credentials.
+Keep the Codespace private and do not use this configuration for production.
+
+The frontend is built with an empty `NEXT_PUBLIC_API_BASE_URL` and a server-side
+`/api/*` rewrite to `http://backend:8000`. Browser requests stay on the private
+frontend origin and avoid cross-origin GitHub proxy authentication. Backend CORS
+and frontend URL use the Codespace's HTTPS address. Port 8000 remains private
+for direct API inspection. Local/production builds keep their existing API URL
+unless `FINCREDIT_API_PROXY_URL` is explicitly provided.
+
+Ollama and the Committee worker are not required for startup. Ask AI may use
+its existing explicit deterministic fallback until a model is installed and
+Ollama is running. Committee jobs remain queued until the worker starts.
+
+## Download the model only when ready
+
+These are explicit network/storage and CPU operations. They are never lifecycle
+hooks. Both backend and Committee use `qwen3.5:4b` at `http://ollama:11434`.
+The image is pinned to the existing locally verified Ollama release `0.40.11`;
+this Codespaces model/image combination still needs the smoke test below.
+
+```bash
+dc up -d ollama
+# Wait for the daemon; this command does not download a model.
+until dc exec -T ollama ollama list; do sleep 2; done
+dc exec -T ollama ollama pull qwen3.5:4b
+dc exec -T ollama ollama list
+# Optional actual generation (consumes CPU):
+dc exec -T ollama ollama run qwen3.5:4b 'Reply with exactly: READY'
+dc up -d --build committee-worker
+```
+
+Ollama permits one parallel generation and one loaded model. Committee's
+existing sequential loop is preserved; API and worker requests are serialized
+by the shared Ollama server. The existing CPU settings remain **180 seconds**
+per model request, **384 output tokens**, and **8192 context tokens**. Requests
+queued behind another generation can time out; truncation and fallback remain
+explicit in the application. No HF credentials or automatic HF fallback are
+passed through this override. No model is automatically pulled on restart.
+
+Simulation Phase 1 remains configuration/snapshot persistence only. This
+override explicitly sets `SIMULATION_ENABLED=false` for both services. It adds
+no Phase 2 execution, trading, or simulation startup. Its isolated tests enable
+the feature only inside their test settings, without changing running services.
+
+## Tests
+
+No model or Committee worker is needed for the existing isolated backend suite.
+Install tools manually, then run the same checks as CI:
+
+```bash
+python -m venv .venv
+.venv/bin/python -m pip install -r backend/requirements.txt
+(cd backend && ../.venv/bin/python -m unittest discover -s tests -v)
+.venv/bin/python -m compileall -q backend/app scripts
+(cd frontend && npm ci && npx tsc --noEmit)
+(cd frontend && npx playwright install --with-deps chromium)
+(cd frontend && npx playwright test tests/e2e/portfolio-scenario.spec.ts tests/e2e/research-workbench.spec.ts)
+git diff --check
+python scripts/check_git_safety.py  # Paths and finding types only; no staging.
+```
+
+Playwright starts its own frontend dev server, so first stop the Compose
+frontend with `dc stop frontend` if it is running. Resume with `dc up -d frontend`.
+The selected CI browser suites mock backend requests. PostgreSQL-specific tests
+skip unless explicitly given an empty, dedicated disposable database. To run
+them without publishing PostgreSQL or touching application records:
+
+```bash
+dc up -d postgres
+dc exec -T postgres createdb -U postgres fincredit_simulation_test
+dc run --rm --no-deps -v "$PWD/backend/tests:/app/tests:ro" \
+  -e SIMULATION_TEST_DATABASE_URL=postgresql://postgres:postgres@postgres:5432/fincredit_simulation_test \
+  backend python -m unittest discover -s tests -p test_simulation_postgres.py -v
+```
+
+The test database is intentionally retained. The tests refuse a non-empty test
+database on repeat runs; use a fresh disposable Codespace to repeat this check.
+Never point it at `fincredit_ai`. The existing `scripts/verify_*.py` remain
+workstation verification helpers; they hardcode the local Compose setup and
+write their historical result reports. Do not run them unchanged in Codespaces.
+Use the isolated suite and the explicit model smoke test above instead.
+
+## Stop, resume, and preserve data
+
+```bash
+dc stop committee-worker ollama  # Stop inference/queue processing first.
+dc stop                         # Stop the remaining application containers.
+# Alternatively remove application containers/network while keeping volumes:
+dc down
+docker volume inspect fincredit-codespaces_postgres_data fincredit-codespaces_ollama_models
+# Resume explicitly; no model re-download is needed if its volume remains:
+dc up -d postgres backend frontend
+dc up -d ollama committee-worker  # Only when inference is wanted again.
+# Stop the Codespace VM itself to stop compute billing:
+gh codespace stop -c "$CODESPACE_NAME"
+```
+
+PostgreSQL records live in `fincredit-codespaces_postgres_data`; downloaded
+weights live in `fincredit-codespaces_ollama_models`. They survive `dc stop`,
+`dc down` without `--volumes`, and normal Codespace stop/start. Docker-in-Docker
+stores daemon data in its persistent `/var/lib/docker` feature volume. Do not
+rely on this as a backup across full rebuild/recovery or Codespace deletion.
+Never use `dc down -v`, `docker volume prune`, or `docker system prune --volumes`
+when preserving data. Deleting a Codespace deletes its local storage.
+
+Optional database backup (private and ignored; never stage it):
+
+```bash
+mkdir -p .secrets
+dc exec -T postgres pg_dump -U postgres -Fc fincredit_ai > .secrets/fincredit.dump
+```
+
+Store that backup outside the Codespace privately before deletion. Models can
+be downloaded again explicitly. No database files, model weights, environment
+files, tokens, or personal data belong in Git; sanitized `.env.example` files
+and the non-secret `compose.env.example` are intentional exceptions.
+
+References: [machine requirements](https://docs.github.com/en/codespaces/setting-up-your-project-for-codespaces/configuring-dev-containers/setting-a-minimum-specification-for-codespace-machines),
+[private forwarded ports](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace),
+[Compose merge rules](https://docs.docker.com/reference/compose-file/merge/),
+[Ollama concurrency](https://github.com/ollama/ollama/blob/main/docs/faq.mdx).

@@ -1,0 +1,76 @@
+{
+  "checkedAtUTC": "2026-10-27T21:08:25.486487+00:00",
+  "directGeneration": {
+    "backend": {
+      "provider": "ollama",
+      "model": "llama3.1:8b",
+      "timeoutSeconds": 180,
+      "maxOutputTokens": 384,
+      "hfTokenPresent": false,
+      "spaceKeyConfigured": false,
+      "simulationEnabled": false,
+      "status": "model_generated",
+      "actualProvider": "ollama",
+      "actualModel": "llama3.1:8b",
+      "nonempty": true,
+      "exactSyntheticResponse": true,
+      "truncated": false,
+      "elapsedSeconds": 8.31
+    },
+    "committee-worker": {
+      "provider": "ollama",
+      "model": "llama3.1:8b",
+      "timeoutSeconds": 180,
+      "maxOutputTokens": 384,
+      "hfTokenPresent": false,
+      "spaceKeyConfigured": false,
+      "simulationEnabled": false,
+      "status": "model_generated",
+      "actualProvider": "ollama",
+      "actualModel": "llama3.1:8b",
+      "nonempty": true,
+      "exactSyntheticResponse": true,
+      "truncated": false,
+      "elapsedSeconds": 1.08
+    }
+  },
+  "workflows": {
+    "ask": {
+      "id": 2,
+      "generated": true,
+      "fallback": false,
+      "auditStatus": "Generated with ollama: llama3.1:8b",
+      "answerCharacters": 1822,
+      "elapsedSeconds": 53.11
+    },
+    "committee": {
+      "id": "89956ee5-c1c3-4ed8-af75-13937cd91349",
+      "status": "completed",
+      "elapsedSeconds": 49.72,
+      "perspectives": [
+        {
+          "role": "Bull analyst",
+          "status": "generated",
+          "provider": "ollama",
+          "model": "llama3.1:8b",
+          "notice": "",
+          "auditFlags": false
+        },
+        {
+          "role": "Bear analyst",
+          "status": "generated",
+          "provider": "ollama",
+          "model": "llama3.1:8b",
+          "notice": "",
+          "auditFlags": true
+        }
+      ]
+    }
+  },
+  "testAccount": {
+    "id": 5,
+    "email": "model-verify-20261027T210856Z-9dc98c@example.test"
+  },
+  "preexistingRowsCompared": 39,
+  "changedOrMissingPreexistingRows": 0
+}

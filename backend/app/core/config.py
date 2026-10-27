@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     ADMIN_USER_EMAIL: str = "admin@fincredit.ai"
     ADMIN_USER_PASSWORD: str = "AdminPass123!"
     OLLAMA_MODEL: str = "llama3.1:8b"
+    OLLAMA_MAX_OUTPUT_TOKENS: int = Field(default=768, ge=64, le=2048)
     LLM_TIMEOUT_SECONDS: int = Field(default=20, ge=1, le=180)
     LLM_PROVIDER: Literal["ollama", "huggingface"] = "ollama"
     HF_SPACE_ID: str = "Sreemaan05/fincredit-ai-inference"
@@ -27,6 +28,12 @@ class Settings(BaseSettings):
     HF_TIMEOUT_SECONDS: int = Field(default=90, ge=1, le=180)
     HF_ALLOW_OLLAMA_FALLBACK: bool = False
     OLLAMA_BASE_URL: str = "http://localhost:11434"
+    SIMULATION_ENABLED: bool = False
+    SIMULATION_MAX_AGENTS: int = Field(default=6, ge=1, le=6)
+    SIMULATION_MAX_ROUNDS: int = Field(default=10, ge=1, le=10)
+    SIMULATION_MAX_MODEL_CALLS: int = Field(default=40, ge=1, le=40)
+    SIMULATION_PROVIDER: Literal["ollama", "huggingface"] = "ollama"
+    SIMULATION_MODEL: str = Field(default="", max_length=200)
 
     @model_validator(mode="after")
     def production_guard(self):

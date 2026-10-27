@@ -1,0 +1,5 @@
+# Optional local verification override: prepare schemas without demo seeding/reset.
+# docker compose -f docker-compose.yml -f compose.simulation-local.yml up -d --no-deps --build backend
+services:
+  backend:
+    command: ["sh", "-c", "python -m app.db.prepare_release && exec python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"]

@@ -10,3 +10,18 @@ test-results/
 coverage/
 
 .env.production
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*
+secrets/
+.secrets/
+.ollama/
+*.gguf
+*.safetensors
+*.db
+*.sqlite*
+*.sql
+*.dump

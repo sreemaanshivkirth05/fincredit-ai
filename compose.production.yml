@@ -19,6 +19,12 @@ services:
     command: ["sh", "-c", "python -m app.db.prepare_release && exec python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"]
     environment: &app_env
       APP_ENV: production
+      SIMULATION_ENABLED: ${SIMULATION_ENABLED:-false}
+      SIMULATION_MAX_AGENTS: ${SIMULATION_MAX_AGENTS:-6}
+      SIMULATION_MAX_ROUNDS: ${SIMULATION_MAX_ROUNDS:-10}
+      SIMULATION_MAX_MODEL_CALLS: ${SIMULATION_MAX_MODEL_CALLS:-40}
+      SIMULATION_PROVIDER: ${SIMULATION_PROVIDER:-ollama}
+      SIMULATION_MODEL: ${SIMULATION_MODEL:-}
       DATABASE_URL: ${DATABASE_URL:?Set postgresql://fincredit:URL_ENCODED_PASSWORD@postgres:5432/fincredit_ai}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set a unique secret of at least 40 characters}
       FRONTEND_URL: https://${DOMAIN:?Set the deployment domain}
@@ -26,6 +32,8 @@ services:
       LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3:1.7b}
+      OLLAMA_MAX_OUTPUT_TOKENS: ${OLLAMA_MAX_OUTPUT_TOKENS:-768}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-20}
       HF_SPACE_ID: ${HF_SPACE_ID:-Sreemaan05/fincredit-ai-inference}
       HF_TOKEN: ${HF_TOKEN:-}
       FINCREDIT_SPACE_KEY: ${FINCREDIT_SPACE_KEY:-}

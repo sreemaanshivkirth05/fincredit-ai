@@ -7,3 +7,19 @@ __pycache__/
 *.log
 
 .env.production
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*
+secrets/
+.secrets/
+.venv/
+.ollama/
+*.gguf
+*.safetensors
+*.db
+*.sqlite*
+*.sql
+*.dump
