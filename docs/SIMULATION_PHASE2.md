@@ -5,11 +5,19 @@ research run. It is disabled by default and must be explicitly enabled on the
 server. It does not place trades, alter holdings, fetch live data, estimate
 probabilities, clear a market, or claim to reproduce real investor behavior.
 
+The professional agent mandates, desk ordering, decision contract, quality
+scoring, and committee synthesis are documented in
+`docs/SIMULATION_AGENT_SYSTEM.md`.
+
 ## What is implemented
 
 - Explicit authenticated start and cancellation endpoints.
 - A separate polling worker with PostgreSQL skip-locked queue claims.
 - Sequential agent calls to limit CPU and memory pressure.
+- Professional role mandates, canonical desk ordering, same-round peer context,
+  and prior-round learning without treating model opinions as evidence.
+- Structured thesis/counter-thesis, catalysts, risks, horizon, sizing rationale,
+  confidence calibration, and deterministic decision-quality scoring.
 - Six supported research roles, strict structured actions, frozen evidence IDs,
   deterministic per-agent seeds, call/round/runtime limits, and no automatic
   model retries.
@@ -101,12 +109,12 @@ curl --fail -X POST "http://localhost:8000/api/simulations/$RUN_ID/cancel" \
 
 Expected completed output contains one round, two validated actions, evidence
 IDs from the frozen prompt, provider/model provenance, `noPortfolioWrites: true`,
-and ordered audit events. A model formatting failure is intentionally recorded
+decision details, committee synthesis, and ordered audit events. A model formatting failure is intentionally recorded
 as `failed`; unvalidated text is never saved as an action.
 
 ## Limits and operation
 
-Defaults are six agents, ten rounds, forty model calls, 384 output tokens per
+Defaults are six agents, ten rounds, forty model calls, 768 output tokens per
 call, a one-hour run budget, and a ten-minute stale-worker threshold. Client
 requests may choose smaller values but cannot exceed server limits. For a CPU
 Codespace, begin with two agents and one round.

@@ -23,6 +23,7 @@ The complete light editorial redesign is on [`feat/editorial-ui-redesign`](https
 | [Optional local setup](docs/DEPLOYMENT.md#local-docker-windows--docker-desktop) | How to run the project yourself |
 | [GitHub Codespaces](docs/CODESPACES.md) | Private ports, manual Compose startup, and optional local Ollama inference |
 | [Simulation Lab Phase 2](docs/SIMULATION_PHASE2.md) | Bounded agent execution, audit trail, cancellation, and Codespaces API test |
+| [Professional agent system](docs/SIMULATION_AGENT_SYSTEM.md) | Role mandates, desk workflow, decision quality, and committee synthesis |
 
 ## The problem
 

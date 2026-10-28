@@ -118,6 +118,10 @@ queued behind another generation can time out; truncation and fallback remain
 explicit in the application. No HF credentials or automatic HF fallback are
 passed through this override. No model is automatically pulled on restart.
 
+Simulation Lab uses its own **768-token** output cap for the larger professional
+decision contract. It still uses the same timeout, context limit, and single
+sequential Ollama slot.
+
 Simulation Lab remains disabled by default. Phase 2 adds an explicit start API,
 a separate sequential worker, persisted rounds/actions/memory, cooperative
 cancellation, strict structured output validation, and audit events. It never

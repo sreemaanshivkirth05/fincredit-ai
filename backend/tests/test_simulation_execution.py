@@ -101,7 +101,17 @@ class SimulationExecutionTests(unittest.TestCase):
                 "action": "HOLD", "ticker": "AAPL", "allocationIntentPct": 0,
                 "confidence": 55,
                 "rationale": "The frozen scenario and holding support a cautious simulated research position.",
-                "evidenceIds": ["scenario:input", "ticker:AAPL"],
+                "thesis": "The frozen holding and hypothetical scenario support maintaining a cautious position.",
+                "counterThesis": "Missing live fundamentals and market context could make even a hold inappropriate.",
+                "catalysts": ["Evidence that the scenario pressure is temporary"],
+                "risks": ["The stored price may be stale", "Scenario transmission is uncertain"],
+                "timeHorizon": "months",
+                "riskScore": 58,
+                "riskFlags": ["data_staleness", "scenario_uncertainty"],
+                "dataQuality": "medium",
+                "sizingRationale": "Zero allocation change matches the incomplete evidence and bounded confidence.",
+                "disconfirmingEvidenceNeeded": ["Current fundamentals that contradict the hold thesis"],
+                "evidenceIds": ["scenario:input", "ticker:AAPL", "holding:1"],
                 "uncertainties": ["No live market or news data was supplied"],
             }), kwargs["provider"], kwargs["model"])
 
@@ -112,6 +122,7 @@ class SimulationExecutionTests(unittest.TestCase):
             db.close()
         self.assertEqual(len(calls), 4)
         self.assertEqual([item[1]["seed"] for item in calls], [118, 119, 218, 219])
+        self.assertEqual([item[1]["temperature"] for item in calls], [0.05, 0.08, 0.05, 0.08])
         result = self.client.get(f"/api/simulations/{run_id}/execution", headers=self.headers)
         self.assertEqual(result.status_code, 200, result.text)
         data = result.json()
@@ -119,6 +130,11 @@ class SimulationExecutionTests(unittest.TestCase):
         self.assertEqual(data["run"]["progress"]["completedActions"], 4)
         self.assertEqual(len(data["rounds"]), 2)
         self.assertTrue(data["run"]["result"]["noPortfolioWrites"])
+        self.assertEqual(data["run"]["result"]["committeeSynthesis"]["majorityAction"], "HOLD")
+        self.assertEqual(data["rounds"][0]["actions"][0]["decisionDetail"]["quality"]["band"], "strong")
+        self.assertTrue(calls[0][1]["json_mode"])
+        self.assertIn("Desk brief", calls[1][0])
+        self.assertIn("risk_manager", calls[1][0])
         with self.sessions() as db:
             self.assertEqual(db.query(SimulationAction).filter_by(run_id=run_id).count(), 4)
             self.assertEqual(db.query(SimulationMemory).filter_by(run_id=run_id).count(), 4)

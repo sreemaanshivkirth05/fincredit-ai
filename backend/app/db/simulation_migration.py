@@ -85,6 +85,16 @@ def _snapshot_guards(connection):
         raise RuntimeError("Simulation snapshots require PostgreSQL or SQLite")
 
 
+def _postgres_action_upgrade(connection):
+    for statement in (
+        "ALTER TABLE simulation_actions ADD COLUMN IF NOT EXISTS decision_detail JSONB",
+        "UPDATE simulation_actions SET decision_detail = COALESCE(decision_detail, '{}'::jsonb)",
+        "ALTER TABLE simulation_actions ALTER COLUMN decision_detail SET DEFAULT '{}'::jsonb",
+        "ALTER TABLE simulation_actions ALTER COLUMN decision_detail SET NOT NULL",
+    ):
+        connection.execute(text(statement))
+
+
 def run_migration(bind=None):
     target = bind if bind is not None else engine
     with target.begin() as connection:
@@ -103,6 +113,8 @@ def run_migration(bind=None):
             _postgres_run_upgrade(connection)
         for model in EXECUTION_TABLES:
             model.__table__.create(connection, checkfirst=True)
+        if connection.dialect.name == "postgresql":
+            _postgres_action_upgrade(connection)
         _snapshot_guards(connection)
 
 

@@ -79,6 +79,8 @@ class SimulationPostgresTests(unittest.TestCase):
         self.assertEqual(self.client.get('/api/simulations', headers=self.other).json()['runs'], [])
         columns = {column['name']: str(column['type']) for column in inspect(self.engine).get_columns('simulation_snapshots')}
         self.assertEqual(columns['inputs'], 'JSONB')
+        action_columns = {column['name']: str(column['type']) for column in inspect(self.engine).get_columns('simulation_actions')}
+        self.assertEqual(action_columns['decision_detail'], 'JSONB')
 
     def test_postgres_trigger_and_status_constraint(self):
         result = self.create()

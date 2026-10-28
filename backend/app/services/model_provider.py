@@ -85,7 +85,8 @@ def generate_huggingface(prompt, expected_model=None):
         _REMOTE_SLOT.release()
 
 
-def generate_local(prompt, model=None, max_output_tokens=None, temperature=0.2, seed=None):
+def generate_local(prompt, model=None, max_output_tokens=None, temperature=0.2,
+                   seed=None, json_mode=False):
     from ollama import Client, ResponseError
     from httpx import TimeoutException
     try:
@@ -98,9 +99,14 @@ def generate_local(prompt, model=None, max_output_tokens=None, temperature=0.2, 
                    "num_predict": output_tokens}
         if seed is not None:
             options["seed"] = seed
-        response = client.chat(model=selected_model,
-            messages=[{"role": "user", "content": prompt}],
-            options=options)
+        request = {
+            "model": selected_model,
+            "messages": [{"role": "user", "content": prompt}],
+            "options": options,
+        }
+        if json_mode:
+            request["format"] = "json"
+        response = client.chat(**request)
         answer = response.message.content
         if not isinstance(answer, str) or not answer.strip():
             raise ModelUnavailable("Local model returned no answer")
@@ -118,7 +124,7 @@ def generate_local(prompt, model=None, max_output_tokens=None, temperature=0.2, 
 
 
 def generate_model_answer(prompt, provider=None, model=None, max_output_tokens=None,
-                          temperature=0.2, seed=None):
+                          temperature=0.2, seed=None, json_mode=False):
     """Generate through an explicit free provider without mutating global settings.
 
     Existing research callers omit overrides. Simulation workers pass the
@@ -134,8 +140,10 @@ def generate_model_answer(prompt, provider=None, model=None, max_output_tokens=N
             if provider is not None or not settings.HF_ALLOW_OLLAMA_FALLBACK:
                 raise
             result = generate_local(prompt, max_output_tokens=max_output_tokens,
-                                    temperature=temperature, seed=seed)
+                                    temperature=temperature, seed=seed,
+                                    json_mode=json_mode)
             result.notice = f"Cloud unavailable ({error}); used local Ollama"
             return result
     return generate_local(prompt, model=model, max_output_tokens=max_output_tokens,
-                          temperature=temperature, seed=seed)
+                          temperature=temperature, seed=seed,
+                          json_mode=json_mode)

@@ -99,6 +99,7 @@ def execution_detail(db: Session, run):
                 "allocationIntentPct": action.allocation_intent_pct,
                 "confidence": action.confidence,
                 "rationale": action.rationale,
+                "decisionDetail": action.decision_detail or {},
                 "evidenceIds": action.evidence_ids,
                 "uncertainties": action.uncertainties,
                 "provider": action.provider,

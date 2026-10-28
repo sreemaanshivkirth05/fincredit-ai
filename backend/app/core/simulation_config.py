@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class SimulationExecutionSettings(BaseSettings):
-    SIMULATION_MAX_OUTPUT_TOKENS: int = Field(default=384, ge=128, le=1024)
+    SIMULATION_MAX_OUTPUT_TOKENS: int = Field(default=768, ge=256, le=1536)
     SIMULATION_MAX_RUNTIME_SECONDS: int = Field(default=3600, ge=60, le=7200)
     SIMULATION_STALE_SECONDS: int = Field(default=600, ge=60, le=1800)
 

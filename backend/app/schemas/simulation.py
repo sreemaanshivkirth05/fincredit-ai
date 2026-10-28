@@ -32,6 +32,30 @@ class SimulatedAction(str, Enum):
     abstain = "ABSTAIN"
 
 
+class TimeHorizon(str, Enum):
+    days = "days"
+    weeks = "weeks"
+    months = "months"
+    quarters = "quarters"
+
+
+class DataQuality(str, Enum):
+    low = "low"
+    medium = "medium"
+    high = "high"
+
+
+class RiskFlag(str, Enum):
+    concentration = "concentration"
+    liquidity = "liquidity"
+    valuation = "valuation"
+    data_staleness = "data_staleness"
+    scenario_uncertainty = "scenario_uncertainty"
+    currency = "currency"
+    model_risk = "model_risk"
+    none = "none"
+
+
 class Contract(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -137,21 +161,56 @@ class AgentDecision(Contract):
     action: SimulatedAction
     ticker: Ticker | None = None
     allocationIntentPct: int = Field(strict=True, ge=-100, le=100)
-    confidence: int = Field(strict=True, ge=0, le=100)
+    confidence: int = Field(strict=True, ge=0, le=85)
     rationale: Annotated[str, StringConstraints(strip_whitespace=True, min_length=20, max_length=1500)]
+    thesis: Annotated[str, StringConstraints(strip_whitespace=True, min_length=20, max_length=800)]
+    counterThesis: Annotated[str, StringConstraints(strip_whitespace=True, min_length=20, max_length=800)]
+    catalysts: list[Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=240)]] = Field(
+        default_factory=list, max_length=5
+    )
+    risks: list[Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=240)]] = Field(
+        min_length=1, max_length=6
+    )
+    timeHorizon: TimeHorizon
+    riskScore: int = Field(strict=True, ge=0, le=100)
+    riskFlags: list[RiskFlag] = Field(min_length=1, max_length=7)
+    dataQuality: DataQuality
+    sizingRationale: Annotated[str, StringConstraints(strip_whitespace=True, min_length=20, max_length=600)]
+    disconfirmingEvidenceNeeded: list[
+        Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=240)]
+    ] = Field(min_length=1, max_length=5)
     evidenceIds: list[Annotated[str, StringConstraints(pattern=r"^[a-z]+:[A-Za-z0-9.^=\-]+$")]] = Field(
         min_length=1, max_length=12
     )
     uncertainties: list[Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=240)]] = Field(
-        default_factory=list, max_length=6
+        min_length=1, max_length=6
     )
 
     @model_validator(mode="after")
     def consistent_action(self):
-        if self.action in (SimulatedAction.buy, SimulatedAction.sell) and not self.ticker:
-            raise ValueError("BUY and SELL require a ticker")
-        if self.action == SimulatedAction.abstain and self.allocationIntentPct != 0:
-            raise ValueError("ABSTAIN requires zero allocation intent")
+        if self.action in (SimulatedAction.buy, SimulatedAction.sell, SimulatedAction.hold) and not self.ticker:
+            raise ValueError("BUY, SELL, and HOLD require a ticker")
+        if self.action == SimulatedAction.buy and self.allocationIntentPct <= 0:
+            raise ValueError("BUY requires positive allocation intent")
+        if self.action == SimulatedAction.sell and self.allocationIntentPct >= 0:
+            raise ValueError("SELL requires negative allocation intent")
+        if self.action in (SimulatedAction.hold, SimulatedAction.abstain) and self.allocationIntentPct != 0:
+            raise ValueError("HOLD and ABSTAIN require zero allocation intent")
+        if self.action == SimulatedAction.abstain and self.ticker is not None:
+            raise ValueError("ABSTAIN must not select a ticker")
+        if RiskFlag.none in self.riskFlags and len(self.riskFlags) != 1:
+            raise ValueError("The none risk flag cannot be combined with other risk flags")
+        if len(set(self.riskFlags)) != len(self.riskFlags):
+            raise ValueError("Risk flags must be unique")
+        if len(set(self.evidenceIds)) != len(self.evidenceIds):
+            raise ValueError("Evidence IDs must be unique")
+        confidence_limits = {
+            DataQuality.low: 60,
+            DataQuality.medium: 75,
+            DataQuality.high: 85,
+        }
+        if self.confidence > confidence_limits[self.dataQuality]:
+            raise ValueError("Confidence exceeds the selected data-quality limit")
         return self
 
 
@@ -164,6 +223,7 @@ class SimulationActionResponse(Contract):
     allocationIntentPct: int
     confidence: int
     rationale: str
+    decisionDetail: dict[str, Any]
     evidenceIds: list[str]
     uncertainties: list[str]
     provider: Literal["ollama", "huggingface"]

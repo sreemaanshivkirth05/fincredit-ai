@@ -35,6 +35,16 @@ class OllamaProviderTests(unittest.TestCase):
             answer = generate_model_answer('Synthetic prompt')
         self.assertIn('token limit', answer.notice)
 
+    def test_simulation_json_mode_reaches_ollama(self):
+        client = MagicMock()
+        client.chat.return_value = SimpleNamespace(
+            message=SimpleNamespace(content='{"action":"ABSTAIN"}'),
+            done_reason='stop',
+        )
+        with patch('ollama.Client', return_value=client):
+            generate_model_answer('Synthetic structured prompt', json_mode=True)
+        self.assertEqual(client.chat.call_args.kwargs['format'], 'json')
+
     def test_missing_model_has_specific_safe_error(self):
         from ollama import ResponseError
         client = MagicMock()

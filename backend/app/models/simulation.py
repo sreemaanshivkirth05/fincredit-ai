@@ -103,6 +103,8 @@ class SimulationAction(Base):
     allocation_intent_pct = Column(Integer, nullable=False, default=0)
     confidence = Column(Integer, nullable=False)
     rationale = Column(Text, nullable=False)
+    decision_detail = Column(JSON().with_variant(JSONB, "postgresql"), nullable=False,
+                             default=dict, server_default="{}")
     evidence_ids = Column(JSON().with_variant(JSONB, "postgresql"), nullable=False)
     uncertainties = Column(JSON().with_variant(JSONB, "postgresql"), nullable=False)
     provider = Column(String(20), nullable=False)
