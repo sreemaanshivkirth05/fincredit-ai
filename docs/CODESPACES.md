@@ -19,6 +19,21 @@ stable, and the non-secret env example prevents loading a workstation `.env`.
 Shell variables take precedence over env-file defaults for timeout/output limits.
 
 ```bash
+mkdir -p .secrets
+if [ ! -f .secrets/codespaces.env ]; then
+  umask 077
+  python - <<'PY'
+from pathlib import Path
+import secrets
+Path('.secrets/codespaces.env').write_text(
+    'POSTGRES_PASSWORD=' + secrets.token_hex(24) + '\n', encoding='utf-8'
+)
+PY
+fi
+set -a
+. .secrets/codespaces.env
+set +a
+
 dc() {
   docker compose --project-name fincredit-codespaces \
     --env-file .devcontainer/compose.env.example \
@@ -27,6 +42,12 @@ dc() {
 docker compose version  # Requires 2.24.4 or newer for !override / !reset.
 dc config --quiet
 ```
+
+The private password file is ignored by Git. Source it before using `dc` in
+each new terminal. If this Codespace already has a database volume created by
+an older configuration, put that volume's existing password in the private
+file instead of generating a different one; PostgreSQL does not change an
+initialized volume's password from a new environment value.
 
 Ports **3000** and **8000** are automatically forwarded. GitHub defaults them
 to private; the attach hook explicitly reapplies private access. If that hook
@@ -67,7 +88,7 @@ and frontend URL use the Codespace's HTTPS address. Port 8000 remains private
 for direct API inspection. Local/production builds keep their existing API URL
 unless `FINCREDIT_API_PROXY_URL` is explicitly provided.
 
-Ollama and the Committee worker are not required for startup. Ask AI may use
+Ollama and the background workers are not required for startup. Ask AI may use
 its existing explicit deterministic fallback until a model is installed and
 Ollama is running. Committee jobs remain queued until the worker starts.
 
@@ -97,10 +118,26 @@ queued behind another generation can time out; truncation and fallback remain
 explicit in the application. No HF credentials or automatic HF fallback are
 passed through this override. No model is automatically pulled on restart.
 
-Simulation Phase 1 remains configuration/snapshot persistence only. This
-override explicitly sets `SIMULATION_ENABLED=false` for both services. It adds
-no Phase 2 execution, trading, or simulation startup. Its isolated tests enable
-the feature only inside their test settings, without changing running services.
+Simulation Lab remains disabled by default. Phase 2 adds an explicit start API,
+a separate sequential worker, persisted rounds/actions/memory, cooperative
+cancellation, strict structured output validation, and audit events. It never
+writes to portfolio holdings and does not claim to forecast actual markets.
+
+Enable it only after the Ollama smoke test succeeds. Recreate the backend so the
+flag reaches the API, then start the worker. This uses the already downloaded
+model and performs no generation until an authenticated run is explicitly
+started:
+
+```bash
+export SIMULATION_ENABLED=true
+dc up -d --build backend simulation-worker
+dc ps
+```
+
+The application currently exposes the Phase 2 API but does not yet include the
+Phase 4 Simulation Lab interface. Use the authenticated API workflow in
+`docs/SIMULATION_PHASE2.md` to run a small manual test. Stop the worker before
+changing models or stopping Ollama.
 
 ## Tests
 
@@ -129,7 +166,7 @@ them without publishing PostgreSQL or touching application records:
 dc up -d postgres
 dc exec -T postgres createdb -U postgres fincredit_simulation_test
 dc run --rm --no-deps -v "$PWD/backend/tests:/app/tests:ro" \
-  -e SIMULATION_TEST_DATABASE_URL=postgresql://postgres:postgres@postgres:5432/fincredit_simulation_test \
+  -e "SIMULATION_TEST_DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/fincredit_simulation_test" \
   backend python -m unittest discover -s tests -p test_simulation_postgres.py -v
 ```
 
@@ -143,14 +180,14 @@ Use the isolated suite and the explicit model smoke test above instead.
 ## Stop, resume, and preserve data
 
 ```bash
-dc stop committee-worker ollama  # Stop inference/queue processing first.
+dc stop committee-worker simulation-worker ollama  # Stop inference/queue processing first.
 dc stop                         # Stop the remaining application containers.
 # Alternatively remove application containers/network while keeping volumes:
 dc down
 docker volume inspect fincredit-codespaces_postgres_data fincredit-codespaces_ollama_models
 # Resume explicitly; no model re-download is needed if its volume remains:
 dc up -d postgres backend frontend
-dc up -d ollama committee-worker  # Only when inference is wanted again.
+dc up -d ollama committee-worker simulation-worker  # Only when inference is wanted again.
 # Stop the Codespace VM itself to stop compute billing:
 gh codespace stop -c "$CODESPACE_NAME"
 ```

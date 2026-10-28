@@ -1,5 +1,10 @@
 # FinCredit AI 3.0 — Multi-Agent Market Simulation Engine
 
+> Implementation status: Phase 1 configuration/snapshots and Phase 2 bounded
+> agent execution are implemented on `feat/fincredit-simulation-lab`. Phase 3
+> analytics/reports and Phase 4 UI remain planned. See
+> `docs/SIMULATION_PHASE2.md` for the shipped API and operational contract.
+
 Technical implementation blueprint · Based on your existing GitHub repository and MiroFish architecture
 
 I reviewed your [FinCredit AI repository](https://github.com/sreemaanshivkirth05/fincredit-ai?utm_source=chatgpt.com) and its latest development branches, including your Investment Committee release and editorial UI redesign.

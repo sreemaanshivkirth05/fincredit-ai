@@ -1,5 +1,8 @@
 from app.models.committee_run import CommitteeRun
-from app.models.simulation import SimulationRun, SimulationSnapshot
+from app.models.simulation import (
+    SimulationAction, SimulationAgent, SimulationAuditEvent, SimulationMemory,
+    SimulationRound, SimulationRun, SimulationSnapshot,
+)
 from app.models.portfolio_transaction import PortfolioTransaction
 from app.db.database import Base, engine
 from app.models.agent_run import AgentRun

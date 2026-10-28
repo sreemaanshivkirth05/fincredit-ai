@@ -18,13 +18,17 @@ services:
       HF_TOKEN: ""
       FINCREDIT_SPACE_KEY: ""
       HF_ALLOW_OLLAMA_FALLBACK: "false"
-      SIMULATION_ENABLED: "false"
+      SIMULATION_ENABLED: ${SIMULATION_ENABLED:-false}
       SIMULATION_PROVIDER: ollama
       SIMULATION_MODEL: qwen3.5:4b
       FRONTEND_URL: https://${CODESPACE_NAME:?Run inside a Codespace}-3000.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-app.github.dev}
       CORS_ALLOWED_ORIGINS: https://${CODESPACE_NAME:?Run inside a Codespace}-3000.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-app.github.dev}
 
   committee-worker:
+    environment: *codespaces_environment
+    restart: "no"
+
+  simulation-worker:
     environment: *codespaces_environment
     restart: "no"
 

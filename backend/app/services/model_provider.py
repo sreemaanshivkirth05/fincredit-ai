@@ -20,9 +20,14 @@ class ModelAnswer(str):
         return value
 
 
-def generate_huggingface(prompt):
+HF_MODEL_ID = "Qwen/Qwen3-4B-Instruct-2507"
+
+
+def generate_huggingface(prompt, expected_model=None):
     if not re.fullmatch(r"[\w-]+/[\w.-]+", settings.HF_SPACE_ID):
         raise ModelUnavailable("Invalid Hugging Face Space ID")
+    if expected_model and expected_model != HF_MODEL_ID:
+        raise ModelUnavailable("Configured model does not match the Hugging Face Space model")
     key = settings.FINCREDIT_SPACE_KEY.get_secret_value()
     if len(key) < 32 or not settings.HF_TOKEN.get_secret_value():
         raise ModelUnavailable("Hugging Face credentials are not configured")
@@ -56,7 +61,7 @@ def generate_huggingface(prompt):
         if not isinstance(answer, str) or not answer.strip() or len(answer) > 20000:
             raise ModelUnavailable("Cloud returned an invalid answer")
         notice = "Output reached its token limit; review for incompleteness" if result.get("possiblyTruncated") else ""
-        return ModelAnswer(answer, "huggingface", "Qwen/Qwen3-4B-Instruct-2507", notice)
+        return ModelAnswer(answer, "huggingface", HF_MODEL_ID, notice)
     except ModelUnavailable:
         raise
     except TimeoutError:
@@ -80,20 +85,27 @@ def generate_huggingface(prompt):
         _REMOTE_SLOT.release()
 
 
-def generate_local(prompt):
+def generate_local(prompt, model=None, max_output_tokens=None, temperature=0.2, seed=None):
     from ollama import Client, ResponseError
     from httpx import TimeoutException
     try:
         client = Client(host=settings.OLLAMA_BASE_URL, timeout=settings.LLM_TIMEOUT_SECONDS)
-        response = client.chat(model=settings.OLLAMA_MODEL,
+        selected_model = (model or settings.OLLAMA_MODEL).strip()
+        if not selected_model or len(selected_model) > 200:
+            raise ModelUnavailable("Configured Ollama model is invalid")
+        output_tokens = max_output_tokens or settings.OLLAMA_MAX_OUTPUT_TOKENS
+        options = {"temperature": temperature, "num_ctx": 8192,
+                   "num_predict": output_tokens}
+        if seed is not None:
+            options["seed"] = seed
+        response = client.chat(model=selected_model,
             messages=[{"role": "user", "content": prompt}],
-            options={"temperature": 0.2, "num_ctx": 8192,
-                     "num_predict": settings.OLLAMA_MAX_OUTPUT_TOKENS})
+            options=options)
         answer = response.message.content
         if not isinstance(answer, str) or not answer.strip():
             raise ModelUnavailable("Local model returned no answer")
         notice = "Output reached its token limit; review for incompleteness" if response.done_reason == "length" else ""
-        return ModelAnswer(answer, "ollama", settings.OLLAMA_MODEL, notice)
+        return ModelAnswer(answer, "ollama", selected_model, notice)
     except ModelUnavailable:
         raise
     except ResponseError as error:
@@ -105,14 +117,25 @@ def generate_local(prompt):
         raise ModelUnavailable("Local Ollama is unavailable or timed out") from None
 
 
-def generate_model_answer(prompt):
-    if settings.LLM_PROVIDER == "huggingface":
+def generate_model_answer(prompt, provider=None, model=None, max_output_tokens=None,
+                          temperature=0.2, seed=None):
+    """Generate through an explicit free provider without mutating global settings.
+
+    Existing research callers omit overrides. Simulation workers pass the
+    provider/model frozen in their immutable input snapshot.
+    """
+    selected_provider = provider or settings.LLM_PROVIDER
+    if selected_provider not in ("ollama", "huggingface"):
+        raise ModelUnavailable("Configured model provider is unsupported")
+    if selected_provider == "huggingface":
         try:
-            return generate_huggingface(prompt)
+            return generate_huggingface(prompt, expected_model=model)
         except ModelUnavailable as error:
-            if not settings.HF_ALLOW_OLLAMA_FALLBACK:
+            if provider is not None or not settings.HF_ALLOW_OLLAMA_FALLBACK:
                 raise
-            result = generate_local(prompt)
+            result = generate_local(prompt, max_output_tokens=max_output_tokens,
+                                    temperature=temperature, seed=seed)
             result.notice = f"Cloud unavailable ({error}); used local Ollama"
             return result
-    return generate_local(prompt)
+    return generate_local(prompt, model=model, max_output_tokens=max_output_tokens,
+                          temperature=temperature, seed=seed)

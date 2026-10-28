@@ -23,6 +23,9 @@ services:
       SIMULATION_MAX_AGENTS: ${SIMULATION_MAX_AGENTS:-6}
       SIMULATION_MAX_ROUNDS: ${SIMULATION_MAX_ROUNDS:-10}
       SIMULATION_MAX_MODEL_CALLS: ${SIMULATION_MAX_MODEL_CALLS:-40}
+      SIMULATION_MAX_OUTPUT_TOKENS: ${SIMULATION_MAX_OUTPUT_TOKENS:-384}
+      SIMULATION_MAX_RUNTIME_SECONDS: ${SIMULATION_MAX_RUNTIME_SECONDS:-3600}
+      SIMULATION_STALE_SECONDS: ${SIMULATION_STALE_SECONDS:-600}
       SIMULATION_PROVIDER: ${SIMULATION_PROVIDER:-ollama}
       SIMULATION_MODEL: ${SIMULATION_MODEL:-}
       DATABASE_URL: ${DATABASE_URL:?Set postgresql://fincredit:URL_ENCODED_PASSWORD@postgres:5432/fincredit_ai}
@@ -50,6 +53,14 @@ services:
     build: ./backend
     restart: unless-stopped
     command: ["python", "-m", "app.committee_worker"]
+    environment: *app_env
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    depends_on:
+      backend: {condition: service_healthy}
+  simulation-worker:
+    build: ./backend
+    restart: unless-stopped
+    command: ["python", "-m", "app.simulation_worker"]
     environment: *app_env
     extra_hosts: ["host.docker.internal:host-gateway"]
     depends_on:

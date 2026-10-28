@@ -4,7 +4,7 @@ services:
     environment:
       POSTGRES_DB: fincredit_ai
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in an untracked environment file}
     ports:
       - "5432:5432"
     volumes:
@@ -31,19 +31,17 @@ services:
       SIMULATION_MAX_AGENTS: ${SIMULATION_MAX_AGENTS:-6}
       SIMULATION_MAX_ROUNDS: ${SIMULATION_MAX_ROUNDS:-10}
       SIMULATION_MAX_MODEL_CALLS: ${SIMULATION_MAX_MODEL_CALLS:-40}
+      SIMULATION_MAX_OUTPUT_TOKENS: ${SIMULATION_MAX_OUTPUT_TOKENS:-384}
+      SIMULATION_MAX_RUNTIME_SECONDS: ${SIMULATION_MAX_RUNTIME_SECONDS:-3600}
+      SIMULATION_STALE_SECONDS: ${SIMULATION_STALE_SECONDS:-600}
       SIMULATION_PROVIDER: ${SIMULATION_PROVIDER:-ollama}
       SIMULATION_MODEL: ${SIMULATION_MODEL:-}
       API_PREFIX: /api
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/fincredit_ai
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in an untracked environment file}@postgres:5432/fincredit_ai
       FRONTEND_URL: http://localhost:3000
       CORS_ALLOWED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
-      JWT_SECRET_KEY: local-docker-demo-secret-change-before-prod
       JWT_ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: "1440"
-      DEMO_USER_EMAIL: demo@fincredit.ai
-      DEMO_USER_PASSWORD: DemoPass123!
-      ADMIN_USER_EMAIL: admin@fincredit.ai
-      ADMIN_USER_PASSWORD: AdminPass123!
       LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
       HF_SPACE_ID: ${HF_SPACE_ID:-Sreemaan05/fincredit-ai-inference}
       HF_TOKEN: ${HF_TOKEN:-}
@@ -58,6 +56,14 @@ services:
   committee-worker:
     build: ./backend
     command: ["python", "-m", "app.committee_worker"]
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment: *backend_environment
+
+  simulation-worker:
+    build: ./backend
+    command: ["python", "-m", "app.simulation_worker"]
     restart: unless-stopped
     depends_on:
       - backend

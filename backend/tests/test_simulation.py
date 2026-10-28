@@ -75,7 +75,7 @@ class SimulationTests(unittest.TestCase):
         infer.assert_not_called()
         data = response.json()
         self.assertEqual(data['status'], 'configured')
-        self.assertEqual(data['version'], 'simulation-v1')
+        self.assertEqual(data['version'], 'simulation-v2')
         self.assertEqual(data['snapshot']['inputs']['request']['tickers'], ['AAPL'])
         self.assertEqual(data['snapshot']['inputs']['holdings'][0]['shares'], '2.0')
         self.assertNotIn('PRIVATE', response.text)
@@ -177,7 +177,7 @@ class SimulationTests(unittest.TestCase):
             self.assertIsNotNone(db.get(SimulationSnapshot, run_id))
         with self.assertRaises(IntegrityError):
             with self.engine.begin() as connection:
-                connection.execute(text("UPDATE simulation_runs SET status = 'queued' WHERE id = :id"), {'id': run_id})
+                connection.execute(text("UPDATE simulation_runs SET status = 'unknown' WHERE id = :id"), {'id': run_id})
 
     def test_atomic_create_and_no_holdings_writes(self):
         with self.sessions() as db:

@@ -89,7 +89,7 @@ class SimulationPostgresTests(unittest.TestCase):
                     connection.execute(text(sql), {'id': result['id']})
         with self.assertRaises(IntegrityError):
             with self.engine.begin() as connection:
-                connection.execute(text("UPDATE simulation_runs SET status = 'queued' WHERE id = :id"), {'id': result['id']})
+                connection.execute(text("UPDATE simulation_runs SET status = 'unknown' WHERE id = :id"), {'id': result['id']})
         self.assertEqual(self.client.get('/api/simulations/' + result['id'], headers=self.headers).json(), result)
 
     def test_postgres_migration_rerun_preserves_records(self):
