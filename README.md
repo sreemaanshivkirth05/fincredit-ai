@@ -112,7 +112,7 @@ Ask AI uses the existing LangGraph workflow. The new committee uses a separate b
 
 Next.js 16, React, TypeScript and Tailwind provide the interface. FastAPI, SQLAlchemy and PostgreSQL provide the API and persistence. LangGraph coordinates the existing Ask workflow. Ollama and Hugging Face provide model inference; Docker Compose packages the services. Playwright covers existing browser workflows.
 
-No paid inference provider is required. Local inference consumes the user's hardware resources; free Hugging Face availability depends on account access and quota.
+No paid inference provider is required. The free cloud configuration uses Qwen3-8B on Hugging Face ZeroGPU for agent reasoning and a compact financial DistilRoBERTa classifier on the Space CPU. Local inference consumes the user's hardware resources; free Hugging Face availability depends on account access and quota.
 
 ## Current scope
 

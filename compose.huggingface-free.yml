@@ -1,0 +1,17 @@
+# Free cloud inference override. Requires HF_TOKEN and FINCREDIT_SPACE_KEY in
+# the selected env file. It never enables local Ollama fallback.
+services:
+  backend:
+    environment: &huggingface_free_environment
+      LLM_PROVIDER: huggingface
+      SIMULATION_PROVIDER: huggingface
+      SIMULATION_MODEL: Qwen/Qwen3-8B
+      HF_SPACE_ID: ${HF_SPACE_ID:-Sreemaan05/fincredit-ai-inference}
+      HF_TOKEN: ${HF_TOKEN:?Set HF_TOKEN in a private environment file}
+      FINCREDIT_SPACE_KEY: ${FINCREDIT_SPACE_KEY:?Set FINCREDIT_SPACE_KEY in a private environment file}
+      HF_TIMEOUT_SECONDS: "180"
+      HF_ALLOW_OLLAMA_FALLBACK: "false"
+  committee-worker:
+    environment: *huggingface_free_environment
+  simulation-worker:
+    environment: *huggingface_free_environment

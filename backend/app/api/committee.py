@@ -10,6 +10,7 @@ from app.core.config import settings
 from app.db.database import get_db
 from app.models.user import User
 from app.models.committee_run import CommitteeRun
+from app.services.model_provider import HF_MODEL_ID, HF_SENTIMENT_MODEL_ID
 
 router = APIRouter(prefix="/committee", tags=["Investment Committee"])
 
@@ -34,7 +35,8 @@ def owned(db, user, run_id):
 
 @router.get("/configuration")
 def configuration(user: User = Depends(get_current_user)):
-    return {"provider": settings.LLM_PROVIDER, "model": settings.OLLAMA_MODEL if settings.LLM_PROVIDER == "ollama" else "Qwen/Qwen3-4B-Instruct-2507",
+    return {"provider": settings.LLM_PROVIDER, "model": settings.OLLAMA_MODEL if settings.LLM_PROVIDER == "ollama" else HF_MODEL_ID,
+            "sentimentModel": HF_SENTIMENT_MODEL_ID if settings.LLM_PROVIDER == "huggingface" else None,
             "cloudCredentialsConfigured": bool(settings.HF_TOKEN.get_secret_value()) and len(settings.FINCREDIT_SPACE_KEY.get_secret_value()) >= 32,
             "fallbackEnabled": settings.HF_ALLOW_OLLAMA_FALLBACK, "liveConnectionVerified": False,
             "execution": "Paper research only; no autonomous orders", "version": "committee-v1"}

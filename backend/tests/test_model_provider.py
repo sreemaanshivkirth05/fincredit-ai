@@ -6,7 +6,15 @@ from unittest.mock import patch, MagicMock
 from types import SimpleNamespace
 from pydantic import SecretStr
 from app.core.config import settings
-from app.services.model_provider import generate_huggingface, generate_model_answer, ModelAnswer, ModelUnavailable
+from app.services.model_provider import (
+    HF_MODEL_ID,
+    HF_SENTIMENT_MODEL_ID,
+    ModelAnswer,
+    ModelUnavailable,
+    classify_huggingface_sentiment,
+    generate_huggingface,
+    generate_model_answer,
+)
 
 
 class OllamaProviderTests(unittest.TestCase):
@@ -79,10 +87,43 @@ class ModelProviderTests(unittest.TestCase):
         with patch('gradio_client.Client', return_value=client) as constructor:
             answer = generate_model_answer('Synthetic research question')
         self.assertEqual(answer.provider, 'huggingface')
+        self.assertEqual(answer.model, HF_MODEL_ID)
         self.assertEqual(str(answer), 'Grounded answer')
         self.assertEqual(constructor.call_args.args, ('Sreemaan05/fincredit-ai-inference',))
         client.submit.assert_called_once_with('Synthetic research question', 'k'*32, api_name='/generate')
         client.close.assert_called_once()
+
+    def test_financial_sentiment_uses_bounded_space_cpu_endpoint(self):
+        client = self.client(None)
+        client.submit.return_value.result.return_value = {
+            'ok': True,
+            'label': 'negative',
+            'scores': {'negative': 0.8, 'neutral': 0.15, 'positive': 0.05},
+        }
+        with patch('gradio_client.Client', return_value=client):
+            result = classify_huggingface_sentiment(
+                'Simulated operating margin declined during the quarter.'
+            )
+        self.assertEqual(result['label'], 'negative')
+        self.assertEqual(result['model'], HF_SENTIMENT_MODEL_ID)
+        self.assertEqual(sum(result['scores'].values()), 1.0)
+        client.submit.assert_called_once_with(
+            'Simulated operating margin declined during the quarter.',
+            'k' * 32,
+            api_name='/sentiment',
+        )
+        client.close.assert_called_once()
+
+    def test_financial_sentiment_rejects_invalid_cloud_response(self):
+        client = self.client(None)
+        client.submit.return_value.result.return_value = {
+            'ok': True,
+            'label': 'bullish',
+            'scores': {'negative': 0.1, 'neutral': 0.2, 'positive': 0.7},
+        }
+        with patch('gradio_client.Client', return_value=client):
+            with self.assertRaisesRegex(ModelUnavailable, 'invalid sentiment'):
+                classify_huggingface_sentiment('Synthetic financial text')
 
     def test_quota_does_not_automatically_use_local_or_retry(self):
         client = self.client({'ok': False, 'error': 'quota_exhausted'})
@@ -148,3 +189,10 @@ class SpacePolicyTests(unittest.TestCase):
             self.assertEqual(policy.validate_request('test','wrong'), 'unauthorized')
             self.assertEqual(policy.validate_request('x'*24001,'k'*32), 'invalid_prompt')
             self.assertIsNone(policy.validate_request('test','k'*32))
+            self.assertEqual(
+                policy.validate_sentiment_request('x' * 4001, 'k' * 32),
+                'invalid_text',
+            )
+            self.assertIsNone(
+                policy.validate_sentiment_request('Revenue increased.', 'k' * 32)
+            )

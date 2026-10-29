@@ -74,7 +74,7 @@ The **intended repository contract**, documented by the existing local source in
 - JSON object output: `ok`, `text`, `model`, generation time, output token count and truncation flag on success; sanitized error code on failure.
 - Server Space secret `FINCREDIT_SPACE_KEY` must contain at least 32 characters; missing/mismatched keys fail closed before GPU allocation.
 - The local adapter additionally requires `HF_TOKEN` and the same `FINCREDIT_SPACE_KEY` and submits `client.submit(prompt, key, api_name="/generate")` using authenticated HF quota. This application authentication is separate from public readability of the repository.
-- Expected model: `Qwen/Qwen3-4B-Instruct-2507`. This is an intended identifier from local source, not an observed remote loaded model.
+- Current free-cloud target: `Qwen/Qwen3-8B` for generation plus `mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis` for CPU sentiment classification. These identifiers describe the updated local Space source until a live deployed Space check confirms them.
 
 Restoring HF would require deploying the missing app files, supplying secrets privately, confirming an eligible free runtime/quota, and then testing real generation. None of those remote changes were performed. The existing HF setup guide describes them, but they are optional and outside this local repair. Do not select paid hardware or assume authenticated HF has unlimited free quota.
 

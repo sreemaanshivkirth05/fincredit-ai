@@ -1,6 +1,6 @@
 # GitHub Codespaces
 
-Use branch `feat/fincredit-simulation-lab` and the checked-in dev container.
+Use the current feature branch and the checked-in dev container.
 Select the **4-core / 16 GB** machine in Codespaces creation options. The
 `hostRequirements` setting requests that minimum; GitHub may offer a larger
 machine if repository/organization policy requires it. No GPU is required.
@@ -91,6 +91,55 @@ unless `FINCREDIT_API_PROXY_URL` is explicitly provided.
 Ollama and the background workers are not required for startup. Ask AI may use
 its existing explicit deterministic fallback until a model is installed and
 Ollama is running. Committee jobs remain queued until the worker starts.
+
+## Use free Hugging Face cloud models instead of Ollama
+
+The free cloud override runs Qwen3-8B in the Hugging Face ZeroGPU Space and
+uses the Space CPU for financial-text sentiment. It does not start or download
+Ollama, and local fallback remains disabled. First deploy the files under
+`deployment/huggingface-space/` by following `docs/HUGGINGFACE_INFERENCE.md`.
+
+Add these values to the existing ignored `.secrets/codespaces.env` file. Create
+the token and random key privately; do not paste either value into Git, source
+files, an issue, or chat.
+
+```dotenv
+HF_SPACE_ID=Sreemaan05/fincredit-ai-inference
+HF_TOKEN=your_read_token
+FINCREDIT_SPACE_KEY=the_same_random_key_saved_as_a_space_secret
+```
+
+Source the file and define a separate helper with the Hugging Face override
+last so its provider settings take precedence:
+
+```bash
+set -a
+. .secrets/codespaces.env
+set +a
+
+dc_hf() {
+  docker compose --project-name fincredit-codespaces \
+    --env-file .devcontainer/compose.env.example \
+    -f docker-compose.yml -f compose.codespaces.yml \
+    -f compose.huggingface-free.yml "$@"
+}
+
+dc_hf config --quiet
+dc_hf up -d --build postgres backend frontend committee-worker
+dc_hf ps
+```
+
+Enable Simulation Lab only when you are ready for a small manual test because
+each professional agent action uses a ZeroGPU generation. Free daily quota can
+run out during multi-agent, multi-round simulations:
+
+```bash
+export SIMULATION_ENABLED=true
+dc_hf up -d --build backend simulation-worker
+```
+
+If the free quota is exhausted, requests fail with an explicit quota message.
+The application does not switch to local RAM or a paid provider.
 
 ## Download the model only when ready
 
