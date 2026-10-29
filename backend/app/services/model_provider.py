@@ -20,7 +20,10 @@ class ModelAnswer(str):
         return value
 
 
-HF_MODEL_ID = "Qwen/Qwen3-4B-Instruct-2507"
+HF_MODEL_ID = "Qwen/Qwen3-8B"
+HF_SENTIMENT_MODEL_ID = (
+    "mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis"
+)
 
 
 def generate_huggingface(prompt, expected_model=None):
@@ -71,6 +74,82 @@ def generate_huggingface(prompt, expected_model=None):
         message = str(error).lower()
         reason = "Cloud GPU quota exhausted; no paid service was used" if "quota" in message else "Cloud connection failed or Space is not ready"
         raise ModelUnavailable(reason) from None
+    finally:
+        if job is not None:
+            try:
+                job.cancel()
+            except Exception:
+                pass
+        if client is not None:
+            try:
+                client.close()
+            except Exception:
+                pass
+        _REMOTE_SLOT.release()
+
+
+def classify_huggingface_sentiment(text):
+    """Classify bounded financial text through the Space's free CPU endpoint.
+
+    The classifier is a derived research signal. It does not replace evidence,
+    calculate prices, or make an investment decision.
+    """
+    if not re.fullmatch(r"[\w-]+/[\w.-]+", settings.HF_SPACE_ID):
+        raise ModelUnavailable("Invalid Hugging Face Space ID")
+    key = settings.FINCREDIT_SPACE_KEY.get_secret_value()
+    if len(key) < 32 or not settings.HF_TOKEN.get_secret_value():
+        raise ModelUnavailable("Hugging Face credentials are not configured")
+    if not isinstance(text, str) or not text.strip() or len(text) > 4000:
+        raise ModelUnavailable("Financial text exceeds the sentiment request limit")
+    if not _REMOTE_SLOT.acquire(blocking=False):
+        raise ModelUnavailable("A cloud model request is already in progress; try again after it finishes")
+    client = None
+    job = None
+    try:
+        from gradio_client import Client
+        client = Client(
+            settings.HF_SPACE_ID,
+            hf_token=settings.HF_TOKEN.get_secret_value(),
+            verbose=False,
+            max_workers=1,
+            analytics_enabled=False,
+            download_files=False,
+            httpx_kwargs={"timeout": 15.0},
+        )
+        job = client.submit(text, key, api_name="/sentiment")
+        result = job.result(timeout=settings.HF_TIMEOUT_SECONDS)
+        if not isinstance(result, dict) or not result.get("ok"):
+            errors = {
+                "unauthorized": "Cloud access key was rejected",
+                "not_configured": "Cloud Space secret is not configured",
+                "invalid_text": "Financial text failed sentiment validation",
+                "sentiment_unavailable": "Financial sentiment model is unavailable",
+            }
+            code = result.get("error") if isinstance(result, dict) else None
+            raise ModelUnavailable(errors.get(code, "Cloud sentiment classification failed"))
+        label = result.get("label")
+        scores = result.get("scores")
+        if label not in ("negative", "neutral", "positive") or not isinstance(scores, dict):
+            raise ModelUnavailable("Cloud returned an invalid sentiment response")
+        normalized = {}
+        for name in ("negative", "neutral", "positive"):
+            score = scores.get(name)
+            if not isinstance(score, (int, float)) or not 0 <= score <= 1:
+                raise ModelUnavailable("Cloud returned an invalid sentiment response")
+            normalized[name] = round(float(score), 6)
+        return {
+            "label": label,
+            "scores": normalized,
+            "provider": "huggingface",
+            "model": HF_SENTIMENT_MODEL_ID,
+            "use": "derived financial-text sentiment; not an investment decision",
+        }
+    except ModelUnavailable:
+        raise
+    except TimeoutError:
+        raise ModelUnavailable("Cloud sentiment classification timed out") from None
+    except Exception:
+        raise ModelUnavailable("Cloud connection failed or Space is not ready") from None
     finally:
         if job is not None:
             try:

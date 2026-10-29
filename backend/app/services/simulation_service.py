@@ -16,6 +16,7 @@ from app.models.simulation import (
     SimulationAction, SimulationAgent, SimulationAuditEvent, SimulationRound,
     SimulationRun, SimulationSnapshot,
 )
+from app.services.model_provider import HF_MODEL_ID
 from app.schemas.simulation import SimulationCreate, SnapshotInputs
 
 
@@ -158,7 +159,7 @@ def create_simulation(db: Session, user_id: int, body: SimulationCreate):
     provider = settings.SIMULATION_PROVIDER
     model = settings.SIMULATION_MODEL.strip() or (
         settings.OLLAMA_MODEL if provider == "ollama"
-        else "Qwen/Qwen3-4B-Instruct-2507"
+        else HF_MODEL_ID
     )
     inputs = SnapshotInputs(
         request=body,
